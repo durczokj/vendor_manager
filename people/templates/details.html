@@ -1,0 +1,17 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Vendor Manager – Details about {{ myperson.first_name }} {{ myperson.last_name }}
+{% endblock %}
+
+
+{% block content %}
+  <h1>{{ myperson.first_name }} {{ myperson.last_name }}</h1>
+
+  <p>Description: {{ myperson.description }}</p>
+
+  <p>Location: {{ myperson.location }}</p>
+  
+  <p>Back to <a href="/people">People</a></p>
+  
+{% endblock %}
