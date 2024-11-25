@@ -15,10 +15,14 @@ def people(request):
   return HttpResponse(template.render(context, request))
   
 def details(request, id):
-  myperson = Person.objects.get(id=id)
+  person = Person.objects.get(id=id)
+  engagements = person.engagements.all()
+  assignments = person.get_assignments(active_only=True)
   template = loader.get_template('details.html')
   context = {
-    'myperson': myperson,
+    'person': person,
+    'engagements': engagements,
+    'assignments': assignments
   }
   return HttpResponse(template.render(context, request))
 

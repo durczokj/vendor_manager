@@ -13,6 +13,8 @@
         <th>ID</th>
         <th>First Name</th>
         <th>Last Name</th>
+        <th>Description</th>
+        <th>Location</th>
       </tr>
     </thead>
     <tbody>
@@ -21,6 +23,8 @@
           <td><a href="details/{{ x.id }}">{{ x.id }}</a></td>
           <td>{{ x.first_name }}</td>
           <td>{{ x.last_name }}</td>
+          <td>{{ x.description }}</td>
+          <td> {{ x.location }}</td>
         </tr>
       {% endfor %}
     </tbody>

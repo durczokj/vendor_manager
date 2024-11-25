@@ -21,6 +21,11 @@ from . import views
 urlpatterns = [
     path('', views.main, name='main'),
     path('people/', include('people.urls')),
+    path('orders/', include('orders.urls')),
+    path('companies/', include('companies.urls')),
+    path('undertakings/', include('undertakings.urls')),
+    path('engagements/', include('engagements.urls')),
+    path('leaves/', include('leaves.urls')),
     path('admin/', admin.site.urls),
 ]
 

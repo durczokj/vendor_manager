@@ -1,0 +1,30 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Vendor Manager – Orders
+{% endblock %}
+
+{% block content %}
+  <h1>Orders</h1>
+  
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Order Name</th>
+        <th>Company</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in myorders %}
+        <tr>
+          <td><a href="order_details/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.name }}</td>
+          <td>{{ x.company }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p>Back to <a href="/">Home</a></p>
+{% endblock %}

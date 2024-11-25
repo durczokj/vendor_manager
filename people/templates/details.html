@@ -1,16 +1,69 @@
 {% extends "master.html" %}
 
 {% block title %}
-  Vendor Manager – Details about {{ myperson.first_name }} {{ myperson.last_name }}
+  Vendor Manager – Person Details
 {% endblock %}
 
 
 {% block content %}
-  <h1>{{ myperson.first_name }} {{ myperson.last_name }}</h1>
+  <h1>Person: {{ person.id }} ({{ person.first_name }} {{ person.last_name }})</h1>
 
-  <p>Description: {{ myperson.description }}</p>
+  <h2>Details</h2>
+  <p>ID: {{ person.id }}</p>
+  <p>First Name:  {{ person.first_name }}</p>
+  <p>Last Name:  {{ person.last_name }}</p>
+  <p>Description: {{ person.description }}</p>
+  <p>Location: {{ person.location }}</p>
+  
+  <h2>Engagements</h2>
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Order</th>
+        <th>Order Version</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Daily Rate</th>
+        <th>FTE</th>
+        <th>Active</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in engagements %}
+        <tr>
+          <td><a href="/engagements/engagement/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.order_version.order.id }}</td>
+          <td>{{ x.order_version.version_number }}</td>
+          <td>{{ x.start_date|date:"Y-m-d" }}</td>
+          <td>{{ x.end_date|date:"Y-m-d" }}</td>
+          <td>{{ x.daily_rate }}</td>
+          <td>{{ x.fte }}</td>
+          <td>{{ x.active }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-  <p>Location: {{ myperson.location }}</p>
+  <h2>Active Assignments</h2>
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>Engagement ID</th>
+        <th>Undertaking</th>
+        <th>Percentage</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in assignments %}
+        <tr>
+          <td><a href="/engagements/engagement/{{ x.id }}">{{ x.engagement.id }}</a></td>
+          <td>{{ x.undertaking }}</td>
+          <td>{{ x.percentage }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
   
   <p>Back to <a href="/people">People</a></p>
   

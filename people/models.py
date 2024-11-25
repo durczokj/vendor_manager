@@ -9,3 +9,16 @@ class Person(models.Model):
 
   def __str__(self):
     return f'{self.first_name} {self.last_name}'
+  
+  @property
+  def active_engagements(self):
+    return [e for e in self.engagements.all() if e.active]
+  
+  def get_assignments(self, active_only = False):
+    assignmnents = []
+    for e in self.engagements.all():
+        if e.active or not active_only:
+            for a in e.assignments.all():
+                assignmnents.append(a)
+    return assignmnents
+

@@ -1,0 +1,30 @@
+{% extends "master.html" %}
+
+{% block title %} 
+  Vendor Manager – Company Details
+{% endblock %}
+
+{% block content %}
+  <h1>Company Details: {{ company.name }}</h1>
+  <p>Email: {{ company.email }}</p>
+
+  <h2>Orders</h2>
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Order Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in orders %}
+        <tr>
+          <td><a href="/orders/order_details/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.name }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p>Back to <a href="/companies">Companies</a></p>
+{% endblock %}

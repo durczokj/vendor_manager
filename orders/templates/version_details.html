@@ -1,0 +1,44 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Vendor Manager – Order Version Details
+{% endblock %}
+
+{% block content %}
+  <h1>Contract: {{ version.order.name }} – Version: {{ version.version_number }}</h1>
+
+  <h2>Details</h2>
+  <p>Contract: <a href="{% url 'contract_details' version.contract.id %}">{{ version.contract.name }}</a></p>
+  <p>Start Date: {{ version.start_date|date:"Y-m-d" }}</p>
+  <p>End Date: {{ version.end_date|date:"Y-m-d" }}</p>
+
+  <h2>Engagements</h2>
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Person ID</th>
+        <th>Person</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Daily Rate</th>
+        <th>FTE</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in engagements %}
+        <tr>
+          <td><a href="/engagements/engagement/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.person.id }}</td>
+          <td>{{ x.person }}</td>
+          <td>{{ x.start_date|date:"Y-m-d" }}</td>
+          <td>{{ x.end_date|date:"Y-m-d" }}</td>
+          <td>{{ x.daily_rate }}</td>
+          <td>{{ x.fte }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p>Back to <a href="{% url 'order_details' version.order.id %}">Order Details</a></p>
+{% endblock %}

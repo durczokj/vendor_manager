@@ -1,0 +1,36 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Vendor Manager – Leaves
+{% endblock %}
+
+{% block content %}
+  <h1>Leaves</h1>
+  
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Person ID</th>
+        <th>Person Name</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Percentage</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in myleaves %}
+        <tr>
+          <td><a href="details/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.person.id }}</td>
+          <td>{{ x.person }}</td>
+          <td>{{ x.start_date|date:"Y-m-d" }}</td>
+          <td> {{ x.end_date|date:"Y-m-d" }}</td>
+          <td> {{ x.percentage }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p>Back to <a href="/">Home</a></p>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Vendor Manager – Engagements
+{% endblock %}
+
+{% block content %}
+  <h1>Engagements</h1>
+  
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Order</th>
+        <th>Order Version</th>
+        <th>Person ID</th>
+        <th>Person</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Daily Rate</th>
+        <th>FTE</th>
+        <th>Active</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in myengagements %}
+        <tr>
+          <td><a href="/engagements/engagement/{{ x.id }}">{{ x.id }}</a></td>
+          <td><a href="{% url 'order_details' x.order_version.order.id %}">{{ x.order_version.order.id }}</a></td>
+          <td><a href="{% url 'version_details' x.order_version.order.id x.order_version.version_number %}">{{ x.order_version.version_number }}</a></td>
+          <td><a href="{% url 'person_details' x.person.id %}">{{ x.person.id }}</a></td>
+          <td><a href="{% url 'person_details' x.person.id %}">{{ x.person }}</a></td>
+          <td>{{ x.start_date|date:"Y-m-d" }}</td>
+          <td>{{ x.end_date|date:"Y-m-d" }}</td>
+          <td>{{ x.daily_rate }}</td>
+          <td>{{ x.fte }}</td>
+          <td>{{ x.active }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p>Back to <a href="/">Home</a></p>
+{% endblock %}

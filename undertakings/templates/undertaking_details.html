@@ -1,0 +1,55 @@
+{% extends "master.html" %}
+
+{% block title %} 
+  Vendor Manager – Undertaking Details
+{% endblock %}
+
+{% block content %}
+  <h1>Undertaking: {{ undertaking.name }}</h1>
+
+  <h2>Details</h2>
+  <p>Cost Center: {{ undertaking.cost_center.id }}</p>
+
+  <h2>Assignemnts</h2>
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>Engagement ID</th>
+        <th>Order ID</th>
+        <th>Order Name</th>
+        <th>Order Version</th>
+        <th>Company</th>
+        <th>Person ID</th>
+        <th>Person</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Daily Rate</th>
+        <th>FTE</th>
+        <th>Percentage</th>
+        <th>Active</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in assignments %}
+        <tr>
+          <td>{{ x.engagement.id }}</td>
+          <td>{{ x.engagement.order_version.order.id }}</td>
+          <td>{{ x.engagement.order_version.order.name }}</td>
+          <td>{{ x.engagement.order_version.version_number }}</td>
+          <td>{{ x.engagement.order_version.order.company.name }}</td>
+          <td>{{ x.engagement.person.id }}</td>
+          <td>{{ x.engagement.person }}</td>
+          <td>{{ x.engagement.start_date|date:"Y-m-d" }}</td>
+          <td>{{ x.engagement.end_date|date:"Y-m-d" }}</td>
+          <td>{{ x.engagement.daily_rate }}</td>
+          <td>{{ x.engagement.fte }}</td>
+          <td>{{ x.percentage }}</td>
+          <td>{{ x.engagement.active }}</td>
+        </tr>
+    </tbody>
+    {% endfor %}
+  </table>
+
+  <p>Back to <a href="/undertakings">Undertakings</a></p>
+
+{% endblock %}
