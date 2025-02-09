@@ -15,9 +15,9 @@ def undertakings(request):
     return render(request, "all_undertakings.html", {"myundertakings": myundertakings})
 
 
-def undertaking_details(request, undertaking_id):
+def undertaking_details(request, id):
     """View to display details of a specific undertaking."""
-    undertaking = get_object_or_404(Undertaking, id=undertaking_id)
+    undertaking = get_object_or_404(Undertaking, id=id)
 
     if not has_object_permission("access_undertaking", request.user, undertaking):
         return HttpResponseForbidden()

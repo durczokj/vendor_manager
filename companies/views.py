@@ -17,9 +17,9 @@ def companies(request):
 
 
 @login_required
-def company_details(request, company_id):
+def company_details(request, id):
     """Show details of a company."""
-    company = get_object_or_404(Company, id=company_id)
+    company = get_object_or_404(Company, id=id)
 
     if not has_object_permission("access_company", request.user, company):
         return HttpResponseForbidden()
