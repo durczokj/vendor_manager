@@ -26,15 +26,15 @@
       </tr>
     </thead>
     <tbody>
-      {% for x in engagements %}
+      {% for x in engagement_assignments %}
         <tr>
-          <td><a href="/engagements/engagement/{{ x.id }}">{{ x.id }}</a></td>
-          <td>{{ x.person.id }}</td>
-          <td>{{ x.person }}</td>
-          <td>{{ x.start_date|date:"Y-m-d" }}</td>
-          <td>{{ x.end_date|date:"Y-m-d" }}</td>
-          <td>{{ x.daily_rate }}</td>
-          <td>{{ x.fte }}</td>
+          <td><a href="/engagements/{{ x.engagement.id }}">{{ x.engagement.id }}</a></td>
+          <td>{{ x.engagement.person.id }}</td>
+          <td>{{ x.engagement.person }}</td>
+          <td>{{ x.engagement.start_date|date:"Y-m-d" }}</td>
+          <td>{{ x.engagement.end_date|date:"Y-m-d" }}</td>
+          <td>{{ x.engagement.daily_rate }}</td>
+          <td>{{ x.engagement.fte }}</td>
         </tr>
       {% endfor %}
     </tbody>

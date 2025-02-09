@@ -21,25 +21,23 @@
       <tr>
         <th>ID</th>
         <th>Order</th>
-        <th>Order Version</th>
+        <th>Company</th>
         <th>Start Date</th>
         <th>End Date</th>
         <th>Daily Rate</th>
         <th>FTE</th>
-        <th>Active</th>
       </tr>
     </thead>
     <tbody>
       {% for x in engagements %}
         <tr>
-          <td><a href="/engagements/engagement/{{ x.id }}">{{ x.id }}</a></td>
-          <td>{{ x.order_version.order.id }}</td>
-          <td>{{ x.order_version.version_number }}</td>
+          <td><a href="/engagements/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.order.id }}</td>
+          <td>{{ x.order.company }}</td>
           <td>{{ x.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.end_date|date:"Y-m-d" }}</td>
           <td>{{ x.daily_rate }}</td>
           <td>{{ x.fte }}</td>
-          <td>{{ x.active }}</td>
         </tr>
       {% endfor %}
     </tbody>
@@ -52,14 +50,18 @@
         <th>Engagement ID</th>
         <th>Undertaking</th>
         <th>Percentage</th>
+        <th>Start Date</th>
+        <th>End Date</th>
       </tr>
     </thead>
     <tbody>
       {% for x in assignments %}
         <tr>
-          <td><a href="/engagements/engagement/{{ x.id }}">{{ x.engagement.id }}</a></td>
+          <td><a href="/engagements/{{ x.engagement.id }}">{{ x.engagement.id }}</a></td>
           <td>{{ x.undertaking }}</td>
           <td>{{ x.percentage }}</td>
+          <td>{{ x.start_date|date:"Y-m-d" }}</td>
+          <td>{{ x.end_date|date:"Y-m-d" }}</td>
         </tr>
       {% endfor %}
     </tbody>

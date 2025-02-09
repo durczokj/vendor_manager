@@ -18,7 +18,7 @@
     <tbody>
       {% for x in myundertakings %}
         <tr>
-          <td><a href="undertaking/{{ x.id }}">{{ x.id }}</a></td>
+          <td><a href="{{ x.id }}">{{ x.id }}</a></td>
           <td>{{ x.name }}</td>
           <td>{{ x.cost_center.id }}</td>
         </tr>

@@ -20,7 +20,7 @@
     <tbody>
       {% for x in mypeople %}
         <tr>
-          <td><a href="details/{{ x.id }}">{{ x.id }}</a></td>
+          <td><a href="{{ x.id }}">{{ x.id }}</a></td>
           <td>{{ x.first_name }}</td>
           <td>{{ x.last_name }}</td>
           <td>{{ x.description }}</td>

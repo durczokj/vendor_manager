@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+
 
 class Person(models.Model):
   id = models.CharField(primary_key=True, max_length=6)
@@ -6,6 +8,7 @@ class Person(models.Model):
   last_name = models.CharField(max_length=255)
   description = models.TextField(blank=False, null=True)
   location = models.CharField(max_length=255, blank=False, null=True)
+  user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
 
   def __str__(self):
     return f'{self.first_name} {self.last_name}'
@@ -17,8 +20,7 @@ class Person(models.Model):
   def get_assignments(self, active_only = False):
     assignmnents = []
     for e in self.engagements.all():
-        if e.active or not active_only:
-            for a in e.assignments.all():
-                assignmnents.append(a)
+          for a in e.undertaking_assignments.all():
+              assignmnents.append(a)
     return assignmnents
 
