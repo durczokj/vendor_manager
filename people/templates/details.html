@@ -6,10 +6,10 @@
 
 
 {% block content %}
-  <h1>Person: {{ person.identifier }} ({{ person.first_name }} {{ person.last_name }})</h1>
+  <h1>Person: {{ person.id }} ({{ person.first_name }} {{ person.last_name }})</h1>
 
   <h2>Details</h2>
-  <p>IDENTIFIER: {{ person.identifier }}</p>
+  <p>Id: {{ person.id }}</p>
   <p>First Name:  {{ person.first_name }}</p>
   <p>Last Name:  {{ person.last_name }}</p>
   <p>Description: {{ person.description }}</p>
@@ -19,7 +19,7 @@
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>IDENTIFIER</th>
+        <th>Id</th>
         <th>Order</th>
         <th>Company</th>
         <th>Start Date</th>
@@ -31,8 +31,8 @@
     <tbody>
       {% for x in engagements %}
         <tr>
-          <td><a href="/engagements/{{ x.identifier }}">{{ x.identifier }}</a></td>
-          <td>{{ x.order.identifier }}</td>
+          <td><a href="/engagements/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.order.id }}</td>
           <td>{{ x.order.company }}</td>
           <td>{{ x.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.end_date|date:"Y-m-d" }}</td>
@@ -47,7 +47,7 @@
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>Engagement IDENTIFIER</th>
+        <th>Engagement Id</th>
         <th>Undertaking</th>
         <th>Percentage</th>
         <th>Start Date</th>
@@ -57,7 +57,7 @@
     <tbody>
       {% for x in assignments %}
         <tr>
-          <td><a href="/engagements/{{ x.engagement.identifier }}">{{ x.engagement.identifier }}</a></td>
+          <td><a href="/engagements/{{ x.engagement.id }}">{{ x.engagement.id }}</a></td>
           <td>{{ x.undertaking }}</td>
           <td>{{ x.percentage }}</td>
           <td>{{ x.start_date|date:"Y-m-d" }}</td>

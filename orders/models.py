@@ -13,7 +13,7 @@ from contracts.models import Contract
 class Order(models.Model):
     """Define Order model."""
 
-    identifier = models.IntegerField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     company = models.ForeignKey(Company, related_name="orders", on_delete=models.CASCADE)
 
@@ -69,7 +69,7 @@ class OrderVersion(models.Model):
 
     def __str__(self):
         """Return string representation of OrderVersion."""
-        return f"Order: {self.order.identifier}, Version: {self.version_number}"
+        return f"Order: {self.order.id}, Version: {self.version_number}"
 
     @property
     def active(self):
@@ -84,9 +84,7 @@ class OrderVersion(models.Model):
             raise ValidationError("End date cannot be before start date.")
 
         previous_versions = (
-            OrderVersion.objects.filter(order=self.order)
-            .exclude(identifier=self.identifier)
-            .order_by("-version_number")
+            OrderVersion.objects.filter(order=self.order).exclude(id=self.id).order_by("-version_number")
         )
 
         # Ensure there are no breaks between versions
@@ -98,7 +96,7 @@ class OrderVersion(models.Model):
 
         overlapping_versions = OrderVersion.objects.filter(
             order=self.order, start_date__lt=self.end_date, end_date__gt=self.start_date
-        ).exclude(identifier=self.identifier)
+        ).exclude(id=self.id)
         if overlapping_versions.exists():
             raise ValidationError("There cannot be more than one active version at the same time.")
 

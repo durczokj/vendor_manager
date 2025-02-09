@@ -22,7 +22,7 @@ def people(request):
         if has_object_permission(
             "access_person",
             request.user,
-            Person.objects.get(identifier=p["identifier"]),
+            Person.objects.get(id=p["id"]),
         )
     ]
 
@@ -35,9 +35,9 @@ def people(request):
 
 @has_permission_decorator("view_person")
 @login_required
-def details(request, identifier):
+def details(request, id):
     """View to display details of a specific person."""
-    person = Person.objects.get(identifier=identifier)
+    person = Person.objects.get(id=id)
 
     if not has_object_permission("access_person", request.user, person):
         return HttpResponseForbidden()
@@ -52,15 +52,15 @@ def details(request, identifier):
 @has_permission_decorator("view_person")
 @csrf_exempt
 @login_required
-def person_raw(request, identifier):
+def person_raw(request, id):
     """Return raw data for a person."""
     try:
-        person = Person.objects.get(identifier=identifier)
+        person = Person.objects.get(id=id)
     except ObjectDoesNotExist:
         return JsonResponse({"error": "Person not found"}, status=404)
 
     data = {
-        "identifier": person.identifier,
+        "id": person.id,
         "first_name": person.first_name,
         "last_name": person.last_name,
         "description": person.description,

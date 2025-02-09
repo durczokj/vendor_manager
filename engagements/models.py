@@ -13,7 +13,7 @@ from undertakings.models import Undertaking
 class Engagement(models.Model):
     """Model for an engagement."""
 
-    identifier = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     person = models.ForeignKey(Person, related_name="engagements", on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField()
@@ -49,9 +49,9 @@ class Engagement(models.Model):
     def clean(self):
         """Clean the class."""
         super().clean()
-        if not self.identifier:
-            max_id = Engagement.objects.aggregate(models.Max("identifier"))["id__max"]
-            self.identifier = (max_id or 0) + 1
+        if not self.id:
+            max_id = Engagement.objects.aggregate(models.Max("id"))["id__max"]
+            self.id = (max_id or 0) + 1
 
         if not (0 < self.fte <= 1):
             raise ValidationError("FTE must be between 0 and 1.")
@@ -123,7 +123,7 @@ class EngagementUndertakingAssignment(models.Model):
             undertaking=self.undertaking,
             start_date__lt=self.end_date,
             end_date__gt=self.start_date,
-        ).exclude(identifier=self.identifier)
+        ).exclude(id=self.id)
         if overlapping_assignments.exists():
             raise ValidationError("Assignments for the same engagement and undertaking cannot overlap.")
 

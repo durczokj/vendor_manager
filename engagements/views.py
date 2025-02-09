@@ -20,9 +20,9 @@ def engagements(request):
 
 @has_permission_decorator("view_engagement")
 @login_required
-def engagement_details(request, identifier):
+def engagement_details(request, id):
     """Display the details of a specific engagement."""
-    engagement = get_object_or_404(Engagement, identifier=identifier)
+    engagement = get_object_or_404(Engagement, id=id)
 
     if not has_object_permission("access_engagement", request.user, engagement):
         return HttpResponseForbidden()

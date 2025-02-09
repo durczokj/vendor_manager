@@ -10,7 +10,7 @@
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>IDENTIFIER</th>
+        <th>Id</th>
         <th>Name</th>
         <th>e-mail</th>
       </tr>
@@ -18,7 +18,7 @@
     <tbody>
       {% for x in mycompanies %}
         <tr>
-          <td><a href="{% url 'company_details' x.identifier %}">{{ x.identifier }}</a></td>
+          <td><a href="{% url 'company_details' x.id %}">{{ x.id }}</a></td>
           <td>{{ x.name }}</td>
           <td>{{ x.email }}</td>
         </tr>
