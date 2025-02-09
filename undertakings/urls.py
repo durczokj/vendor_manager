@@ -9,7 +9,7 @@ urlpatterns = [
     path("<int:identifier>/", views.undertaking_details, name="undertaking_details"),
     path(
         "cost_ceter/<int:identifier>/",
-        views.cost_ceter_details,
-        name="cost_ceter_details",
+        views.cost_center_details,
+        name="cost_center_details",
     ),
 ]
