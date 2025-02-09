@@ -6,13 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('engagements', '0009_alter_engagement_unique_together_alter_engagement_id_and_more'),
+        (
+            "engagements",
+            "0009_alter_engagement_unique_together_alter_engagement_id_and_more",
+        ),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='engagement',
-            old_name='id',
-            new_name='identifier',
+            model_name="engagement",
+            old_name="id",
+            new_name="identifier",
         ),
     ]
