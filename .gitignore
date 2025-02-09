@@ -17,7 +17,7 @@ node_modules/
 *.class
 
 # Notebooks
-notebooks/
+notebooks/*
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
