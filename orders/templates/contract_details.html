@@ -10,7 +10,7 @@
   <h2>Details</h2>
   <p>Status: {{ contract.status }}</p>
   <p>Size: {{ contract.size }}</p>
-  <p>Back to <a href="{% url 'version_details' contract.order_version.order.id contract.order_version.version_number %}">Version Details</a></p>
+  <p>Back to <a href="{% url 'version_details' contract.order_version.order.identifier contract.order_version.version_number %}">Version Details</a></p>
 {% endblock %}
 
-<p>Back to <a href="{% url '/orders/order_details/{{ contract.id }}' %}">order details</a></p>
+<p>Back to <a href="{% url '/orders/order_details/{{ contract.identifier }}' %}">order details</a></p>

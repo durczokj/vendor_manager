@@ -1,57 +1,69 @@
-from django.http import HttpResponse, JsonResponse
-from django.template import loader
-from .models import Person
-from django.http import HttpResponseForbidden
-from django.contrib.auth.decorators import login_required, permission_required
-from django.core.exceptions import ObjectDoesNotExist
-from django.views.decorators.csrf import csrf_exempt
-from rolepermissions.decorators import has_permission_decorator
-from rolepermissions.checkers import has_object_permission
+"""Views for the people app."""
 
-@has_permission_decorator('view_person')
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.template import loader
+from django.views.decorators.csrf import csrf_exempt
+from rolepermissions.checkers import has_object_permission
+from rolepermissions.decorators import has_permission_decorator
+
+from .models import Person
+
+
+@has_permission_decorator("view_person")
 @login_required
 def people(request):
+    """View to list all people accessible by the user."""
     mypeople = Person.objects.all().values()
-    mypeople = [p for p in mypeople if has_object_permission('access_person', request.user, Person.objects.get(id=p['id']))]
+    mypeople = [
+        p
+        for p in mypeople
+        if has_object_permission(
+            "access_person",
+            request.user,
+            Person.objects.get(identifier=p["identifier"]),
+        )
+    ]
 
-    template = loader.get_template('all_people.html')
+    template = loader.get_template("all_people.html")
     context = {
-      'mypeople': mypeople,
+        "mypeople": mypeople,
     }
     return HttpResponse(template.render(context, request))
 
-@has_permission_decorator('view_person')
+
+@has_permission_decorator("view_person")
 @login_required
-def details(request, id):
-  person = Person.objects.get(id=id)
+def details(request, identifier):
+    """View to display details of a specific person."""
+    person = Person.objects.get(identifier=identifier)
 
-  if not has_object_permission('access_person', request.user, person):
-      return HttpResponseForbidden()
+    if not has_object_permission("access_person", request.user, person):
+        return HttpResponseForbidden()
 
-  engagements = person.engagements.all()
-  assignments = person.get_assignments(active_only=True)
-  template = loader.get_template('details.html')
-  context = {
-    'person': person,
-    'engagements': engagements,
-    'assignments': assignments
-  }
-  return HttpResponse(template.render(context, request))
+    engagements = person.engagements.all()
+    assignments = person.get_assignments(active_only=True)
+    template = loader.get_template("details.html")
+    context = {"person": person, "engagements": engagements, "assignments": assignments}
+    return HttpResponse(template.render(context, request))
 
-@has_permission_decorator('view_person')
+
+@has_permission_decorator("view_person")
 @csrf_exempt
 @login_required
-def person_raw(request, id):
+def person_raw(request, identifier):
+    """Return raw data for a person."""
     try:
-        person = Person.objects.get(id=id)
+        person = Person.objects.get(identifier=identifier)
     except ObjectDoesNotExist:
-        return JsonResponse({'error': 'Person not found'}, status=404)
-    
+        return JsonResponse({"error": "Person not found"}, status=404)
+
     data = {
-        'id': person.id,
-        'first_name': person.first_name,
-        'last_name': person.last_name,
-        'description': person.description,
-        'location': person.location,
+        "identifier": person.identifier,
+        "first_name": person.first_name,
+        "last_name": person.last_name,
+        "description": person.description,
+        "location": person.location,
     }
     return JsonResponse(data)

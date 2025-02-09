@@ -1,6 +1,6 @@
 {% extends "master.html" %}
 
-{% block title %} 
+{% block title %}
   Vendor Manager – Company Details
 {% endblock %}
 
@@ -12,14 +12,14 @@
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>ID</th>
+        <th>IDENTIFIER</th>
         <th>Order Name</th>
       </tr>
     </thead>
     <tbody>
       {% for x in orders %}
         <tr>
-          <td><a href="/orders/{{ x.id }}">{{ x.id }}</a></td>
+          <td><a href="/orders/{{ x.identifier }}">{{ x.identifier }}</a></td>
           <td>{{ x.name }}</td>
         </tr>
       {% endfor %}

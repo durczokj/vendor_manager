@@ -12,23 +12,17 @@ from .models import Company
 def companies(request):
     """List all companies that the user has access to."""
     mycompanies = Company.objects.all()
-    mycompanies = [
-        c
-        for c in mycompanies
-        if has_object_permission("access_company", request.user, c)
-    ]
+    mycompanies = [c for c in mycompanies if has_object_permission("access_company", request.user, c)]
     return render(request, "all_companies.html", {"mycompanies": mycompanies})
 
 
 @login_required
 def company_details(request, company_id):
     """Show details of a company."""
-    company = get_object_or_404(Company, id=company_id)
+    company = get_object_or_404(Company, identifier=company_id)
 
     if not has_object_permission("access_company", request.user, company):
         return HttpResponseForbidden()
 
     orders = company.orders.all()
-    return render(
-        request, "company_details.html", {"company": company, "orders": orders}
-    )
+    return render(request, "company_details.html", {"company": company, "orders": orders})

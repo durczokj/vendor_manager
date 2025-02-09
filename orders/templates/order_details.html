@@ -8,7 +8,7 @@
   <h1>Order: {{ order.name }}</h1>
 
   <h2>Details</h2>
-  Company: <a href="/companies/company/{{ order.company.id }}">{{ order.company.name }}</a>
+  Company: <a href="/companies/company/{{ order.company.identifier }}">{{ order.company.name }}</a>
 
   <h2>Versions</h2>
   <table border="1" style="border-color: black;">
@@ -22,13 +22,13 @@
     <tbody>
       {% for v in versions %}
         <tr>
-          <td><a href="{% url 'version_details' order.id v.version_number %}">{{ v.version_number }}</a></td>
+          <td><a href="{% url 'version_details' order.identifier v.version_number %}">{{ v.version_number }}</a></td>
           <td>{{ v.start_date|date:"Y-m-d" }}</td>
           <td>{{ v.end_date|date:"Y-m-d" }}</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
-  
+
   <p>Back to <a href="{% url 'orders' %}">Orders</a></p>
 {% endblock %}

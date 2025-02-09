@@ -6,11 +6,11 @@
 
 
 {% block content %}
-  <h1>Engagement {{ engagement.id }}</h1>
-  
+  <h1>Engagement {{ engagement.identifier }}</h1>
+
   <h2>Details</h2>
-  <p>Person: <a href="{% url 'person_details' engagement.person.id %}">{{ engagement.person }}</a></p>
-  <p>Order ID: <a href="{% url 'order_details' engagement.order.id %}">{{ engagement.order.id }}</a></p>
+  <p>Person: <a href="{% url 'person_details' engagement.person.identifier %}">{{ engagement.person }}</a></p>
+  <p>Order IDENTIFIER: <a href="{% url 'order_details' engagement.order.identifier %}">{{ engagement.order.identifier }}</a></p>
   <p>Order Name: {{ engagement.order.name }}</p>
   <p>Company: {{ engagement.order.company }}</p>
   <p>Start Date: {{ engagement.start_date|date:"Y-m-d" }}</p>
@@ -31,7 +31,7 @@
     <tbody>
       {% for x in assignments %}
         <tr>
-          <td><a href="{% url 'undertaking_details' x.undertaking.id %}">{{ x.undertaking }}</a></td>
+          <td><a href="{% url 'undertaking_details' x.undertaking.identifier %}">{{ x.undertaking }}</a></td>
           <td>{{ x.percentage }}</td>
           <td>{{ x.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.end_date|date:"Y-m-d" }}</td>
@@ -39,8 +39,8 @@
       {% endfor %}
     </tbody>
   </table>
-  
+
 
 <p>Back to <a href="/engagements">Engagements</a></p>
-  
+
 {% endblock %}

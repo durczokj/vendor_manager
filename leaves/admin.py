@@ -1,4 +1,7 @@
+"""Admin of the leaves app."""
+
 from django.contrib import admin
+
 from .models import Leave
 
 # Register your models here.
