@@ -10,7 +10,7 @@
 
   <h2>Details</h2>
   <p>Person: <a href="{% url 'person_details' engagement.person.id %}">{{ engagement.person }}</a></p>
-  <p>Order Id: <a href="{% url 'order_details' engagement.order.id %}">{{ engagement.order.id }}</a></p>
+  <p>Order id: <a href="{% url 'order_details' engagement.order.id %}">{{ engagement.order.id }}</a></p>
   <p>Order Name: {{ engagement.order.name }}</p>
   <p>Company: {{ engagement.order.company }}</p>
   <p>Start Date: {{ engagement.start_date|date:"Y-m-d" }}</p>
