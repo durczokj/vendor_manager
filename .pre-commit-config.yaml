@@ -38,3 +38,4 @@ repos:
         - flake8-builtins
         - flake8-variables-names
         - pydocstyle
+        args: ["--extend-ignore=A003,VNE003,A002"]

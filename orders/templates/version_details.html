@@ -8,7 +8,7 @@
   <h1>Contract: {{ version.order.name }} – Version: {{ version.version_number }}</h1>
 
   <h2>Details</h2>
-  <p>Contract: <a href="{% url 'contract_details' version.contract.identifier %}">{{ version.contract.name }}</a></p>
+  <p>Contract: <a href="{% url 'contract_details' version.contract.id %}">{{ version.contract.name }}</a></p>
   <p>Start Date: {{ version.start_date|date:"Y-m-d" }}</p>
   <p>End Date: {{ version.end_date|date:"Y-m-d" }}</p>
 
@@ -16,8 +16,8 @@
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>IDENTIFIER</th>
-        <th>Person IDENTIFIER</th>
+        <th>id</th>
+        <th>Person id</th>
         <th>Person</th>
         <th>Start Date</th>
         <th>End Date</th>
@@ -28,8 +28,8 @@
     <tbody>
       {% for x in engagement_assignments %}
         <tr>
-          <td><a href="/engagements/{{ x.engagement.identifier }}">{{ x.engagement.identifier }}</a></td>
-          <td>{{ x.engagement.person.identifier }}</td>
+          <td><a href="/engagements/{{ x.engagement.id }}">{{ x.engagement.id }}</a></td>
+          <td>{{ x.engagement.person.id }}</td>
           <td>{{ x.engagement.person }}</td>
           <td>{{ x.engagement.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.engagement.end_date|date:"Y-m-d" }}</td>
@@ -40,5 +40,5 @@
     </tbody>
   </table>
 
-  <p>Back to <a href="{% url 'order_details' version.order.identifier %}">Order Details</a></p>
+  <p>Back to <a href="{% url 'order_details' version.order.id %}">Order Details</a></p>
 {% endblock %}

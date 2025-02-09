@@ -6,6 +6,8 @@ exclude =
     .vscode,
     .eggs
 
+extend-ignore = A003
+
 import-order-style = smarkets
 docstring-convention = google
 statistics = False

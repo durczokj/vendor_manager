@@ -17,9 +17,9 @@ def orders(request):
 
 @has_permission_decorator("view_order")
 @login_required
-def order_details(request, identifier):
+def order_details(request, id):
     """View to display details of a specific order."""
-    order = get_object_or_404(Order, identifier=identifier)
+    order = get_object_or_404(Order, id=id)
     versions = order.versions.all()
     return render(request, "order_details.html", {"order": order, "versions": versions})
 
@@ -39,7 +39,7 @@ def version_details(request, order_id, version_number):
 
 @has_permission_decorator("view_order")
 @login_required
-def contract_details(request, identifier):
+def contract_details(request, id):
     """View to display details of a specific contract."""
-    contract = get_object_or_404(Contract, identifier=identifier)
+    contract = get_object_or_404(Contract, id=id)
     return render(request, "contract_details.html", {"contract": contract})

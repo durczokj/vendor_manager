@@ -17,7 +17,7 @@ def undertakings(request):
 
 def undertaking_details(request, undertaking_id):
     """View to display details of a specific undertaking."""
-    undertaking = get_object_or_404(Undertaking, identifier=undertaking_id)
+    undertaking = get_object_or_404(Undertaking, id=undertaking_id)
 
     if not has_object_permission("access_undertaking", request.user, undertaking):
         return HttpResponseForbidden()
@@ -32,5 +32,5 @@ def undertaking_details(request, undertaking_id):
 
 def cost_center_details(request, cost_center_id):
     """View to display details of a specific cost center."""
-    cost_center = get_object_or_404(CostCenter, identifier=cost_center_id)
+    cost_center = get_object_or_404(CostCenter, id=cost_center_id)
     return render(request, "cost_center_details.html", {"cost_center": cost_center})

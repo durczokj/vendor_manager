@@ -7,7 +7,7 @@ from django.db import models
 class Person(models.Model):
     """Model for a person."""
 
-    identifier = models.CharField(primary_key=True, max_length=6)
+    id = models.CharField(primary_key=True, max_length=6)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     description = models.TextField(blank=False, null=True)

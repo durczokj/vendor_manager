@@ -8,14 +8,14 @@
   <h1>Undertaking: {{ undertaking.name }}</h1>
 
   <h2>Details</h2>
-  <p>Cost Center: {{ undertaking.cost_center.identifier }}</p>
+  <p>Cost Center: {{ undertaking.cost_center.id }}</p>
 
   <h2>Assignemnts</h2>
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>Engagement IDENTIFIER</th>
-        <th>Person IDENTIFIER</th>
+        <th>Engagement id</th>
+        <th>Person id</th>
         <th>Person</th>
         <th>Start Date</th>
         <th>End Date</th>
@@ -27,8 +27,8 @@
     <tbody>
       {% for x in engagement_assignments %}
         <tr>
-          <td>{{ x.engagement.identifier }}</td>
-          <td>{{ x.engagement.person.identifier }}</td>
+          <td>{{ x.engagement.id }}</td>
+          <td>{{ x.engagement.person.id }}</td>
           <td>{{ x.engagement.person }}</td>
           <td>{{ x.engagement.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.engagement.end_date|date:"Y-m-d" }}</td>
