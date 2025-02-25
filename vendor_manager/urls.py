@@ -33,5 +33,4 @@ urlpatterns = [
     path("leaves/", include("leaves.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
-    path("sample/", views.sample_view, name="sample_view"),
 ]

@@ -16,7 +16,8 @@ from .forms import PersonForm
 from .models import Person
 
 
-def __is_api_request(request):
+def is_api_request(request):
+    """Check if the request is an API request."""
     return request.headers.get("Accept") == "application/json" or request.content_type == "application/json"
 
 
@@ -37,7 +38,7 @@ class PeopleView(View):
     @method_decorator([csrf_exempt, has_permission_decorator("add_person")])
     def post(self, request):
         """Create a new person."""
-        if __is_api_request(request):
+        if is_api_request(request):
             data = json.loads(request.body)
         else:
             data = request.POST
@@ -46,12 +47,12 @@ class PeopleView(View):
         form.user = request.user
         if form.is_valid():
             person = form.save()
-            if __is_api_request(request):
+            if is_api_request(request):
                 return JsonResponse({"id": person.id}, status=201)
             else:
                 return redirect("people")
         else:
-            if __is_api_request(request):
+            if is_api_request(request):
                 return JsonResponse({"error": "Invalid data"}, status=400)
             else:
                 messages.error(request, form.errors)
@@ -71,8 +72,8 @@ class PersonView(View):
 
     def __get_details(self, request, person):
         engagements = person.engagements.all()
-        assignments = person.get_assignments(active_only=True)
-        if __is_api_request(request):
+        assignments = person.get_assignments()
+        if is_api_request(request):
             return JsonResponse({"id": person.id, "name": person.name})
         return render(
             request, "details.html", {"person": person, "engagements": engagements, "assignments": assignments}
@@ -85,7 +86,7 @@ class PersonView(View):
     def put(self, request, person_id):
         """Update person details."""
         person = get_object_or_404(Person, id=person_id)
-        if __is_api_request(request):
+        if is_api_request(request):
             data = json.loads(request.body)
         else:
             data = request.POST
@@ -94,7 +95,7 @@ class PersonView(View):
         person.description = data.get("description", person.description)
         person.location = data.get("location", person.location)
         person.save()
-        if __is_api_request(request):
+        if is_api_request(request):
             return JsonResponse({"message": "Person updated successfully"})
         else:
             return self.get(request, person_id)
