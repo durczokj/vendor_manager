@@ -7,30 +7,104 @@
 {% block content %}
   <h1>Leaves</h1>
 
-  <table border="1" style="border-color: black;">
+  <!-- Form to choose month and year -->
+  <div class="filters">
+    <form method="get" action="{% url 'leaves' %}">
+      <div class="filter-item">
+        <label for="month">Month:</label>
+        <input type="number" id="month" name="month" value="{{ month }}" min="1" max="12">
+      </div>
+      <div class="filter-item">
+        <label for="year">Year:</label>
+        <input type="number" id="year" name="year" value="{{ year }}" min="1970" max="9999">
+      </div>
+      <div class="filter-item">
+        <button type="submit">Go</button>
+      </div>
+    </form>
+  </div>
+
+  <table border="1" style="border-color: black; width: 100%; margin-top: 20px;">
     <thead>
       <tr>
-        <th>id</th>
-        <th>Person id</th>
+        <th>ID</th>
+        <th>Person ID</th>
         <th>Person Name</th>
         <th>Start Date</th>
         <th>End Date</th>
         <th>Percentage</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for x in myleaves %}
         <tr>
-          <td><a href="details/{{ x.id }}">{{ x.id }}</a></td>
+          <td>{{ x.id }}</td>
           <td>{{ x.person.id }}</td>
-          <td>{{ x.person }}</td>
+          <td>{{ x.person.name }}</td>
           <td>{{ x.start_date|date:"Y-m-d" }}</td>
-          <td> {{ x.end_date|date:"Y-m-d" }}</td>
-          <td> {{ x.percentage }}</td>
+          <td>{{ x.end_date|date:"Y-m-d" }}</td>
+          <td>{{ x.percentage }}</td>
+          <td>
+            <form action="{% url 'delete_leave' x.id %}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit">Delete</button>
+            </form>
+          </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
 
+  <h1>Add a Leave</h1>
+  <table border="1" style="border-color: black; width: 100%; margin-top: 20px;">
+    <thead>
+      <tr>
+        <th>Person</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Percentage</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <form method="post">
+          {% csrf_token %}
+          <td>{{ form.person }}</td>
+          <td>{{ form.start_date }}</td>
+          <td>{{ form.end_date }}</td>
+          <td>{{ form.percentage }}</td>
+          <td>
+            <button type="submit">Add Leave</button>
+          </td>
+        </form>
+      </tr>
+    </tbody>
+  </table>
+
+  <h1>Calendar</h1>
+  <div class="calendar">
+    {{ calendar }}
+  </div>
+
   <p>Back to <a href="/">Home</a></p>
 {% endblock %}
+
+<style>
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .filter-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .filter-item label {
+    margin-bottom: 5px;
+  }
+  .calendar {
+    margin-top: 20px;
+  }
+</style>

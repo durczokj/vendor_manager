@@ -9,8 +9,8 @@ from rolepermissions.decorators import has_permission_decorator
 from .models import Engagement
 
 
-@has_permission_decorator("view_engagement")
 @login_required
+@has_permission_decorator("view_engagement")
 def engagements(request):
     """Display all engagements the user has access to."""
     myengagements = Engagement.objects.all()
@@ -18,8 +18,8 @@ def engagements(request):
     return render(request, "all_engagements.html", {"myengagements": myengagements})
 
 
-@has_permission_decorator("view_engagement")
 @login_required
+@has_permission_decorator("view_engagement")
 def engagement_details(request, id):
     """Display the details of a specific engagement."""
     engagement = get_object_or_404(Engagement, id=id)

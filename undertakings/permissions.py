@@ -12,7 +12,9 @@ def access_undertaking(role, user, undertaking):
         return True
 
     if role == UndertakingManager:
-        return True
+        managed_undertakings = user.person.managed_undertakings.all()
+        if undertaking in managed_undertakings:
+            return True
 
     if role == Person:
         engagements = user.person.engagements.prefetch_related("undertaking_assignments__undertaking")

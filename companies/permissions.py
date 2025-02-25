@@ -12,7 +12,12 @@ def access_company(role, user, company):
         return True
 
     if role == UndertakingManager:
-        return True
+        undertaking_companies = set()
+        for un in user.person.managed_undertakings.all():
+            for ass in un.engagement_assignments.all():
+                undertaking_companies.add(ass.engagement.order.company)
+        if company in undertaking_companies:
+            return True
 
     if role == Person:
         companies = [e.order.company for e in user.person.engagements.all()]

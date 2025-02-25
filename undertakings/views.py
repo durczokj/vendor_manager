@@ -1,5 +1,6 @@
 """Views for managing undertakings and cost centers."""
 
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 from rolepermissions.checkers import has_object_permission
@@ -7,6 +8,7 @@ from rolepermissions.checkers import has_object_permission
 from .models import CostCenter, Undertaking
 
 
+@login_required
 def undertakings(request):
     """View to list all undertakings accessible by the user."""
     myundertakings = Undertaking.objects.all()
@@ -15,6 +17,7 @@ def undertakings(request):
     return render(request, "all_undertakings.html", {"myundertakings": myundertakings})
 
 
+@login_required
 def undertaking_details(request, id):
     """View to display details of a specific undertaking."""
     undertaking = get_object_or_404(Undertaking, id=id)
@@ -30,6 +33,7 @@ def undertaking_details(request, id):
     )
 
 
+@login_required
 def cost_center_details(request, cost_center_id):
     """View to display details of a specific cost center."""
     cost_center = get_object_or_404(CostCenter, id=cost_center_id)

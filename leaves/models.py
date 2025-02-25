@@ -1,5 +1,6 @@
 """Models for leaves app."""
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from people.models import Person
@@ -11,4 +12,10 @@ class Leave(models.Model):
     person = models.ForeignKey(Person, related_name="leaves", on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField()
-    percentage = models.DecimalField(max_digits=3, decimal_places=2)
+    percentage = models.DecimalField(
+        max_digits=3, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(1)]
+    )
+
+    def __str__(self):
+        """Return a string representation of the leave."""
+        return f"{self.person} - from {self.start_date} to {self.end_date} – {self.percentage}%"

@@ -1,2 +1,6 @@
 django
 django-role-permissions
+plotly
+pandas
+nbformat
+djangorestframework

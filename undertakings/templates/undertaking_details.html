@@ -14,8 +14,8 @@
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>Engagement id</th>
-        <th>Person id</th>
+        <th>Engagement ID</th>
+        <th>Person ID</th>
         <th>Person</th>
         <th>Start Date</th>
         <th>End Date</th>
@@ -29,7 +29,7 @@
         <tr>
           <td>{{ x.engagement.id }}</td>
           <td>{{ x.engagement.person.id }}</td>
-          <td>{{ x.engagement.person }}</td>
+          <td>{{ x.engagement.person.name }}</td>
           <td>{{ x.engagement.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.engagement.end_date|date:"Y-m-d" }}</td>
           <td>{{ x.engagement.daily_rate }}</td>

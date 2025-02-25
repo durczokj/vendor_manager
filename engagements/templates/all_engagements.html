@@ -10,8 +10,8 @@
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
-        <th>id</th>
-        <th>Person id</th>
+        <th>ID</th>
+        <th>Person ID</th>
         <th>Person</th>
         <th>Start Date</th>
         <th>End Date</th>
@@ -23,8 +23,8 @@
       {% for x in myengagements %}
         <tr>
           <td><a href="{% url 'engagement_details' x.id %}">{{ x.id }}</a></td>
-          <td><a href="{% url 'person_details' x.person.id %}">{{ x.person.id }}</a></td>
-          <td><a href="{% url 'person_details' x.person.id %}">{{ x.person }}</a></td>
+          <td><a href="{% url 'person' x.person.id %}">{{ x.person.id }}</a></td>
+          <td><a href="{% url 'person' x.person.id %}">{{ x.person.name }}</a></td>
           <td>{{ x.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.end_date|date:"Y-m-d" }}</td>
           <td>{{ x.daily_rate }}</td>
