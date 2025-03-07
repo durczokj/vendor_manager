@@ -1,11 +1,18 @@
 {% extends "master.html" %}
+{% load static %}
 
 {% block title %}
   Vendor Manager – Undertakings
 {% endblock %}
 
 {% block content %}
-  <h1>Undertakings</h1>
+  <h1>Undertakings
+    {% if manage_undertaking %}
+      <a href="{% url 'undertakings' %}?form=True">
+        <button>Add</button>
+      </a>
+    {% endif %}
+  </h1>
 
   <table border="1" style="border-color: black;">
     <thead>
@@ -13,18 +20,33 @@
         <th>ID</th>
         <th>Name</th>
         <th>Cost Center</th>
+        <th>Manager</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      {% for x in myundertakings %}
+      {% for x in items %}
         <tr>
-          <td><a href="{{ x.id }}">{{ x.id }}</a></td>
+          <td><a href="{% url 'undertaking' x.id %}">{{ x.id }}</a></td>
           <td>{{ x.name }}</td>
-          <td>{{ x.cost_center.id }}</td>
+          <td>{{ x.cost_center.name }}</td>
+          <td>{{ x.manager.name }}</td>
+          <td>
+            {% if manage_undertaking %}
+              <form onsubmit="deleteResource(event, `{% url 'undertaking' 0 %}`, '{{ x.id }}', '{{ csrf_token }}');" style="display:inline;">
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this undertaking?');">Delete</button>
+              </form>
+              <a href="{% url 'undertaking' x.id %}?form=True" style="display:inline;">
+                <button>Edit</button>
+              </a>
+            {% endif %}
+          </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+
+  <script src="{% static 'js/deleteResource.js' %}"></script>
 
   <p>Back to <a href="/">Home</a></p>
 {% endblock %}

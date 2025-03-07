@@ -1,0 +1,19 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Add Contract
+{% endblock %}
+
+{% block content %}
+  <h1>
+    Add Contract
+    <button type="submit" form="add-form">Save</button>
+    <a href="/contracts/">
+      <button type="button">Cancel</button>
+    </a>
+  </h1>
+  <form id="add-form" method="post" action="/contracts/">
+    {% csrf_token %}
+    {{ form.as_p }}
+  </form>
+{% endblock %}

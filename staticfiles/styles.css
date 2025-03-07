@@ -1,0 +1,48 @@
+body {
+    font-family: Calibri, Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 25%;
+    padding: 10px;
+    background-color: #f4f4f4;
+    height: 100vh;
+}
+
+.content {
+    width: 75%;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.header {
+    text-align: center;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+}
+
+.header a {
+    color: white;
+    text-decoration: none;
+}
+
+.messages {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align text at the top */
+    text-align: center; /* Match header alignment */
+    padding: 10px; /* Match header padding */
+    background-color: #333; /* Match header background color */
+    color: white; /* Match header text color */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #ccc;
+}

@@ -12,5 +12,4 @@ urlpatterns = [
         views.version_details,
         name="version_details",
     ),
-    path("contract/<int:id>/", views.contract_details, name="contract_details"),
 ]

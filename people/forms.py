@@ -12,4 +12,4 @@ class PersonForm(forms.ModelForm):
         """Meta class to define the model and fields to be used."""
 
         model = Person
-        fields = ["id", "first_name", "last_name", "description", "location", "user"]
+        fields = "__all__"

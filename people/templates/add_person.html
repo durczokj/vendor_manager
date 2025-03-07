@@ -1,14 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Person</title>
-</head>
-<body>
-    <h1>Add Person</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Add Person</button>
-    </form>
-</body>
-</html>
+{% extends "master.html" %}
+
+{% block title %}
+  Add Person
+{% endblock %}
+
+{% block content %}
+  <h1>
+    Add Person
+    <button type="submit" form="add-form">Save</button>
+    <a href="/people/">
+      <button type="button">Cancel</button>
+    </a>
+  </h1>
+  <form id="add-form" method="post" action="/people/">
+    {% csrf_token %}
+    {{ form.as_p }}
+  </form>
+{% endblock %}

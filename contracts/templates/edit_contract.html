@@ -1,0 +1,19 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Edit Contract
+{% endblock %}
+
+{% block content %}
+  <h1>
+    Edit Contract: {{ contract.id }} ({{ contract.name }})
+    <button type="submit" form="edit-form">Save</button>
+    <a href="/contracts/{{ contract.id }}">
+      <button type="button">Cancel</button>
+    </a>
+  </h1>
+  <form id="edit-form" method="post" action="/contracts/{{ contract.id }}">
+    {% csrf_token %}
+    {{ form.as_p }}
+  </form>
+{% endblock %}

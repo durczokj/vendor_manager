@@ -5,8 +5,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.undertakings, name="undertakings"),
-    path("<int:id>/", views.undertaking_details, name="undertaking_details"),
+    path("", views.UndertakingsView.as_view(), name="undertakings"),
+    path("<int:undertaking_id>/", views.UndertakingView.as_view(), name="undertaking"),
     path(
         "cost_ceter/<int:id>/",
         views.cost_center_details,

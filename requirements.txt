@@ -4,3 +4,8 @@ plotly
 pandas
 nbformat
 djangorestframework
+gunicorn==23.0.0
+asgiref==3.8.1
+sqlparse==0.5.2
+psycopg2-binary==2.9.10
+whitenoise
