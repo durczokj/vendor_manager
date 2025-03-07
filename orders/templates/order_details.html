@@ -8,7 +8,7 @@
   <h1>Order: {{ order.name }}</h1>
 
   <h2>Details</h2>
-  Company: <a href="{% url 'company_details' order.company.id %}">{{ order.company.name }}</a>
+  Company: <a href="{% url 'company' order.company.id %}">{{ order.company.name }}</a>
 
   <h2>Versions</h2>
   <table border="1" style="border-color: black;">

@@ -107,7 +107,6 @@ class BaseListView(View):
             for item in self.model.objects.all()
             if has_object_permission(f"access_{self.model.__name__.lower()}", request.user, item)
         ]
-        print(items)
         return render(
             request,
             self.template_name_list,

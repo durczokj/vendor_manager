@@ -5,8 +5,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.orders, name="orders"),
-    path("<int:id>/", views.order_details, name="order_details"),
+    path("", views.OrdersView.as_view(), name="orders"),
+    path("<int:order_id>/", views.OrderView.as_view(), name="order"),
     path(
         "<int:order_id>/versions/<int:version_number>/",
         views.version_details,
