@@ -12,7 +12,12 @@ def access_engagement(role, user, engagement):
         return True
 
     if role == UndertakingManager:
-        return True
+        undertaking_engagements = set()
+        for un in user.person.managed_undertakings.all():
+            for ass in un.engagement_assignments.all():
+                undertaking_engagements.add(ass.engagement)
+        if engagement in undertaking_engagements:
+            return True
 
     if role == Person:
         if engagement.person == user.person:

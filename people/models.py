@@ -14,16 +14,22 @@ class Person(models.Model):
     location = models.CharField(max_length=255, blank=False, null=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
 
-    def __str__(self):
+    @property
+    def name(self):
         """Return the full name of the person."""
         return f"{self.first_name} {self.last_name}"
+
+    def __str__(self):
+        """Return the full name of the person."""
+        return f"{self.id} \u2013 {self.name}"
 
     @property
     def active_engagements(self):
         """Return all active engagements for this person."""
         return [e for e in self.engagements.all() if e.active]
 
-    def get_assignments(self, active_only=False):
+    def get_assignments(self):
+        """Return all assignments for this person."""
         """Return all assignments for this person."""
         assignmnents = []
         for eng in self.engagements.all():

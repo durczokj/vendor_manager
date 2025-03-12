@@ -5,7 +5,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.people, name="people"),
-    path("<str:id>", views.details, name="person_details"),
-    path("<str:id>/raw", views.person_raw, name="person_raw"),
+    path("", views.PeopleView.as_view(), name="people"),
+    path("<str:item_id>/", views.PersonView.as_view(), name="person"),
 ]

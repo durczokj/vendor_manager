@@ -1,0 +1,22 @@
+/* Style for all tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+
+/* Style for table headers */
+table th {
+    background-color: #333;
+    color: white;
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}
+
+/* Style for table cells */
+table td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}

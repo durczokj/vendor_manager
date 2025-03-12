@@ -61,11 +61,6 @@ class OrderVersion(models.Model):
     def __init__(self, *args, **kwargs):
         """Override init method to ensure start_date and end_date are instances of datetime.date."""
         super().__init__(*args, **kwargs)
-        # Ensure start_date and end_date are instances of datetime.date
-        if not isinstance(self.start_date, date):
-            raise ValidationError("Start date must be a date.")
-        if not isinstance(self.end_date, date):
-            raise ValidationError("End date must be a date.")
 
     def __str__(self):
         """Return string representation of OrderVersion."""
@@ -79,6 +74,10 @@ class OrderVersion(models.Model):
     def clean(self):
         """Clean OrderVersion."""
         super().clean()
+        if not isinstance(self.start_date, date):
+            raise ValidationError("Start date must be a date.")
+        if not isinstance(self.end_date, date):
+            raise ValidationError("End date must be a date.")
 
         if self.end_date < self.start_date:
             raise ValidationError("End date cannot be before start date.")

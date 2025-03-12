@@ -1,0 +1,19 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Add Engagement
+{% endblock %}
+
+{% block content %}
+  <h1>
+    Add Engagement
+    <button type="submit" form="add-form">Save</button>
+    <a href="/engagements/">
+      <button type="button">Cancel</button>
+    </a>
+  </h1>
+  <form id="add-form" method="post" action="/engagements/">
+    {% csrf_token %}
+    {{ form.as_p }}
+  </form>
+{% endblock %}

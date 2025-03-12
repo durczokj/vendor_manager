@@ -1,0 +1,19 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Edit Undertaking
+{% endblock %}
+
+{% block content %}
+  <h1>
+    Edit Undertaking: {{ item.id }} ({{ item.name }})
+    <button type="submit" form="edit-form">Save</button>
+    <a href="/undertakings/{{ item.id }}/">
+      <button type="button">Cancel</button>
+    </a>
+  </h1>
+  <form id="edit-form" method="post" action="/undertakings/{{ item.id }}/">
+    {% csrf_token %}
+    {{ form.as_p }}
+  </form>
+{% endblock %}

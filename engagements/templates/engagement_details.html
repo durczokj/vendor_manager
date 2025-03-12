@@ -1,46 +1,77 @@
 {% extends "master.html" %}
+{% load static %}
 
 {% block title %}
   Vendor Manager – Engagement Details
 {% endblock %}
 
-
 {% block content %}
-  <h1>Engagement {{ engagement.id }}</h1>
+  <h1>
+    Engagement {{ engagement.id }}
+    {% if manage_engagement %}
+    <form onsubmit="deleteResource(event, `{% url 'engagement' 0 %}`, '{{ item.id }}', '{{ csrf_token }}', `{% url 'engagements' %}`);" style="display:inline;">
+        <button type="submit" onclick="return confirm('Are you sure you want to delete this engagement?');">Delete</button>
+      </form>
+      <a href="{% url 'engagement' item.id %}?form=True">
+        <button>Edit</button>
+      </a>
+    {% endif %}
+  </h1>
 
   <h2>Details</h2>
-  <p>Person: <a href="{% url 'person_details' engagement.person.id %}">{{ engagement.person }}</a></p>
-  <p>Order id: <a href="{% url 'order_details' engagement.order.id %}">{{ engagement.order.id }}</a></p>
-  <p>Order Name: {{ engagement.order.name }}</p>
-  <p>Company: {{ engagement.order.company }}</p>
-  <p>Start Date: {{ engagement.start_date|date:"Y-m-d" }}</p>
-  <p>End Date: {{ engagement.end_date|date:"Y-m-d" }}</p>
-  <p>Daily Rate: {{ engagement.daily_rate }}</p>
-  <p>FTE: {{ engagement.fte }}</p>
+  <p>Person: <a href="{% url 'person' item.person.id %}">{{ item.person }}</a></p>
+  <p>Order id:
+    {% if item.order %}
+      <a href="{% url 'order' item.order.id %}">{{ item.order.id }}</a>
+    {% endif %}
+  <p>Order Name: {{ item.order.name }}</p>
+  <p>Company: {{ item.order.company }}</p>
+  <p>Start Date: {{ item.start_date|date:"Y-m-d" }}</p>
+  <p>End Date: {{ item.end_date|date:"Y-m-d" }}</p>
+  <p>Daily Rate: {{ item.daily_rate }}</p>
+  <p>FTE: {{ item.fte }}</p>
 
-  <h2>Assignments</h2>
+  <h2>Undertaking Assignments
+    {% if manage_engagement %}
+      <a href="{% url 'engagement_undertaking_assignments' %}?form=True">
+        <button>Add</button>
+      </a>
+    {% endif %}
+  </h2>
   <table border="1" style="border-color: black;">
     <thead>
       <tr>
+        <th>ID</th>
         <th>Undertaking</th>
         <th>Percentage</th>
         <th>Start Date</th>
         <th>End Date</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      {% for x in assignments %}
+      {% for x in related_objects.undertaking_assignments %}
         <tr>
-          <td><a href="{% url 'undertaking_details' x.undertaking.id %}">{{ x.undertaking }}</a></td>
+          <td><a href="{% url 'undertaking' x.undertaking.id %}">{{ x.id }}</a></td>
+          <td><a href="{% url 'undertaking' x.undertaking.id %}">{{ x.undertaking }}</a></td>
           <td>{{ x.percentage }}</td>
           <td>{{ x.start_date|date:"Y-m-d" }}</td>
           <td>{{ x.end_date|date:"Y-m-d" }}</td>
+          <td>
+            {% if manage_engagement %}
+              <form onsubmit="deleteResource(event, `{% url 'engagement_undertaking_assignment' 0 %}`, '{{ x.id }}', '{{ csrf_token }}');" style="display:inline;">
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this engagement_undertaking_assignment?');">Delete</button>
+              </form>
+              <a href="{% url 'engagement_undertaking_assignment' x.id %}?form=True" style="display:inline;">
+                <button>Edit</button>
+              </a>
+            {% endif %}
         </tr>
       {% endfor %}
     </tbody>
   </table>
 
+  <p>Back to <a href="/engagements">Engagements</a></p>
 
-<p>Back to <a href="/engagements">Engagements</a></p>
-
+  <script src="{% static 'js/deleteResource.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,52 @@
+{% extends "master.html" %}
+{% load static %}
+
+{% block title %}
+  Vendor Manager – Contracts
+{% endblock %}
+
+{% block content %}
+  <h1>Contracts
+    {% if manage_contract %}
+      <a href="{% url 'contracts' %}?form=True">
+        <button>Add</button>
+      </a>
+    {% endif %}
+  </h1>
+
+  <table border="1" style="border-color: black;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Size</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in items %}
+        <tr>
+          <td><a href="{% url 'contract' x.id %}">{{ x.id }}</a></td>
+          <td>{{ x.name }}</td>
+          <td>{{ x.status }}</td>
+          <td>{{ x.size }}</td>
+          <td>
+            {% if manage_contract %}
+              <form onsubmit="deleteResource(event, `{% url 'contract' 0 %}`, '{{ x.id }}', '{{ csrf_token }}');" style="display:inline;">
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this contract?');">Delete</button>
+              </form>
+              <a href="{% url 'contract' x.id %}?form=True" style="display:inline;">
+                <button>Edit</button>
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <script src="{% static 'js/deleteResource.js' %}"></script>
+
+  <p>Back to <a href="/">Home</a></p>
+{% endblock %}

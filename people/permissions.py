@@ -12,7 +12,12 @@ def access_person(role, user, person):
         return True
 
     if role == UndertakingManager:
-        return True
+        managed_people = set()
+        for us in user.person.managed_undertakings.all():
+            for ass in us.engagement_assignments.all():
+                managed_people.add(ass.engagement.person)
+        if person in managed_people:
+            return True
 
     if role == Person:
         if person.user == user:

@@ -1,28 +1,40 @@
 """Views for the companies app."""
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
-from rolepermissions.checkers import has_object_permission
+from django.utils.decorators import method_decorator
+from rolepermissions.decorators import has_permission_decorator
 
+from vendor_manager.views import BaseDetailView, BaseListView
+
+from .forms import CompanyForm
 from .models import Company
 
 
-@login_required
-def companies(request):
-    """List all companies that the user has access to."""
-    mycompanies = Company.objects.all()
-    mycompanies = [c for c in mycompanies if has_object_permission("access_company", request.user, c)]
-    return render(request, "all_companies.html", {"mycompanies": mycompanies})
+@method_decorator([has_permission_decorator("view_company")], name="dispatch")
+class CompaniesView(BaseListView):
+    """View for listing all companies and creating a new company."""
+
+    model = Company
+    redirect_to = "companies"
+    form_class = CompanyForm
+    template_name_list = "all_companies.html"
+    template_name_add = "add_company.html"
+    permission_view = "view_company"
+    permission_manage = "manage_company"
 
 
-@login_required
-def company_details(request, id):
-    """Show details of a company."""
-    company = get_object_or_404(Company, id=id)
+@method_decorator([login_required, has_permission_decorator("view_company")], name="dispatch")
+class CompanyView(BaseDetailView):
+    """View for retrieving, updating, and deleting a company."""
 
-    if not has_object_permission("access_company", request.user, company):
-        return HttpResponseForbidden()
+    model = Company
+    form_class = CompanyForm
+    template_name_details = "company_details.html"
+    template_name_edit = "edit_company.html"
+    permission_view = "view_company"
+    permission_manage = "manage_company"
+    redirect_to = "companies"
 
-    orders = company.orders.all()
-    return render(request, "company_details.html", {"company": company, "orders": orders})
+    def get_related_objects(self, company):
+        """Return related objects for the company."""
+        return {"orders": company.orders.all()}
