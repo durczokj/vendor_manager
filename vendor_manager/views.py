@@ -7,8 +7,9 @@ import plotly.io as pio
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
@@ -73,15 +74,6 @@ def main(request):
     return render(request=request, template_name="main.html", context=context)
 
 
-@csrf_protect
-def logout_view(request):
-    """Log out a user."""
-    if request.method == "POST":
-        logout(request)
-        return redirect("main")
-    return redirect("main")
-
-
 @method_decorator([login_required], name="dispatch")
 class BaseListView(View):
     """Base view for listing items and handling forms."""
@@ -98,10 +90,11 @@ class BaseListView(View):
         """List all items or show the add form."""
         if request.GET.get("form") == "True":
             return self.__get_add_form(request)
-        return self.__get_items(request)
+        return self.get_items(request)
 
     @method_decorator([has_permission_decorator(permission_view)])
-    def __get_items(self, request):
+    def get_items(self, request):
+        """List all items."""
         items = [
             item
             for item in self.model.objects.all()
@@ -112,7 +105,7 @@ class BaseListView(View):
             self.template_name_list,
             {
                 "items": items,
-                f"manage_{self.model.__name__.lower()}": has_permission(request.user, self.permission_manage),
+                self.permission_manage: has_permission(request.user, self.permission_manage),
             },
         )
 
@@ -140,10 +133,107 @@ class BaseListView(View):
             if is_api_request(request):
                 return JsonResponse({"id": item.id}, status=201 if instance is None else 200)
             else:
-                return redirect(self.redirect_to)
+                url = f"{reverse(self.redirect_to, kwargs={'item_id': item.id})}"
+                return HttpResponseRedirect(url)
         else:
             if is_api_request(request):
                 return JsonResponse({"error": "Invalid data"}, status=400)
             else:
                 messages.error(request, form.errors)
                 return redirect(self.redirect_to)
+
+
+@csrf_protect
+def logout_view(request):
+    """Log out a user."""
+    if request.method == "POST":
+        logout(request)
+        return redirect("main")
+    return redirect("main")
+
+
+@method_decorator([login_required], name="dispatch")
+class BaseDetailView(View):
+    """Base view for retrieving, updating, and deleting an item."""
+
+    model = None
+    form_class = None
+    template_name_details = None
+    template_name_edit = None
+    permission_view = None
+    permission_manage = None
+    redirect_to = None
+
+    @method_decorator([has_permission_decorator(permission_view)])
+    def get(self, request, item_id):
+        """Retrieve item details."""
+        item = get_object_or_404(self.model, id=item_id)
+        if request.GET.get("form") == "True":
+            return self.__get_edit_form(request, item)
+        return self.__get_details(request, item)
+
+    @method_decorator([has_permission_decorator(permission_view)])
+    def __get_details(self, request, item):
+        related_objects = self.get_related_objects(item)
+        if is_api_request(request):
+            return JsonResponse({"id": item.id, "name": item.name})
+        return render(
+            request,
+            self.template_name_details,
+            {
+                "item": item,
+                "related_objects": related_objects,
+                self.permission_manage: has_permission(request.user, self.permission_manage),
+            },
+        )
+
+    @method_decorator([has_permission_decorator(permission_manage)])
+    def __get_edit_form(self, request, item):
+        form = self.form_class(instance=item)
+        return render(request, self.template_name_edit, {"form": form, "item": item})
+
+    @method_decorator([has_permission_decorator(permission_manage)])
+    def put(self, request, item_id):
+        """Update item details."""
+        item = get_object_or_404(self.model, id=item_id)
+        return self._handle_form(request, item)
+
+    @method_decorator([has_permission_decorator(permission_manage)])
+    def post(self, request, item_id):
+        """Create a new related object for the item."""
+        return self.put(request, item_id)
+
+    @method_decorator([has_permission_decorator(permission_manage)])
+    def delete(self, request, item_id):
+        """Delete an item."""
+        item = get_object_or_404(self.model, id=item_id)
+        item.delete()
+        return JsonResponse({"message": f"{self.model.__name__} deleted successfully"})
+
+    def _handle_form(self, request, instance=None):
+        """Handle form submission for creating or updating an item."""
+        if is_api_request(request):
+            data = json.loads(request.body)
+        else:
+            data = request.POST
+
+        form = self.form_class(data, instance=instance)
+        form.user = request.user
+        if form.is_valid():
+            item = form.save()
+            if is_api_request(request):
+                return JsonResponse({"id": item.id}, status=201 if instance is None else 200)
+            else:
+                url = f"{reverse(self.redirect_to, kwargs={'item_id': instance.id})}"
+                return HttpResponseRedirect(url)
+        else:
+            if is_api_request(request):
+                return JsonResponse({"error": "Invalid data"}, status=400)
+            else:
+                messages.error(request, form.errors)
+                url = f"{reverse(self.redirect_to, kwargs={'item_id': instance.id})}?form=True"
+                return HttpResponseRedirect(url)
+
+    def get_related_objects(self, item):
+        """Get related objects for the item. Should be overridden in subclasses."""
+        return {}

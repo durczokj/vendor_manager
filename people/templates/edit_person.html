@@ -6,13 +6,13 @@
 
 {% block content %}
   <h1>
-    Edit Person: {{ person.id }} ({{ person.first_name }} {{ person.last_name }})
+    Edit Person: {{ item.id }} ({{ item.first_name }} {{ item.last_name }})
     <button type="submit" form="edit-form">Save</button>
-    <a href="/people/{{ person.id }}/">
+    <a href="/people/{{ item.id }}/">
       <button type="button">Cancel</button>
     </a>
   </h1>
-  <form id="edit-form" method="post" action="/people/{{ person.id }}/">
+  <form id="edit-form" method="post" action="/people/{{ item.id }}/">
     {% csrf_token %}
     {{ form.as_p }}
   </form>

@@ -1,0 +1,17 @@
+{% extends "master.html" %}
+
+{% block title %}
+  Duplicate the Latest Order Version
+{% endblock %}
+
+{% block content %}
+  <h1>
+    Duplicate the Latest Order Version
+    <button type="submit" form="add-form">Save</button>
+    <button type="button" onclick="window.history.back();">Cancel</button>
+  </h1>
+  <form id="add-form" method="post" action="{% url 'order' item.id %}?clone_latest_version=True">
+    {% csrf_token %}
+    {{ form.as_p }}
+  </form>
+{% endblock %}

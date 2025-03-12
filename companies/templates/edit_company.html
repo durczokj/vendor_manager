@@ -6,13 +6,13 @@
 
 {% block content %}
   <h1>
-    Edit Company: {{ company.id }} ({{ company.name }})
+    Edit Company: {{ item.id }} ({{ item.name }})
     <button type="submit" form="edit-form">Save</button>
-    <a href="/companies/{{ company.id }}">
+    <a href="/companies/{{ item.id }}">
       <button type="button">Cancel</button>
     </a>
   </h1>
-  <form id="edit-form" method="post" action="/companies/{{ company.id }}">
+  <form id="edit-form" method="post" action="/companies/{{ item.id }}">
     {% csrf_token %}
     {{ form.as_p }}
   </form>

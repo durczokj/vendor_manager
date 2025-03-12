@@ -1,15 +1,10 @@
 """Views for the companies app."""
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
-from django.views import View
-from rolepermissions.checkers import has_permission
 from rolepermissions.decorators import has_permission_decorator
 
-from vendor_manager.utils.is_api_request import is_api_request
-from vendor_manager.views import BaseListView
+from vendor_manager.views import BaseDetailView, BaseListView
 
 from .forms import CompanyForm
 from .models import Company
@@ -29,47 +24,17 @@ class CompaniesView(BaseListView):
 
 
 @method_decorator([login_required, has_permission_decorator("view_company")], name="dispatch")
-class CompanyView(View):
+class CompanyView(BaseDetailView):
     """View for retrieving, updating, and deleting a company."""
 
-    @method_decorator([has_permission_decorator("view_company")])
-    def get(self, request, company_id):
-        """Retrieve company details."""
-        company = get_object_or_404(Company, id=company_id)
-        if request.GET.get("form") == "True":
-            return self.__get_edit_form(request, company)
-        return self.__get_details(request, company)
+    model = Company
+    form_class = CompanyForm
+    template_name_details = "company_details.html"
+    template_name_edit = "edit_company.html"
+    permission_view = "view_company"
+    permission_manage = "manage_company"
+    redirect_to = "companies"
 
-    @method_decorator([has_permission_decorator("view_company")])
-    def __get_details(self, request, company):
-        orders = company.orders.all()
-        if is_api_request(request):
-            return JsonResponse({"id": company.id, "name": company.name})
-        return render(
-            request,
-            "company_details.html",
-            {"company": company, "orders": orders, "manage_company": has_permission(request.user, "manage_company")},
-        )
-
-    @method_decorator([has_permission_decorator("manage_company")])
-    def __get_edit_form(self, request, company):
-        form = CompanyForm(instance=company)
-        return render(request, "edit_company.html", {"form": form, "company": company})
-
-    @method_decorator([has_permission_decorator("manage_company")])
-    def put(self, request, company_id):
-        """Update company details."""
-        company = get_object_or_404(Company, id=company_id)
-        return CompaniesView()._handle_form(request, company)
-
-    @method_decorator([has_permission_decorator("manage_company")])
-    def post(self, request, company_id):
-        """Create a new order for the company."""
-        return self.put(request, company_id)
-
-    @method_decorator([has_permission_decorator("manage_company")])
-    def delete(self, request, company_id):
-        """Delete a company."""
-        company = get_object_or_404(Company, id=company_id)
-        company.delete()
-        return JsonResponse({"message": "Company deleted successfully"})
+    def get_related_objects(self, company):
+        """Return related objects for the company."""
+        return {"orders": company.orders.all()}

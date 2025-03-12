@@ -6,15 +6,14 @@
 
 {% block content %}
   <h1>
-    Edit Engagement: {{ engagement.id }}
+    Edit Order Version: {{ item.id }} (Order: {{ item.order.id }}, Version: {{ item.version_number }})
     <button type="submit" form="edit-form">Save</button>
-    <a href="/engagements/{{ item.id }}">
+    <a href="{% url 'order_version' item.id %}">
       <button type="button">Cancel</button>
     </a>
   </h1>
-  <form id="edit-form" method="post" action="/engagements/{{ item.id }}">
+  <form id="edit-form" method="post" action="{% url 'order_version' item.id %}">
     {% csrf_token %}
     {{ form.as_p }}
   </form>
-
 {% endblock %}
