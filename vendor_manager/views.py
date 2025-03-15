@@ -140,7 +140,7 @@ class BaseListView(View):
                 return JsonResponse({"error": "Invalid data"}, status=400)
             else:
                 messages.error(request, form.errors)
-                return redirect(self.redirect_to)
+                return self.__get_add_form(request)
 
 
 @csrf_protect

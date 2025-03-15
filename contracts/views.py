@@ -15,7 +15,7 @@ class ContractsView(BaseListView):
     """View for listing all companies and creating a new company."""
 
     model = Contract
-    redirect_to = "contracts"
+    redirect_to = "contract"
     form_class = ContractForm
     template_name_list = "all_contracts.html"
     template_name_add = "add_contract.html"
