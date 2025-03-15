@@ -19,6 +19,14 @@ from rolepermissions.decorators import has_permission_decorator
 from vendor_manager.utils.check_user_person_assignment import NoPersonAssignedToUser, check_user_person_assignment
 from vendor_manager.utils.is_api_request import is_api_request
 
+def decorator(permission_name):
+    """Print the permission name."""
+    def print_permission_decorator(function):
+        def print_permission_wrapper(*args, **kwargs):
+            print(f"Permission: {permission_name}")
+            return function(*args, **kwargs)
+        return print_permission_wrapper
+    return print_permission_decorator
 
 @ensure_csrf_cookie
 @csrf_exempt
@@ -92,7 +100,6 @@ class BaseListView(View):
             return self.__get_add_form(request)
         return self.get_items(request)
 
-    @method_decorator([has_permission_decorator(permission_view)])
     def get_items(self, request):
         """List all items."""
         items = [
@@ -109,15 +116,20 @@ class BaseListView(View):
             },
         )
 
-    @method_decorator([has_permission_decorator(permission_manage)])
     def __get_add_form(self, request):
-        form = self.form_class()
-        return render(request, self.template_name_add, {"form": form})
+        @method_decorator([has_permission_decorator(self. permission_manage)])
+        def inner(self, request):
+            form = self.form_class()
+            return render(request, self.template_name_add, {"form": form})
+        return inner(self, request)
+    
 
-    @method_decorator([has_permission_decorator(permission_manage)])
     def post(self, request):
         """Create a new item."""
-        return self._handle_form(request)
+        @method_decorator([has_permission_decorator(self.permission_manage)])
+        def inner(self, request):
+            return self._handle_form(request)
+        return inner(self, request)
 
     def _handle_form(self, request, instance=None):
         """Handle form submission for creating or updating an item."""
@@ -164,7 +176,6 @@ class BaseDetailView(View):
     permission_manage = None
     redirect_to = None
 
-    @method_decorator([has_permission_decorator(permission_view)])
     def get(self, request, item_id):
         """Retrieve item details."""
         item = get_object_or_404(self.model, id=item_id)
@@ -172,7 +183,6 @@ class BaseDetailView(View):
             return self.__get_edit_form(request, item)
         return self.__get_details(request, item)
 
-    @method_decorator([has_permission_decorator(permission_view)])
     def __get_details(self, request, item):
         related_objects = self.get_related_objects(item)
         if is_api_request(request):
@@ -186,29 +196,35 @@ class BaseDetailView(View):
                 self.permission_manage: has_permission(request.user, self.permission_manage),
             },
         )
-
-    @method_decorator([has_permission_decorator(permission_manage)])
+    
     def __get_edit_form(self, request, item):
-        form = self.form_class(instance=item)
-        return render(request, self.template_name_edit, {"form": form, "item": item})
+        @method_decorator([has_permission_decorator(self.permission_manage)])
+        def inner(self, request, item):
+            form = self.form_class(instance=item)
+            return render(request, self.template_name_edit, {"form": form, "item": item})
+        return inner(self, request, item)
 
-    @method_decorator([has_permission_decorator(permission_manage)])
+    
     def put(self, request, item_id):
         """Update item details."""
-        item = get_object_or_404(self.model, id=item_id)
-        return self._handle_form(request, item)
+        @method_decorator([has_permission_decorator(self.permission_manage)])
+        def inner(self, request, item_id):
+            item = get_object_or_404(self.model, id=item_id)
+            return self._handle_form(request, item)
+        return inner(self, request, item_id)
 
-    @method_decorator([has_permission_decorator(permission_manage)])
     def post(self, request, item_id):
         """Create a new related object for the item."""
         return self.put(request, item_id)
-
-    @method_decorator([has_permission_decorator(permission_manage)])
+        
     def delete(self, request, item_id):
         """Delete an item."""
-        item = get_object_or_404(self.model, id=item_id)
-        item.delete()
-        return JsonResponse({"message": f"{self.model.__name__} deleted successfully"})
+        @method_decorator([has_permission_decorator(self.permission_manage)])
+        def inner(self, request, item_id):
+            item = get_object_or_404(self.model, id=item_id)
+            item.delete()
+            return JsonResponse({"message": f"{self.model.__name__} deleted successfully"})
+        return inner(self, request, item_id)
 
     def _handle_form(self, request, instance=None):
         """Handle form submission for creating or updating an item."""

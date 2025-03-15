@@ -41,8 +41,10 @@ def leaves(request):
 
     # Filter leaves that overlap with the selected month
     myleaves = Leave.objects.filter(Q(start_date__lte=last_day) & Q(end_date__gte=first_day))
-    calendar = LeaveCalendar(year=year, month=month, leaves=myleaves).formatmonth()
     myleaves = [leave for leave in myleaves if has_object_permission("access_person", request.user, leave.person)]
+
+    # Generate the calendar
+    calendar = LeaveCalendar(year=year, month=month, leaves=myleaves).formatmonth()
 
     return render(
         request,

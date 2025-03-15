@@ -9,7 +9,6 @@ from vendor_manager.views import BaseDetailView, BaseListView
 from .forms import PersonForm
 from .models import Person
 
-
 @method_decorator([has_permission_decorator("view_person")], name="dispatch")
 class PeopleView(BaseListView):
     """View for listing all companies and creating a new company."""
