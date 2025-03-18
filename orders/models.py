@@ -66,10 +66,9 @@ class OrderVersion(models.Model):
         """Return string representation of OrderVersion."""
         return f"Order: {self.order.id}, Version: {self.version_number}"
 
-    @property
-    def active(self):
+    def active(self, date=date.today()):
         """Return whether the order version is active."""
-        return self.start_date <= timezone.now().date() <= self.end_date
+        return self.start_date <= date <= self.end_date
 
     def clean(self):
         """Clean OrderVersion."""

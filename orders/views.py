@@ -78,7 +78,7 @@ class OrderVersionsView(BaseListView):
     """View for listing all companies and creating a new company."""
 
     model = OrderVersion
-    redirect_to = "order_versions"
+    redirect_to = "order_version"
     form_class = OrderVersionForm
     template_name_list = "all_order_versions.html"
     template_name_add = "add_order_version.html"
@@ -96,7 +96,7 @@ class OrderVersionView(BaseDetailView):
     template_name_edit = "edit_order_version.html"
     permission_view = "view_order"
     permission_manage = "manage_order"
-    redirect_to = "order_versions"
+    redirect_to = "order_version"
 
     def get_related_objects(self, order_version):
         """Get related objects for an order."""

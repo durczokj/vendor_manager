@@ -1,5 +1,6 @@
 """Models for engagements."""
 
+import logging
 from datetime import date
 
 from django.core.exceptions import ValidationError
@@ -8,6 +9,7 @@ from django.db import models
 from orders.models import Order, OrderVersion
 from people.models import Person
 from undertakings.models import Undertaking
+from vendor_manager.utils.list_dates_between import list_dates_between
 
 
 class Engagement(models.Model):
@@ -20,11 +22,10 @@ class Engagement(models.Model):
     daily_rate = models.DecimalField(max_digits=10, decimal_places=2)
     fte = models.DecimalField(max_digits=3, decimal_places=2)
 
-    @property
-    def active(self):
+    def active(self, date=date.today()):
         """Check if the engagement is active."""
-        return (self.start_date <= date.today() <= self.end_date) and any(
-            [a.order_version.active for a in self.order_version_assignments.all()]
+        return (self.start_date <= date <= self.end_date) and any(
+            [a.order_version.active(date) for a in self.order_version_assignments.all()]
         )
 
     @property
@@ -67,6 +68,45 @@ class Engagement(models.Model):
             assignment.save()
 
         super().save(*args, **kwargs)
+
+    @property
+    def costs(self):
+        """Get the costs for the engagement."""
+        costs_lst = []
+        for dt in list_dates_between(self.start_date, self.end_date):
+            cost = 0
+            active = self.active(dt)
+            if active:
+                avalilability = 1
+                leaves = self.person.leaves.filter(start_date__lte=dt, end_date__gte=dt)
+                for leave in leaves:
+                    avalilability = max(0, avalilability - leave.percentage)
+
+                cost = float(self.daily_rate * self.fte * avalilability)
+
+            costs_lst.append({"date": dt, "cost": cost})
+        return costs_lst
+
+    @property
+    def cost_coverage(self):
+        """Get the cost coverage for the engagement."""
+        cost_coverage_lst = []
+        for dt in list_dates_between(self.start_date, self.end_date):
+
+            undertaking_assignments = self.undertaking_assignments.filter(start_date__lte=dt, end_date__gte=dt)
+
+            total_coverage = 0
+            for ua in undertaking_assignments:
+                cost_coverage_lst.append(
+                    {"date": dt, "undertaking": ua.undertaking, "percentage": float(ua.percentage)}
+                )
+                total_coverage += ua.percentage
+            if total_coverage > 1:
+                raise Exception("Total coverage for engagement %s on date %s is greater than 1" % (self, dt))
+            if total_coverage < 1 and self.active(dt):
+                logging.warning("Total coverage for engagement %s on date %s is less than 1" % (self, dt))
+                cost_coverage_lst.append({"date": dt, "undertaking": None, "percentage": float(1 - total_coverage)})
+        return cost_coverage_lst
 
 
 class EngagementOrderVersionAssignment(models.Model):

@@ -21,7 +21,7 @@ from django.urls import include, path
 from . import views
 
 urlpatterns = [
-    path("", views.main, name="main"),
+    path("", views.MainView.as_view(), name="main"),
     path("api/login/", views.login_api, name="login_api"),
     path("accounts/login/", views.login_web, name="login"),
     path("accounts/logout/", views.logout_view, name="logout"),
@@ -37,4 +37,5 @@ urlpatterns = [
     path("leaves/", include("leaves.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("django_plotly_dash/", include("django_plotly_dash.urls")),
 ]

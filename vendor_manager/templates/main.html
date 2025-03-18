@@ -1,4 +1,5 @@
 {% extends "master.html" %}
+{% load plotly_dash %}
 
 {% block title %}
   Vendor Manager – Home
@@ -6,8 +7,24 @@
 
 {% block content %}
 
+<form id="add-form" method="get">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="hidden" name="recalculate" id="recalculate-input" value="False">
+</form>
+<button type="submit" form="add-form">Save</button>
+<button type="submit" form="add-form" onclick="document.getElementById('recalculate-input').value='True'">Recalculate</button>
+
+<h2>Plot for class: {{ class_param_name }}, granularity: {{ granularity }}</h2>
+
 <div>
-  {{ chart|safe }}
+  {{ plot|safe }}
+</div>
+
+<h2>Table for class: {{ class_param_name }}, granularity: {{ granularity }}</h2>
+
+<div>
+  {{ table|safe }}
 </div>
 
 {% endblock %}

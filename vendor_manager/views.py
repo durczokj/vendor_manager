@@ -2,8 +2,6 @@
 
 import json
 
-import plotly.express as px
-import plotly.io as pio
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -16,17 +14,23 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_
 from rolepermissions.checkers import has_object_permission, has_permission
 from rolepermissions.decorators import has_permission_decorator
 
+from dashboards.summary_dashboard import SummaryDashboard
 from vendor_manager.utils.check_user_person_assignment import NoPersonAssignedToUser, check_user_person_assignment
 from vendor_manager.utils.is_api_request import is_api_request
 
+
 def decorator(permission_name):
     """Print the permission name."""
+
     def print_permission_decorator(function):
         def print_permission_wrapper(*args, **kwargs):
             print(f"Permission: {permission_name}")
             return function(*args, **kwargs)
+
         return print_permission_wrapper
+
     return print_permission_decorator
+
 
 @ensure_csrf_cookie
 @csrf_exempt
@@ -68,18 +72,34 @@ def login_web(request):
     return render(request, "registration/login.html")
 
 
-@login_required
-def main(request):
+@method_decorator([login_required], name="dispatch")
+class MainView(View):
     """Render the dashboard page with a sample Plotly chart."""
-    user = request.user
 
-    # Generate a sample chart
-    df = px.data.iris()  # Sample data
-    fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species", title="Iris Dataset")
-    chart_html = pio.to_html(fig, full_html=False)
+    dashboard = None
 
-    context = {"user": user, "chart": chart_html}
-    return render(request=request, template_name="main.html", context=context)
+    def get(self, request):
+        """Render the dashboard page."""
+        user = request.user
+
+        if MainView.dashboard is None:
+            MainView.dashboard = SummaryDashboard()
+
+        if request.GET.get("recalculate") == "True":
+            self.dashboard.recalculate()
+
+        form = self.dashboard.get_form(data=request.GET)
+        self.dashboard.update(form)
+
+        context = {
+            "user": user,
+            "form": form,
+            "plot": self.dashboard.get_plot(),
+            "table": self.dashboard.get_table(),
+            "granularity": self.dashboard.granularity,
+            "class_param_name": self.dashboard.class_param.__name__,
+        }
+        return render(request=request, template_name="main.html", context=context)
 
 
 @method_decorator([login_required], name="dispatch")
@@ -117,18 +137,20 @@ class BaseListView(View):
         )
 
     def __get_add_form(self, request):
-        @method_decorator([has_permission_decorator(self. permission_manage)])
+        @method_decorator([has_permission_decorator(self.permission_manage)])
         def inner(self, request):
             form = self.form_class()
             return render(request, self.template_name_add, {"form": form})
+
         return inner(self, request)
-    
 
     def post(self, request):
         """Create a new item."""
+
         @method_decorator([has_permission_decorator(self.permission_manage)])
         def inner(self, request):
             return self._handle_form(request)
+
         return inner(self, request)
 
     def _handle_form(self, request, instance=None):
@@ -196,34 +218,38 @@ class BaseDetailView(View):
                 self.permission_manage: has_permission(request.user, self.permission_manage),
             },
         )
-    
+
     def __get_edit_form(self, request, item):
         @method_decorator([has_permission_decorator(self.permission_manage)])
         def inner(self, request, item):
             form = self.form_class(instance=item)
             return render(request, self.template_name_edit, {"form": form, "item": item})
+
         return inner(self, request, item)
 
-    
     def put(self, request, item_id):
         """Update item details."""
+
         @method_decorator([has_permission_decorator(self.permission_manage)])
         def inner(self, request, item_id):
             item = get_object_or_404(self.model, id=item_id)
             return self._handle_form(request, item)
+
         return inner(self, request, item_id)
 
     def post(self, request, item_id):
         """Create a new related object for the item."""
         return self.put(request, item_id)
-        
+
     def delete(self, request, item_id):
         """Delete an item."""
+
         @method_decorator([has_permission_decorator(self.permission_manage)])
         def inner(self, request, item_id):
             item = get_object_or_404(self.model, id=item_id)
             item.delete()
             return JsonResponse({"message": f"{self.model.__name__} deleted successfully"})
+
         return inner(self, request, item_id)
 
     def _handle_form(self, request, instance=None):
