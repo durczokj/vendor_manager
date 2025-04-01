@@ -30,4 +30,5 @@ def get_full_cost_df():
     engagement_cost_coverage = pd.DataFrame(engagement_cost_coverage_lst)
 
     full_df = engagement_costs.merge(engagement_cost_coverage, on=["Engagement", "date"], how="left")
+    full_df["cost"] = full_df["cost"]*full_df["percentage"]
     return full_df
