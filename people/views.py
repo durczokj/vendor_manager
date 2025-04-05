@@ -32,7 +32,7 @@ class PersonView(BaseDetailView):
     template_name_edit = "edit_person.html"
     permission_view = "view_person"
     permission_manage = "manage_person"
-    redirect_to = "people"
+    redirect_to = "person"
 
     def get_related_objects(self, person):
         """Return related objects for a person."""
