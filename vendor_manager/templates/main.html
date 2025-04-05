@@ -7,28 +7,47 @@
 
 {% block content %}
 
-  <form id="add-form" method="get">
-    {% csrf_token %}
-    <div>
-      {{ form.class_.label_tag }} {{ form.class_ }}
-      {{ form.granularity.label_tag }} {{ form.granularity }}
-      {{ form.min_date.label_tag }} {{ form.min_date }}
-      {{ form.max_date.label_tag }} {{ form.max_date }}
+<h2>Filters</h2>
+
+<form id="add-form" method="get">
+  {% csrf_token %}
+  <div style="display: flex; gap: 1rem;">
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      {{ form.class_.label_tag }}
+      {{ form.class_ }}
     </div>
-
-    <br/>
-
-    <div>
-      {% for field in form %}
-        {% if field.name not in "class_ granularity min_date max_date" %}
-          {{ field.label_tag }} {{ field }}
-        {% endif %}
-      {% endfor %}
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      {{ form.granularity.label_tag }}
+      {{ form.granularity }}
     </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      {{ form.min_date.label_tag }}
+      {{ form.min_date }}
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      {{ form.max_date.label_tag }}
+      {{ form.max_date }}
+    </div>
+  </div>
 
-    <button type="submit" form="add-form">Save</button>
-    <button type="submit" form="add-form" onclick="document.getElementById('recalculate-input').value='True'">Recalculate</button>
-  </form>
+  <br/>
+
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    {% for field in form %}
+      {% if field.name not in "class_ granularity min_date max_date" %}
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+          {{ field.label_tag }}
+          {{ field }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <br/>
+
+  <button type="submit" form="add-form">Save</button>
+  <button type="submit" form="add-form" onclick="document.getElementById('recalculate-input').value='True'">Recalculate</button>
+</form>
 
   <h2>Plot for class: {{ class_param_name }}, granularity: {{ granularity }}</h2>
   <div>
