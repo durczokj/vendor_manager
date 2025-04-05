@@ -1,5 +1,6 @@
 """Summary dashboard class."""
 
+import pandas as pd
 import plotly.express as px
 from django import forms
 
@@ -84,13 +85,13 @@ class SummaryDashboard:
 
         if self.__granularity == "Monthly":
             filtered_df["month"] = filtered_df["date"].apply(lambda x: x.strftime("%Y-%m"))
-            grouped_df = filtered_df.groupby(["id", "month"], as_index=False).agg({"cost": "sum"})
+            grouped_df = filtered_df.groupby(["id", "month"], as_index=False, dropna=False).agg({"cost": "sum"})
         elif self.__granularity == "Daily":
-            grouped_df = filtered_df.groupby(["id", "date"], as_index=False).agg({"cost": "sum"})
+            grouped_df = filtered_df.groupby(["id", "date"], as_index=False, dropna=False).agg({"cost": "sum"})
         else:
-            grouped_df = filtered_df.groupby("id", as_index=False).agg({"cost": "sum"})
+            grouped_df = filtered_df.groupby("id", as_index=False, dropna=False).agg({"cost": "sum"})
 
-        grouped_df[self.__class_param.__name__] = grouped_df["id"].map(lambda x: self.__class_param.objects.get(id=x))
+        grouped_df[self.__class_param.__name__] = grouped_df["id"].map(lambda x: self.__class_param.objects.get(id=x) if not pd.isna(x) else None)
         grouped_df["name"] = grouped_df[self.__class_param.__name__].apply(str)
         grouped_df.reset_index(drop=True, inplace=True)
 

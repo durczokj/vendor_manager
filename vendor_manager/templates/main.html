@@ -7,24 +7,37 @@
 
 {% block content %}
 
-<form id="add-form" method="get">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <input type="hidden" name="recalculate" id="recalculate-input" value="False">
-</form>
-<button type="submit" form="add-form">Save</button>
-<button type="submit" form="add-form" onclick="document.getElementById('recalculate-input').value='True'">Recalculate</button>
+  <form id="add-form" method="get">
+    {% csrf_token %}
+    <div>
+      {{ form.class_.label_tag }} {{ form.class_ }}
+      {{ form.granularity.label_tag }} {{ form.granularity }}
+      {{ form.min_date.label_tag }} {{ form.min_date }}
+      {{ form.max_date.label_tag }} {{ form.max_date }}
+    </div>
 
-<h2>Plot for class: {{ class_param_name }}, granularity: {{ granularity }}</h2>
+    <br/>
 
-<div>
-  {{ plot|safe }}
-</div>
+    <div>
+      {% for field in form %}
+        {% if field.name not in "class_ granularity min_date max_date" %}
+          {{ field.label_tag }} {{ field }}
+        {% endif %}
+      {% endfor %}
+    </div>
 
-<h2>Table for class: {{ class_param_name }}, granularity: {{ granularity }}</h2>
+    <button type="submit" form="add-form">Save</button>
+    <button type="submit" form="add-form" onclick="document.getElementById('recalculate-input').value='True'">Recalculate</button>
+  </form>
 
-<div>
-  {{ table|safe }}
-</div>
+  <h2>Plot for class: {{ class_param_name }}, granularity: {{ granularity }}</h2>
+  <div>
+    {{ plot|safe }}
+  </div>
+
+  <h2>Table for class: {{ class_param_name }}, granularity: {{ granularity }}</h2>
+  <div>
+    {{ table|safe }}
+  </div>
 
 {% endblock %}
