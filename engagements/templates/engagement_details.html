@@ -19,8 +19,9 @@
   </h1>
 
   <h2>Details</h2>
+  <p>ID: {{ item.id }}</p>
   <p>Person: <a href="{% url 'person' item.person.id %}">{{ item.person }}</a></p>
-  <p>Order id:
+  <p>Order ID:
     {% if item.order %}
       <a href="{% url 'order' item.order.id %}">{{ item.order.id }}</a>
     {% endif %}
