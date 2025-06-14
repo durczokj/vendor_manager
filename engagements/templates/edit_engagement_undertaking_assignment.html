@@ -6,13 +6,13 @@
 
 {% block content %}
   <h1>
-    Edit Engagement-Order Version Assignment: {{ item.id }}
+    Edit Engagement-Undertaking Version Assignment: {{ item.id }}
     <button type="submit" form="edit-form">Save</button>
-    <a href="/engagement_order_version_assignments/{{ item.id }}/">
+    <a href="{% url 'engagement_undertaking_assignment' item.id %}">
       <button type="button">Cancel</button>
     </a>
   </h1>
-  <form id="edit-form" method="post" action="/engagement_order_version_assignments/{{ item.id }}/">
+  <form id="edit-form" method="post" action="{% url 'engagement_undertaking_assignment' item.id %}">
     {% csrf_token %}
     {{ form.as_p }}
   </form>

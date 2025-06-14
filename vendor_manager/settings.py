@@ -50,7 +50,10 @@ INSTALLED_APPS = [
     "rolepermissions",
     "rest_framework",
     "rest_framework.authtoken",
+    "django_plotly_dash.apps.DjangoPlotlyDashConfig",
 ]
+
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -61,6 +64,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django_plotly_dash.middleware.BaseMiddleware",
 ]
 
 ROOT_URLCONF = "vendor_manager.urls"

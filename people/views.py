@@ -9,7 +9,6 @@ from vendor_manager.views import BaseDetailView, BaseListView
 from .forms import PersonForm
 from .models import Person
 
-
 @method_decorator([has_permission_decorator("view_person")], name="dispatch")
 class PeopleView(BaseListView):
     """View for listing all companies and creating a new company."""
@@ -33,7 +32,7 @@ class PersonView(BaseDetailView):
     template_name_edit = "edit_person.html"
     permission_view = "view_person"
     permission_manage = "manage_person"
-    redirect_to = "people"
+    redirect_to = "person"
 
     def get_related_objects(self, person):
         """Return related objects for a person."""
