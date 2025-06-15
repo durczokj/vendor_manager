@@ -122,7 +122,7 @@ elif DATABASE_ENGINE == "django.db.backends.postgresql_psycopg2":
             'NAME': os.environ.get("DATABASE_NAME"),
             'USER': os.environ.get("DATABASE_USERNAME"),
             'PASSWORD': os.environ.get("DATABASE_PASSWORD"),
-            'HOST': os.environ.get("DATABASE_HOST"),
+            'HOST': os.environ.get("DATABASE_HOST"), #0.0.0.0 for local development
             'PORT': os.environ.get("DATABASE_PORT"),
         }
     }
@@ -130,10 +130,10 @@ elif DATABASE_ENGINE == "mssql":
     DATABASES = {
         'default': {
             'ENGINE': os.environ.get("DATABASE_ENGINE"),
-            'NAME': "vendor_manager",
-            'USER': "jakubdurczok",
-            'PASSWORD': 'Wynalazek3D!',
-            'HOST': 'serverjd107950.database.windows.net',
+            'NAME': os.environ.get("DATABASE_NAME"),
+            'USER': os.environ.get("DATABASE_USERNAME"),
+            'PASSWORD': os.environ.get("DATABASE_PASSWORD"),
+            'HOST': os.environ.get("DATABASE_HOST"),
             'PORT': '',
             'OPTIONS': {
                 'driver': 'ODBC Driver 17 for SQL Server',
