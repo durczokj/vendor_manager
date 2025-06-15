@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - vendor-manager
 on:
   push:
     branches:
-      - azure
+      - main
   workflow_dispatch:
 
 jobs:
