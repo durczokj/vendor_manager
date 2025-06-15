@@ -106,23 +106,42 @@ REST_FRAMEWORK = {
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Check if PostgreSQL should be used based on environment variable
+DATABASE_ENGINE = os.environ.get("DATABASE_ENGINE", "django.db.backends.sqlite3")
+if DATABASE_ENGINE == "django.db.backends.sqlite3":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
-
-# DATABASES = {
-#      'default': {
-#          'ENGINE': os.environ.get("DATABASE_ENGINE"),
-#          'NAME': os.environ.get("DATABASE_NAME"),
-#          'USER': os.environ.get("DATABASE_USERNAME"),
-#          'PASSWORD': os.environ.get("DATABASE_PASSWORD"),
-#          'HOST': os.environ.get("DATABASE_HOST"),
-#          'PORT': os.environ.get("DATABASE_PORT"),
-#      }
-#  }
+elif DATABASE_ENGINE == "django.db.backends.postgresql_psycopg2":
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get("DATABASE_ENGINE"),
+            'NAME': os.environ.get("DATABASE_NAME"),
+            'USER': os.environ.get("DATABASE_USERNAME"),
+            'PASSWORD': os.environ.get("DATABASE_PASSWORD"),
+            'HOST': os.environ.get("DATABASE_HOST"), #0.0.0.0 for local development
+            'PORT': os.environ.get("DATABASE_PORT"),
+        }
+    }
+elif DATABASE_ENGINE == "mssql":
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get("DATABASE_ENGINE"),
+            'NAME': os.environ.get("DATABASE_NAME"),
+            'USER': os.environ.get("DATABASE_USERNAME"),
+            'PASSWORD': os.environ.get("DATABASE_PASSWORD"),
+            'HOST': os.environ.get("DATABASE_HOST"),
+            'PORT': '',
+            'OPTIONS': {
+                'driver': 'ODBC Driver 17 for SQL Server',
+        }
+    }
+    }
+else:
+    raise ValueError("Invalid DATABASE_ENGINE specified.")
 
 
 # Password validation
