@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: docker-compose.prod.yml
-          target: /opt/vendor-manager/
+          target: /tmp/
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1
@@ -37,8 +37,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            sudo cp /tmp/docker-compose.prod.yml /opt/vendor-manager/docker-compose.yaml
             cd /opt/vendor-manager
-            sudo cp docker-compose.prod.yml docker-compose.yaml
             sudo docker compose pull vendor-manager
             sudo docker compose up -d vendor-manager
             sudo docker exec vendor-manager python manage.py migrate --noinput
