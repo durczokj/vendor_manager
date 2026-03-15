@@ -196,4 +196,6 @@ def get_full_cost_df():
     full_df["Company"] = full_df["company_id"].map(company_map)
     full_df["Undertaking"] = full_df["undertaking_id"].map(undertaking_map)
 
+    full_df["date"] = full_df["date"].dt.date
+
     return full_df[["date", "cost", "Engagement", "Order", "Person", "Company", "Undertaking", "percentage"]]
