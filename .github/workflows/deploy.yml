@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [deploy-to-durczok-ovh]
+    branches: [main]
 
 jobs:
   deploy:
