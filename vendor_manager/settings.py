@@ -29,6 +29,10 @@ DEBUG = os.environ.get("DJANGO_DEBUG")
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
+FORCE_SCRIPT_NAME = os.environ.get("FORCE_SCRIPT_NAME", "/")
+
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if os.environ.get("CSRF_TRUSTED_ORIGINS") else []
+
 
 # Application definition
 
@@ -92,8 +96,8 @@ ROLEPERMISSIONS_MODULE = "vendor_manager.roles"
 WSGI_APPLICATION = "vendor_manager.wsgi.application"
 
 LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "main"
-LOGOUT_REDIRECT_URL = "main"
+LOGIN_REDIRECT_URL = FORCE_SCRIPT_NAME
+LOGOUT_REDIRECT_URL = FORCE_SCRIPT_NAME
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
@@ -178,7 +182,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "/static/"
+STATIC_URL = FORCE_SCRIPT_NAME.rstrip("/") + "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "vendor_manager/static/")]
 
