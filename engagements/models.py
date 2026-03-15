@@ -3,13 +3,14 @@
 import logging
 from datetime import date
 
+import numpy as np
+import pandas as pd
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from orders.models import Order, OrderVersion
 from people.models import Person
 from undertakings.models import Undertaking
-from vendor_manager.utils.list_dates_between import list_dates_between
 
 
 class Engagement(models.Model):
@@ -72,41 +73,130 @@ class Engagement(models.Model):
     @property
     def costs(self):
         """Get the costs for the engagement."""
-        costs_lst = []
-        for dt in list_dates_between(self.start_date, self.end_date):
-            cost = 0
-            active = self.active(dt)
-            if active:
-                avalilability = 1
-                leaves = self.person.leaves.filter(start_date__lte=dt, end_date__gte=dt)
-                for leave in leaves:
-                    avalilability = max(0, avalilability - leave.percentage)
+        # 1. Calendar of all dates
+        dates = pd.date_range(self.start_date, self.end_date, freq="D")
+        df = pd.DataFrame({"date": dates})
 
-                cost = float(self.daily_rate * self.fte * avalilability)
+        # 2. Order version coverage → active flag (single query)
+        ov_ranges = list(
+            self.order_version_assignments.values_list("order_version__start_date", "order_version__end_date")
+        )
 
-            costs_lst.append({"date": dt, "cost": cost})
-        return costs_lst
+        if not ov_ranges:
+            df["cost"] = 0.0
+            return df
+
+        ov_df = pd.DataFrame(ov_ranges, columns=["ov_start", "ov_end"])
+        ov_df["ov_start"] = pd.to_datetime(ov_df["ov_start"])
+        ov_df["ov_end"] = pd.to_datetime(ov_df["ov_end"])
+
+        dates = dates.values[:, None]  # (N, 1)
+        ov_starts = ov_df["ov_start"].values[None, :]  # (1, M)
+        ov_ends = ov_df["ov_end"].values[None, :]  # (1, M)
+        df["active"] = ((dates >= ov_starts) & (dates <= ov_ends)).any(axis=1)
+
+        # 3. Leave availability (single query)
+        leave_data = list(self.person.leaves.values_list("start_date", "end_date", "percentage"))
+
+        if not leave_data:
+            df["availability"] = 1.0
+        else:
+            leave_df = pd.DataFrame(leave_data, columns=["l_start", "l_end", "pct"])
+            leave_df["l_start"] = pd.to_datetime(leave_df["l_start"])
+            leave_df["l_end"] = pd.to_datetime(leave_df["l_end"])
+            leave_df["pct"] = leave_df["pct"].astype(float)
+
+            l_starts = leave_df["l_start"].values[None, :]  # (1, K)
+            l_ends = leave_df["l_end"].values[None, :]  # (1, K)
+            l_pcts = leave_df["pct"].values[None, :]  # (1, K)
+
+            overlaps = (dates >= l_starts) & (dates <= l_ends)  # (N, K)
+            df["availability"] = np.maximum(0.0, 1.0 - (overlaps * l_pcts).sum(axis=1))
+
+        # 4. Cost = daily_rate × fte × availability (only on active days)
+        df["cost"] = np.where(
+            df["active"],
+            float(self.daily_rate) * float(self.fte) * df["availability"],
+            0.0,
+        )
+
+        # return as a list of dicts
+        return df[["date", "cost"]].to_dict(orient="records")
 
     @property
     def cost_coverage(self):
         """Get the cost coverage for the engagement."""
-        cost_coverage_lst = []
-        for dt in list_dates_between(self.start_date, self.end_date):
+        dates = pd.date_range(self.start_date, self.end_date, freq="D")
 
-            undertaking_assignments = self.undertaking_assignments.filter(start_date__lte=dt, end_date__gte=dt)
+        # 1. Fetch all undertaking assignments in one query
+        ua_qs = list(self.undertaking_assignments.select_related("undertaking"))
 
-            total_coverage = 0
-            for ua in undertaking_assignments:
-                cost_coverage_lst.append(
-                    {"date": dt, "undertaking": ua.undertaking, "percentage": float(ua.percentage)}
-                )
-                total_coverage += ua.percentage
-            if total_coverage > 1:
-                raise Exception("Total coverage for engagement %s on date %s is greater than 1" % (self, dt))
-            if total_coverage < 1 and self.active(dt):
-                logging.warning("Total coverage for engagement %s on date %s is less than 1" % (self, dt))
-                cost_coverage_lst.append({"date": dt, "undertaking": None, "percentage": float(1 - total_coverage)})
-        return cost_coverage_lst
+        if ua_qs:
+            ua_starts = np.array([np.datetime64(ua.start_date) for ua in ua_qs])
+            ua_ends = np.array([np.datetime64(ua.end_date) for ua in ua_qs])
+            ua_pcts = np.array([float(ua.percentage) for ua in ua_qs])
+            ua_undertakings = [ua.undertaking for ua in ua_qs]
+
+            # 2. Broadcasting: dates (N,1) × assignments (1,K) → overlap matrix (N,K)
+            dates = dates.values[:, None]
+            overlaps = (dates >= ua_starts[None, :]) & (dates <= ua_ends[None, :])
+
+            # 3. Build rows from overlap matrix
+            date_idx, ua_idx = np.where(overlaps)
+            result = pd.DataFrame(
+                {
+                    "date": dates[date_idx],
+                    "undertaking": [ua_undertakings[i] for i in ua_idx],
+                    "percentage": ua_pcts[ua_idx],
+                }
+            )
+
+            # 4. Validate total coverage per date
+            total_per_date = result.groupby("date")["percentage"].sum()
+        else:
+            result = pd.DataFrame(columns=["date", "undertaking", "percentage"])
+            total_per_date = pd.Series(dtype=float)
+
+        # Check > 1
+        over = total_per_date[total_per_date > 1]
+        if not over.empty:
+            bad_date = over.index[0]
+            raise Exception("Total coverage for engagement %s on date %s is greater than 1" % (self, bad_date))
+
+        # 5. Active flags (single query, same logic as costs)
+        ov_ranges = list(
+            self.order_version_assignments.values_list("order_version__start_date", "order_version__end_date")
+        )
+        if ov_ranges:
+            ov_df = pd.DataFrame(ov_ranges, columns=["ov_start", "ov_end"])
+            ov_starts = pd.to_datetime(ov_df["ov_start"]).values[None, :]
+            ov_ends = pd.to_datetime(ov_df["ov_end"]).values[None, :]
+            active_flags = pd.Series(
+                ((dates.values[:, None] >= ov_starts) & (dates.values[:, None] <= ov_ends)).any(axis=1),
+                index=dates,
+            )
+        else:
+            active_flags = pd.Series(False, index=dates)
+
+        # 6. Add unassigned rows where coverage < 1 and active
+        total_per_date = total_per_date.reindex(dates, fill_value=0.0)
+        under_and_active = (total_per_date < 1) & active_flags
+        under_dates = under_and_active[under_and_active].index
+
+        if not under_dates.empty:
+            for dt in under_dates:
+                logging.warning("Total coverage for engagement %s on date %s is less than 1" % (self, dt.date()))
+
+            unassigned = pd.DataFrame(
+                {
+                    "date": under_dates,
+                    "undertaking": None,
+                    "percentage": 1.0 - total_per_date[under_dates].values,
+                }
+            )
+            result = pd.concat([result, unassigned], ignore_index=True)
+
+        return result[["date", "undertaking", "percentage"]].to_dict(orient="records")
 
 
 class EngagementOrderVersionAssignment(models.Model):
