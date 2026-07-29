@@ -5,7 +5,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -17,6 +17,11 @@ from rolepermissions.decorators import has_permission_decorator
 from dashboards.summary_dashboard import SummaryDashboard
 from vendor_manager.utils.check_user_person_assignment import NoPersonAssignedToUser, check_user_person_assignment
 from vendor_manager.utils.is_api_request import is_api_request
+
+
+def health(request):
+    """Liveness/readiness probe target. Returns 200 with a plain-text body."""
+    return HttpResponse("ok", content_type="text/plain")
 
 
 def decorator(permission_name):

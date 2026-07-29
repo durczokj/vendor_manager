@@ -1,0 +1,59 @@
+name: Build and Deploy
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to build and deploy (e.g. 0.0.1)"
+        required: true
+        type: string
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="${{ inputs.tag }}"
+          fi
+          if [ -z "${TAG}" ]; then
+            echo "No tag resolved" >&2
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Using tag: ${TAG}"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            durczokj/vendor-manager:${{ steps.vars.outputs.tag }}
+
+      - name: Deploy to k3s
+        uses: durczokj/vm/.github/actions/deploy-to-k3s@main
+        with:
+          app_name: vendor-manager
+          deployment_name: vendor-manager
+          image_tag: ${{ steps.vars.outputs.tag }}
+          server_host:    ${{ secrets.SERVER_HOST }}
+          server_user:    ${{ secrets.SERVER_USER }}
+          server_ssh_key: ${{ secrets.SERVER_SSH_KEY }}
