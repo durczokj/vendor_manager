@@ -8,34 +8,22 @@ from .models import Engagement, EngagementOrderVersionAssignment, EngagementUnde
 
 _ENGAGEMENT_ACTIONS = """
 {% if table.can_manage %}
-{% url 'engagement' 0 as delete_pattern %}
-{% url 'engagement' record.pk as edit_url %}
-<form onsubmit="deleteResource(event,'{{ delete_pattern }}','{{ record.pk }}','{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this engagement?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'engagement-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'engagement-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
 _EUA_ACTIONS = """
 {% if table.can_manage %}
-{% url 'engagement_undertaking_assignment' 0 as delete_pattern %}
-{% url 'engagement_undertaking_assignment' record.pk as edit_url %}
-<form onsubmit="deleteResource(event, '{{ delete_pattern }}', '{{ record.pk }}', '{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this assignment?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'engagement-undertaking-assignment-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'engagement-undertaking-assignment-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
 _EOVA_ACTIONS = """
 {% if table.can_manage %}
-{% url 'engagement_order_version_assignment' 0 as delete_pattern %}
-{% url 'engagement_order_version_assignment' record.pk as edit_url %}
-<form onsubmit="deleteResource(event, '{{ delete_pattern }}', '{{ record.pk }}', '{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this assignment?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'engagement-order-version-assignment-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'engagement-order-version-assignment-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
@@ -43,7 +31,7 @@ _EOVA_ACTIONS = """
 class EngagementTable(BaseEntityTable):
     """Table for listing Engagement records."""
 
-    id = tables.Column(linkify=("engagement", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("engagement-detail", {"pk": tables.A("pk")}))
     start_date = tables.DateColumn(format="Y-m-d")
     end_date = tables.DateColumn(format="Y-m-d")
     actions = tables.TemplateColumn(
@@ -63,7 +51,7 @@ class EngagementTable(BaseEntityTable):
 class EngagementUndertakingAssignmentTable(BaseEntityTable):
     """Table for listing EngagementUndertakingAssignment records."""
 
-    id = tables.Column(linkify=("engagement_undertaking_assignment", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("engagement-undertaking-assignment-detail", {"pk": tables.A("pk")}))
     start_date = tables.DateColumn(format="Y-m-d")
     end_date = tables.DateColumn(format="Y-m-d")
     actions = tables.TemplateColumn(
@@ -83,7 +71,7 @@ class EngagementUndertakingAssignmentTable(BaseEntityTable):
 class EngagementOrderVersionAssignmentTable(BaseEntityTable):
     """Table for listing EngagementOrderVersionAssignment records."""
 
-    id = tables.Column(linkify=("engagement_order_version_assignment", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("engagement-order-version-assignment-detail", {"pk": tables.A("pk")}))
     actions = tables.TemplateColumn(
         template_code=_EOVA_ACTIONS,
         orderable=False,

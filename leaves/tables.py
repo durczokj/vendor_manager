@@ -7,11 +7,7 @@ from vendor_manager.tables import BaseEntityTable
 from .models import Leave
 
 _LEAVE_ACTIONS = """
-{% load static %}
-<form action="{% url 'delete_leave' record.pk %}" method="post" class="inline">
-  {% csrf_token %}
-  <button type="submit">Delete</button>
-</form>
+<a href="{% url 'leave-delete' record.pk %}"><button>Delete</button></a>
 """
 
 

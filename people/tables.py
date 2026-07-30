@@ -8,12 +8,8 @@ from .models import Person
 
 _PERSON_ACTIONS = """
 {% if table.can_manage %}
-{% url 'person' 0 as delete_pattern %}
-{% url 'person' record.pk as edit_url %}
-<form onsubmit="deleteResource(event,'{{ delete_pattern }}','{{ record.pk }}','{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this person?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'person-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'person-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
@@ -21,7 +17,7 @@ _PERSON_ACTIONS = """
 class PersonTable(BaseEntityTable):
     """Table for listing Person records."""
 
-    id = tables.Column(linkify=("person", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("person-detail", {"pk": tables.A("pk")}))
     actions = tables.TemplateColumn(
         template_code=_PERSON_ACTIONS,
         orderable=False,

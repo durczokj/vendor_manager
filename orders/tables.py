@@ -8,23 +8,15 @@ from .models import Order, OrderVersion
 
 _ORDER_ACTIONS = """
 {% if table.can_manage %}
-{% url 'order' 0 as delete_pattern %}
-{% url 'order' record.pk as edit_url %}
-<form onsubmit="deleteResource(event, '{{ delete_pattern }}', '{{ record.pk }}', '{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this order?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'order-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'order-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
 _ORDER_VERSION_ACTIONS = """
 {% if table.can_manage %}
-{% url 'order_version' 0 as delete_pattern %}
-{% url 'order_version' record.pk as edit_url %}
-<form onsubmit="deleteResource(event, '{{ delete_pattern }}', '{{ record.pk }}', '{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this order version?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'order-version-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'order-version-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
@@ -32,7 +24,7 @@ _ORDER_VERSION_ACTIONS = """
 class OrderTable(BaseEntityTable):
     """Table for listing Order records."""
 
-    id = tables.Column(linkify=("order", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("order-detail", {"pk": tables.A("pk")}))
     actions = tables.TemplateColumn(
         template_code=_ORDER_ACTIONS,
         orderable=False,
@@ -50,7 +42,7 @@ class OrderTable(BaseEntityTable):
 class OrderVersionTable(BaseEntityTable):
     """Table for listing OrderVersion records."""
 
-    id = tables.Column(linkify=("order_version", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("order-version-detail", {"pk": tables.A("pk")}))
     start_date = tables.DateColumn(format="Y-m-d")
     end_date = tables.DateColumn(format="Y-m-d")
     actions = tables.TemplateColumn(

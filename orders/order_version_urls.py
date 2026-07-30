@@ -1,10 +1,19 @@
-"""This module contains the URL patterns for the orders app."""
+"""URL patterns for the order versions sub-resource."""
 
 from django.urls import path
 
-from . import views
+from .order_version_views import (
+    OrderVersionCreateView,
+    OrderVersionDeleteView,
+    OrderVersionDetailView,
+    OrderVersionListView,
+    OrderVersionUpdateView,
+)
 
 urlpatterns = [
-    path("", views.OrderVersionsView.as_view(), name="order_versions"),
-    path("<int:item_id>/", views.OrderVersionView.as_view(), name="order_version"),
+    path("", OrderVersionListView.as_view(), name="order-version-list"),
+    path("create/", OrderVersionCreateView.as_view(), name="order-version-create"),
+    path("<int:pk>/", OrderVersionDetailView.as_view(), name="order-version-detail"),
+    path("<int:pk>/update/", OrderVersionUpdateView.as_view(), name="order-version-update"),
+    path("<int:pk>/delete/", OrderVersionDeleteView.as_view(), name="order-version-delete"),
 ]

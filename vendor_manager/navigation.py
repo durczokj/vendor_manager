@@ -53,13 +53,13 @@ def _perm(codename: str) -> Callable[[User], bool]:
 #: All sidebar entries in display order.
 #: To add a new entity, append exactly one ``NavEntry`` here.
 NAV_ENTRIES: list[NavEntry] = [
-    NavEntry(label="People", url_name="people", permission=_perm("view_person")),
-    NavEntry(label="Companies", url_name="companies", permission=_perm("view_company")),
-    NavEntry(label="Undertakings", url_name="undertakings", permission=_perm("view_undertaking")),
-    NavEntry(label="Engagements", url_name="engagements", permission=_perm("view_engagement")),
-    NavEntry(label="Leaves", url_name="leaves", permission=_perm("view_leave")),
-    NavEntry(label="Contracts", url_name="contracts", permission=_perm("view_contract")),
-    NavEntry(label="Orders", url_name="orders", permission=_perm("view_order")),
+    NavEntry(label="People", url_name="person-list", permission=_perm("view_person")),
+    NavEntry(label="Companies", url_name="company-list", permission=_perm("view_company")),
+    NavEntry(label="Undertakings", url_name="undertaking-list", permission=_perm("view_undertaking")),
+    NavEntry(label="Engagements", url_name="engagement-list", permission=_perm("view_engagement")),
+    NavEntry(label="Leaves", url_name="leave-list", permission=_perm("view_leave")),
+    NavEntry(label="Contracts", url_name="contract-list", permission=_perm("view_contract")),
+    NavEntry(label="Orders", url_name="order-list", permission=_perm("view_order")),
 ]
 
 

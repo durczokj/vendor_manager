@@ -287,9 +287,9 @@ def test_nav_context_processor_person_role_sees_only_allowed_entries() -> None:
     visible_url_names = {entry.url_name for entry in result["nav"]}
 
     # Person role: view_person=True, view_leave=True; everything else False
-    assert "people" in visible_url_names
-    assert "leaves" in visible_url_names
-    for restricted in ("companies", "undertakings", "engagements", "contracts", "orders"):
+    assert "person-list" in visible_url_names
+    assert "leave-list" in visible_url_names
+    for restricted in ("company-list", "undertaking-list", "engagement-list", "contract-list", "order-list"):
         assert restricted not in visible_url_names
 
 
