@@ -132,6 +132,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "vendor_manager.logging.RequestContextMiddleware",
     "django_plotly_dash.middleware.BaseMiddleware",
 ]
 
@@ -250,4 +251,75 @@ MESSAGE_TAGS = {
     message_constants.SUCCESS: "success",
     message_constants.WARNING: "warning",
     message_constants.ERROR: "danger",
+}
+
+
+# ---------------------------------------------------------------------------
+# Logging — structured JSON to stdout (NFR-27, NFR-36, NFR-37)
+# ---------------------------------------------------------------------------
+# All loggers propagate to a single stdout handler using python-json-logger.
+# Under DEBUG we swap to a plain human-readable formatter for local dev.
+#
+# Django's AdminEmailHandler is intentionally NOT enabled. Unhandled exceptions
+# reach the "django" logger at ERROR level with traceback included.
+
+LOG_LEVEL = os.environ.get("DJANGO_LOG_LEVEL", "DEBUG" if DEBUG else "INFO").upper()
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "request_context": {
+            "()": "vendor_manager.logging.RequestContextFilter",
+        },
+    },
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "fmt": "%(asctime)s %(levelname)s %(name)s %(message)s %(user_id)s %(request_id)s",
+            "rename_fields": {
+                "asctime": "timestamp",
+                "levelname": "level",
+                "name": "logger",
+            },
+        },
+        "plain": {
+            "format": "%(asctime)s %(levelname)s %(name)s [%(user_id)s %(request_id)s] %(message)s",
+        },
+    },
+    "handlers": {
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "plain" if DEBUG else "json",
+            "filters": ["request_context"],
+        },
+    },
+    "root": {
+        "handlers": ["stdout"],
+        "level": LOG_LEVEL,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["stdout"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["stdout"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["stdout"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            # Very noisy; only interesting when explicitly requested.
+            "handlers": ["stdout"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
 }
