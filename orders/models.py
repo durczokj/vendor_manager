@@ -1,9 +1,9 @@
 """Define Order and OrderVersion models."""
 
-from datetime import date, timedelta
+from datetime import date
 
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
+from django.db import models
 from django.utils import timezone
 
 from companies.models import Company
@@ -21,30 +21,19 @@ class Order(models.Model):
     company = models.ForeignKey(Company, related_name="orders", on_delete=models.CASCADE)
 
     def create_new_version(self, contract, start_date, end_date, copy_engagement_assignments=True):
-        """Create a new version of the order."""
-        with transaction.atomic():
-            last_version = self.versions.order_by("-version_number").first()
+        """Create a new version of the order.
 
-            last_version.end_date = start_date - timedelta(days=1)
-            last_version.save()
+        Deprecated: use orders.services.create_new_order_version directly.
+        """
+        from orders.services import create_new_order_version
 
-            contract.save()
-
-            new_version = OrderVersion(
-                order=self,
-                contract=contract,
-                version_number=last_version.version_number + 1,
-                start_date=start_date,
-                end_date=end_date,
-            )
-
-            new_version.save()
-
-            if copy_engagement_assignments:
-                for assignment in last_version.engagement_assignments.all():
-                    assignment.pk = None
-                    assignment.order_version = new_version
-                    assignment.save()
+        return create_new_order_version(
+            order=self,
+            contract=contract,
+            start_date=start_date,
+            end_date=end_date,
+            copy_engagement_assignments=copy_engagement_assignments,
+        )
 
 
 class OrderVersion(models.Model):
