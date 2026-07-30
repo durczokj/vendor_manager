@@ -5,6 +5,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.leaves, name="leaves"),
-    path("delete/<int:leave_id>", views.delete_leave, name="delete_leave"),
+    path("", views.LeaveListView.as_view(), name="leave-list"),
+    path("create/", views.LeaveCreateView.as_view(), name="leave-create"),
+    path("<int:pk>/delete/", views.LeaveDeleteView.as_view(), name="leave-delete"),
 ]

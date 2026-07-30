@@ -1,17 +1,15 @@
 """Views for the people app."""
 
-from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from rolepermissions.decorators import has_permission_decorator
 
 from engagements.tables import EngagementUndertakingAssignmentTable
-from vendor_manager.views import BaseDetailView, BaseListView
+from vendor_manager.cbv import EntityCreateView, EntityDeleteView, EntityDetailView, EntityListView, EntityUpdateView
 
 from .forms import PersonForm
 from .models import Person
 from .tables import PersonTable
 
-# Lazy import to avoid circular reference: people → engagements
 try:
     from engagements.tables import EngagementTable as _EngagementTable
 except ImportError:  # pragma: no cover
@@ -19,33 +17,25 @@ except ImportError:  # pragma: no cover
 
 
 @method_decorator([has_permission_decorator("view_person")], name="dispatch")
-class PeopleView(BaseListView):
-    """View for listing all companies and creating a new company."""
+class PersonListView(EntityListView):
+    """List all people."""
 
     model = Person
-    redirect_to = "people"
-    form_class = PersonForm
-    permission_view = "view_person"
-    permission_manage = "manage_person"
-    permission_add = "add_person"
-    permission_change = "change_person"
     table_class = PersonTable
     page_title = "People"
+    permission_create = "add_person"
+    create_url_name = "person-create"
 
 
-@method_decorator([login_required, has_permission_decorator("view_person")], name="dispatch")
-class PersonView(BaseDetailView):
-    """View for retrieving, updating, and deleting a company."""
+@method_decorator([has_permission_decorator("view_person")], name="dispatch")
+class PersonDetailView(EntityDetailView):
+    """Show a single person."""
 
     model = Person
-    form_class = PersonForm
-    permission_view = "view_person"
-    permission_manage = "manage_person"
     permission_change = "change_person"
-    permission_delete = "delete_person"
-    redirect_to = "person"
-    item_url_name = "person"
-    list_url_name = "people"
+    update_url_name = "person-update"
+    delete_url_name = "person-delete"
+    list_url_name = "person-list"
     detail_fields = [
         ("ID", "id"),
         ("First Name", "first_name"),
@@ -55,9 +45,32 @@ class PersonView(BaseDetailView):
     ]
     related_table_specs = [
         ("Engagements", lambda p: p.engagements.all(), _EngagementTable),
-        (
-            "Active Assignments",
-            lambda p: p.get_assignments(),
-            EngagementUndertakingAssignmentTable,
-        ),
+        ("Active Assignments", lambda p: p.get_assignments(), EngagementUndertakingAssignmentTable),
     ]
+
+
+@method_decorator([has_permission_decorator("add_person")], name="dispatch")
+class PersonCreateView(EntityCreateView):
+    """Create a new person."""
+
+    model = Person
+    form_class = PersonForm
+    success_url_name = "person-detail"
+    list_url_name = "person-list"
+
+
+@method_decorator([has_permission_decorator("change_person")], name="dispatch")
+class PersonUpdateView(EntityUpdateView):
+    """Edit an existing person."""
+
+    model = Person
+    form_class = PersonForm
+    success_url_name = "person-detail"
+
+
+@method_decorator([has_permission_decorator("delete_person")], name="dispatch")
+class PersonDeleteView(EntityDeleteView):
+    """Delete a person."""
+
+    model = Person
+    success_url_name = "person-list"

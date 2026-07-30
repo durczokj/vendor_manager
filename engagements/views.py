@@ -1,49 +1,35 @@
 """Views for the engagements app."""
 
-from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from rolepermissions.decorators import has_permission_decorator
 
-from vendor_manager.views import BaseDetailView, BaseListView
+from vendor_manager.cbv import EntityCreateView, EntityDeleteView, EntityDetailView, EntityListView, EntityUpdateView
 
-from .forms import EngagementForm, EngagementOrderVersionAssignmentForm, EngagementUndertakingAssignmentForm
-from .models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
-from .tables import (
-    EngagementOrderVersionAssignmentTable,
-    EngagementTable,
-    EngagementUndertakingAssignmentTable,
-)
+from .forms import EngagementForm, EngagementUndertakingAssignmentForm
+from .models import Engagement, EngagementUndertakingAssignment
+from .tables import EngagementTable, EngagementUndertakingAssignmentTable
 
 
 @method_decorator([has_permission_decorator("view_engagement")], name="dispatch")
-class EngagementsView(BaseListView):
-    """View for listing all engagements and creating a new engagement."""
+class EngagementListView(EntityListView):
+    """List all engagements."""
 
     model = Engagement
-    redirect_to = "engagement"
-    form_class = EngagementForm
-    permission_view = "view_engagement"
-    permission_manage = "manage_engagement"
-    permission_add = "add_engagement"
-    permission_change = "change_engagement"
     table_class = EngagementTable
     page_title = "Engagements"
-    add_url_name = "engagements"
+    permission_create = "add_engagement"
+    create_url_name = "engagement-create"
 
 
-@method_decorator([login_required, has_permission_decorator("view_engagement")], name="dispatch")
-class EngagementView(BaseDetailView):
-    """View for retrieving, updating, and deleting an engagement."""
+@method_decorator([has_permission_decorator("view_engagement")], name="dispatch")
+class EngagementDetailView(EntityDetailView):
+    """Show a single engagement."""
 
     model = Engagement
-    form_class = EngagementForm
-    permission_view = "view_engagement"
-    permission_manage = "manage_engagement"
     permission_change = "change_engagement"
-    permission_delete = "delete_engagement"
-    redirect_to = "engagement"
-    item_url_name = "engagement"
-    list_url_name = "engagements"
+    update_url_name = "engagement-update"
+    delete_url_name = "engagement-delete"
+    list_url_name = "engagement-list"
     detail_fields = [
         ("ID", "id"),
         ("Person", "person"),
@@ -53,43 +39,57 @@ class EngagementView(BaseDetailView):
         ("FTE", "fte"),
     ]
     related_table_specs = [
-        (
-            "Undertaking Assignments",
-            lambda e: e.undertaking_assignments.all(),
-            EngagementUndertakingAssignmentTable,
-        ),
+        ("Undertaking Assignments", lambda e: e.undertaking_assignments.all(), EngagementUndertakingAssignmentTable),
     ]
 
 
+@method_decorator([has_permission_decorator("add_engagement")], name="dispatch")
+class EngagementCreateView(EntityCreateView):
+    """Create a new engagement."""
+
+    model = Engagement
+    form_class = EngagementForm
+    success_url_name = "engagement-detail"
+    list_url_name = "engagement-list"
+
+
+@method_decorator([has_permission_decorator("change_engagement")], name="dispatch")
+class EngagementUpdateView(EntityUpdateView):
+    """Edit an existing engagement (calls update_engagement service via form.save)."""
+
+    model = Engagement
+    form_class = EngagementForm
+    success_url_name = "engagement-detail"
+
+
+@method_decorator([has_permission_decorator("delete_engagement")], name="dispatch")
+class EngagementDeleteView(EntityDeleteView):
+    """Delete an engagement."""
+
+    model = Engagement
+    success_url_name = "engagement-list"
+
+
 @method_decorator([has_permission_decorator("view_engagement_undertaking_assignment")], name="dispatch")
-class EngagementUndertakingAssignmentsView(BaseListView):
-    """View for listing all engagement undertaking assignments and creating a new engagement undertaking assignment."""
+class EngagementUndertakingAssignmentListView(EntityListView):
+    """List all engagement–undertaking assignments."""
 
     model = EngagementUndertakingAssignment
-    redirect_to = "engagement_undertaking_assignment"
-    form_class = EngagementUndertakingAssignmentForm
-    permission_view = "view_engagement_undertaking_assignment"
-    permission_manage = "manage_engagement"
-    permission_add = "add_engagement_undertaking_assignment"
-    permission_change = "change_engagement_undertaking_assignment"
     table_class = EngagementUndertakingAssignmentTable
     page_title = "Engagement Undertaking Assignments"
-    add_url_name = "engagement_undertaking_assignments"
+    permission_create = "add_engagement_undertaking_assignment"
+    create_url_name = "engagement-undertaking-assignment-create"
 
 
-@method_decorator([login_required, has_permission_decorator("view_engagement_undertaking_assignment")], name="dispatch")
-class EngagementUndertakingAssignmentView(BaseDetailView):
-    """View for retrieving, updating, and deleting an engagement undertaking assignment."""
+@method_decorator([has_permission_decorator("view_engagement_undertaking_assignment")], name="dispatch")
+class EngagementUndertakingAssignmentDetailView(EntityDetailView):
+    """Show a single engagement–undertaking assignment."""
 
     model = EngagementUndertakingAssignment
-    form_class = EngagementUndertakingAssignmentForm
-    permission_view = "view_engagement_undertaking_assignment"
-    permission_manage = "manage_engagement_undertaking_assignment"
     permission_change = "change_engagement_undertaking_assignment"
-    permission_delete = "delete_engagement_undertaking_assignment"
-    redirect_to = "engagement_undertaking_assignment"
-    item_url_name = "engagement_undertaking_assignment"
-    list_url_name = "engagement_undertaking_assignments"
+    update_url_name = "engagement-undertaking-assignment-update"
+    delete_url_name = "engagement-undertaking-assignment-delete"
+    list_url_name = "engagement-undertaking-assignment-list"
     detail_fields = [
         ("ID", "id"),
         ("Engagement", "engagement"),
@@ -100,39 +100,28 @@ class EngagementUndertakingAssignmentView(BaseDetailView):
     ]
 
 
-@method_decorator([has_permission_decorator("view_engagement_order_version_assignment")], name="dispatch")
-class EngagementOrderVersionAssignmentsView(BaseListView):
-    """View for listing all engagement order version assignments and creating new ones."""
+@method_decorator([has_permission_decorator("add_engagement_undertaking_assignment")], name="dispatch")
+class EngagementUndertakingAssignmentCreateView(EntityCreateView):
+    """Create a new engagement–undertaking assignment."""
 
-    model = EngagementOrderVersionAssignment
-    redirect_to = "engagement_order_version_assignment"
-    form_class = EngagementOrderVersionAssignmentForm
-    permission_view = "view_engagement_order_version_assignment"
-    permission_manage = "manage_engagement_order_version_assignment"
-    permission_add = "add_engagement_order_version_assignment"
-    permission_change = "change_engagement_order_version_assignment"
-    table_class = EngagementOrderVersionAssignmentTable
-    page_title = "Engagement Order Version Assignments"
-    add_url_name = "engagement_order_version_assignments"
+    model = EngagementUndertakingAssignment
+    form_class = EngagementUndertakingAssignmentForm
+    success_url_name = "engagement-undertaking-assignment-detail"
+    list_url_name = "engagement-undertaking-assignment-list"
 
 
-@method_decorator(
-    [login_required, has_permission_decorator("view_engagement_order_version_assignment")], name="dispatch"
-)
-class EngagementOrderVersionAssignmentView(BaseDetailView):
-    """View for retrieving, updating, and deleting an engagement order version assignment."""
+@method_decorator([has_permission_decorator("change_engagement_undertaking_assignment")], name="dispatch")
+class EngagementUndertakingAssignmentUpdateView(EntityUpdateView):
+    """Edit an existing engagement–undertaking assignment."""
 
-    model = EngagementOrderVersionAssignment
-    form_class = EngagementOrderVersionAssignmentForm
-    permission_view = "view_engagement_order_version_assignment"
-    permission_manage = "manage_engagement_order_version_assignment"
-    permission_change = "change_engagement_order_version_assignment"
-    permission_delete = "delete_engagement_order_version_assignment"
-    redirect_to = "engagement_order_version_assignment"
-    item_url_name = "engagement_order_version_assignment"
-    list_url_name = "engagement_order_version_assignments"
-    detail_fields = [
-        ("ID", "id"),
-        ("Engagement", "engagement"),
-        ("Order Version", "order_version"),
-    ]
+    model = EngagementUndertakingAssignment
+    form_class = EngagementUndertakingAssignmentForm
+    success_url_name = "engagement-undertaking-assignment-detail"
+
+
+@method_decorator([has_permission_decorator("delete_engagement_undertaking_assignment")], name="dispatch")
+class EngagementUndertakingAssignmentDeleteView(EntityDeleteView):
+    """Delete an engagement–undertaking assignment."""
+
+    model = EngagementUndertakingAssignment
+    success_url_name = "engagement-undertaking-assignment-list"

@@ -8,12 +8,8 @@ from .models import Undertaking
 
 _UNDERTAKING_ACTIONS = """
 {% if table.can_manage %}
-{% url 'undertaking' 0 as delete_pattern %}
-{% url 'undertaking' record.pk as edit_url %}
-<form onsubmit="deleteResource(event,'{{ delete_pattern }}','{{ record.pk }}','{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this undertaking?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'undertaking-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'undertaking-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
@@ -21,7 +17,7 @@ _UNDERTAKING_ACTIONS = """
 class UndertakingTable(BaseEntityTable):
     """Table for listing Undertaking records."""
 
-    id = tables.Column(linkify=("undertaking", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("undertaking-detail", {"pk": tables.A("pk")}))
     actions = tables.TemplateColumn(
         template_code=_UNDERTAKING_ACTIONS,
         orderable=False,

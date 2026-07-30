@@ -8,12 +8,8 @@ from .models import Company
 
 _COMPANY_ACTIONS = """
 {% if table.can_manage %}
-{% url 'company' 0 as delete_pattern %}
-{% url 'company' record.pk as edit_url %}
-<form onsubmit="deleteResource(event,'{{ delete_pattern }}','{{ record.pk }}','{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this company?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'company-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'company-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
@@ -21,7 +17,7 @@ _COMPANY_ACTIONS = """
 class CompanyTable(BaseEntityTable):
     """Table for listing Company records."""
 
-    id = tables.Column(linkify=("company", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("company-detail", {"pk": tables.A("pk")}))
     actions = tables.TemplateColumn(
         template_code=_COMPANY_ACTIONS,
         orderable=False,

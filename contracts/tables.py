@@ -8,12 +8,8 @@ from .models import Contract
 
 _CONTRACT_ACTIONS = """
 {% if table.can_manage %}
-{% url 'contract' 0 as delete_pattern %}
-{% url 'contract' record.pk as edit_url %}
-<form onsubmit="deleteResource(event,'{{ delete_pattern }}','{{ record.pk }}','{{ csrf_token }}');" class="inline">
-  <button type="submit" onclick="return confirm('Delete this contract?');">Delete</button>
-</form>
-<a href="{{ edit_url }}?form=True" class="inline"><button>Edit</button></a>
+<a href="{% url 'contract-update' record.pk %}" class="inline"><button>Edit</button></a>
+<a href="{% url 'contract-delete' record.pk %}" class="inline"><button>Delete</button></a>
 {% endif %}
 """
 
@@ -21,7 +17,7 @@ _CONTRACT_ACTIONS = """
 class ContractTable(BaseEntityTable):
     """Table for listing Contract records."""
 
-    id = tables.Column(linkify=("contract", {"item_id": tables.A("pk")}))
+    id = tables.Column(linkify=("contract-detail", {"pk": tables.A("pk")}))
     actions = tables.TemplateColumn(
         template_code=_CONTRACT_ACTIONS,
         orderable=False,
