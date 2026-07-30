@@ -128,7 +128,7 @@ exclude = [
 # P0 scope: only files substantially rewritten or created in P0 are strict-
 # checked in CI. Legacy modules (views.py, utils/*, apps' models/forms/views)
 # are annotated in P7/P8 as part of the strict-typing sweep. Any new code
-# landing in P0 must still pass mypy --strict.
+# landing must still pass mypy --strict.
 files = [
     "vendor_manager/settings.py",
     "vendor_manager/logging.py",
@@ -142,6 +142,30 @@ files = [
     "undertakings/managers.py",
     "engagements/managers.py",
     "leaves/managers.py",
+    # P3.T2: per-app serializers, filters, and viewsets
+    "api/serializers.py",
+    "api/viewsets.py",
+    "companies/serializers.py",
+    "companies/filters.py",
+    "companies/api.py",
+    "contracts/serializers.py",
+    "contracts/filters.py",
+    "contracts/api.py",
+    "people/serializers.py",
+    "people/filters.py",
+    "people/api.py",
+    "orders/serializers.py",
+    "orders/filters.py",
+    "orders/api.py",
+    "undertakings/serializers.py",
+    "undertakings/filters.py",
+    "undertakings/api.py",
+    "engagements/serializers.py",
+    "engagements/filters.py",
+    "engagements/api.py",
+    "leaves/serializers.py",
+    "leaves/filters.py",
+    "leaves/api.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -161,6 +185,8 @@ module = [
     "django_tables2.*",
     "factory.*",
     "pythonjsonlogger.*",
+    "django_filters",
+    "django_filters.*",
 ]
 ignore_missing_imports = true
 
