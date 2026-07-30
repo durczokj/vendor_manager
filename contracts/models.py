@@ -14,3 +14,7 @@ class Contract(models.Model):
     name = models.CharField(max_length=255)
     status = models.CharField(max_length=50)
     size = models.IntegerField()
+
+    def __str__(self) -> str:
+        """Return the name of the contract."""
+        return self.name
