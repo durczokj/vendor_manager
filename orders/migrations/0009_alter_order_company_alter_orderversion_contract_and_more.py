@@ -7,8 +7,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("companies", "0003_rename_identifier_company_id"),
-        ("contracts", "0003_rename_identifier_contract_id"),
+        ("companies", "0001_initial_squashed_0003_rename_identifier_company_id"),
+        ("contracts", "0001_initial_squashed_0003_rename_identifier_contract_id"),
         ("orders", "0001_initial_squashed_0008_rename_identifier_order_id"),
     ]
 
