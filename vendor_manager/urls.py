@@ -33,8 +33,6 @@ urlpatterns = [
     path("companies/", include("companies.urls")),
     path("undertakings/", include("undertakings.urls")),
     path("engagements/", include("engagements.urls")),
-    path("engagement_undertaking_assignments/", include("engagements.engagement_undertaking_assignment_urls")),
-    path("engagement_order_version_assignments/", include("engagements.engagement_order_version_assignment_urls")),
     path("leaves/", include("leaves.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
