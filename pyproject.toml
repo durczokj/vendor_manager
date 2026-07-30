@@ -132,6 +132,7 @@ exclude = [
 files = [
     "vendor_manager/settings.py",
     "vendor_manager/logging.py",
+    "vendor_manager/navigation.py",
     "vendor_manager/wsgi.py",
     "vendor_manager/asgi.py",
     "vendor_manager/tests.py",
