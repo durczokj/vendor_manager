@@ -3,7 +3,17 @@
 from __future__ import annotations
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from rolepermissions.checkers import has_role
+
+
+def _get_user_person_pk(user: User) -> object | None:
+    """Return the primary key of the person's profile linked to the user."""
+    try:
+        return user.person.pk
+    except ObjectDoesNotExist:
+        return None
 
 
 class OrderQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [Order] once strict scope widens
@@ -18,10 +28,23 @@ class OrderQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add
         Returns:
             A filtered OrderQuerySet.
 
-        Raises:
-            NotImplementedError: Implementation lands in P2.T5.
         """
-        raise NotImplementedError
+        if has_role(user, "admin"):
+            return self
+
+        person_pk = _get_user_person_pk(user)
+        if person_pk is None:
+            return self.none()
+
+        if has_role(user, "undertaking_manager"):
+            return self.filter(
+                versions__engagement_assignments__engagement__undertaking_assignments__undertaking__manager_id=person_pk
+            ).distinct()
+
+        if has_role(user, "person"):
+            return self.filter(versions__engagement_assignments__engagement__person_id=person_pk).distinct()
+
+        return self.none()
 
 
 OrderManager = models.Manager.from_queryset(OrderQuerySet)
@@ -39,10 +62,23 @@ class OrderVersionQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P
         Returns:
             A filtered OrderVersionQuerySet.
 
-        Raises:
-            NotImplementedError: Implementation lands in P2.T5.
         """
-        raise NotImplementedError
+        if has_role(user, "admin"):
+            return self
+
+        person_pk = _get_user_person_pk(user)
+        if person_pk is None:
+            return self.none()
+
+        if has_role(user, "undertaking_manager"):
+            return self.filter(
+                engagement_assignments__engagement__undertaking_assignments__undertaking__manager_id=person_pk
+            ).distinct()
+
+        if has_role(user, "person"):
+            return self.filter(engagement_assignments__engagement__person_id=person_pk).distinct()
+
+        return self.none()
 
 
 OrderVersionManager = models.Manager.from_queryset(OrderVersionQuerySet)
