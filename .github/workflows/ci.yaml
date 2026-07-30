@@ -48,11 +48,12 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
+            requirements-docs.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -r requirements.txt -r requirements-dev.txt -r requirements-docs.txt
 
       - name: Ruff — lint
         run: ruff check .
@@ -88,9 +89,4 @@ jobs:
         run: python manage.py check --deploy
 
       - name: MkDocs build
-        run: |
-          if [ -f mkdocs.yml ]; then
-            mkdocs build --strict
-          else
-            echo "::notice::MkDocs not yet configured — this step becomes enforcing in Phase 6."
-          fi
+        run: mkdocs build --strict

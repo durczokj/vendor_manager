@@ -20,7 +20,27 @@ COPY requirements.txt /app/
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Production stage
+# Stage 2: Docs build stage — builds the MkDocs site (FR-53)
+FROM python:3.13-slim AS docs-builder
+
+RUN mkdir /app
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN pip install --upgrade pip
+
+COPY requirements-docs.txt /app/
+RUN pip install --no-cache-dir -r requirements-docs.txt
+
+# Only the files mkdocs needs
+COPY mkdocs.yml /app/
+COPY docs/ /app/docs/
+
+RUN mkdocs build --strict
+
+# Stage 3: Production stage
 FROM python:3.13-slim
 
 RUN useradd -m -r appuser && \
@@ -36,6 +56,9 @@ WORKDIR /app
 
 # Copy application code
 COPY --chown=appuser:appuser . .
+
+# Copy the pre-built MkDocs site from docs-builder (FR-53)
+COPY --from=docs-builder --chown=appuser:appuser /app/site/ /app/site/
 
 # Collect static files
 RUN python manage.py collectstatic --noinput
