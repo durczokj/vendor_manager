@@ -96,7 +96,7 @@ class OrderVersionCloneView(View):
                 "submit_label": "Clone",
                 "page_title": f"Clone Latest Version of Order: {order.name}",
                 "cancel_url": reverse("order-detail", kwargs={"pk": pk}),
-                "form_action": request.path,
+                "form_action": reverse("order-version-clone", kwargs={"pk": pk}),
             },
         )
 
@@ -114,4 +114,4 @@ class OrderVersionCloneView(View):
             )
             return redirect("order-detail", pk=pk)
         messages.error(request, form.errors)
-        return HttpResponseRedirect(request.path)
+        return HttpResponseRedirect(reverse("order-version-clone", kwargs={"pk": pk}))
