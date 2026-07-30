@@ -14,6 +14,7 @@ from vendor_manager.views import BaseDetailView, BaseListView
 
 from .forms import CloneLatestVersionForm, OrderForm, OrderVersionForm
 from .models import Order, OrderVersion
+from .services import create_new_order_version
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +63,12 @@ class OrderView(BaseDetailView):
             logger.debug("Cloning latest version for order: %s", instance)
             form = CloneLatestVersionForm(data)
             if form.is_valid():
-                instance.create_new_version(
-                    form.cleaned_data["contract"],
-                    form.cleaned_data["start_date"],
-                    form.cleaned_data["end_date"],
-                    form.cleaned_data["copy_engagement_assignments"],
+                create_new_order_version(
+                    order=instance,
+                    contract=form.cleaned_data["contract"],
+                    start_date=form.cleaned_data["start_date"],
+                    end_date=form.cleaned_data["end_date"],
+                    copy_engagement_assignments=form.cleaned_data["copy_engagement_assignments"],
                 )
                 return redirect("order", item_id=instance.id)
             else:
