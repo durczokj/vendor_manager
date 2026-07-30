@@ -10,8 +10,8 @@ class Person(models.Model):
     id = models.CharField(primary_key=True, max_length=6)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    description = models.TextField(blank=False, null=True)
-    location = models.CharField(max_length=255, blank=False, null=True)
+    description = models.TextField(blank=True, null=False, default="")
+    location = models.CharField(max_length=255, blank=True, null=False, default="")
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
 
     @property
@@ -30,9 +30,8 @@ class Person(models.Model):
 
     def get_assignments(self):
         """Return all assignments for this person."""
-        """Return all assignments for this person."""
-        assignmnents = []
+        assignments = []
         for eng in self.engagements.all():
             for ass in eng.undertaking_assignments.all():
-                assignmnents.append(ass)
-        return assignmnents
+                assignments.append(ass)
+        return assignments
