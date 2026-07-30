@@ -1,15 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Delete {{ object }}{% endblock %}
+{% block title %}Delete {{ object }}?{% endblock %}
 
 {% block content %}
-<h1>Delete {{ object }}</h1>
-<p>Are you sure you want to delete <strong>{{ object }}</strong>?</p>
+<h1>Delete {{ object }}?</h1>
 <form method="post">
   {% csrf_token %}
-  <button type="submit">Yes, delete</button>
+  <button type="submit">Yes</button>
   {% if back_url %}
-    <a href="{{ back_url }}"><button type="button">Cancel</button></a>
+    <a href="{{ back_url }}">Cancel</a>
   {% endif %}
 </form>
 {% endblock %}
