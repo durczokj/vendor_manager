@@ -1,4 +1,4 @@
-"""API tests for the dashboard summary endpoint (P5.T2).
+"""API tests for the dashboard summary endpoint (P5.T2) and entity options endpoint (P5.T3).
 
 Verifies:
 - GET /api/v1/dashboards/summary/ and POST /api/v1/dashboards/summary/
@@ -7,6 +7,7 @@ Verifies:
   entitled to see.
 - Unauthenticated requests are rejected with 403.
 - Invalid filter parameters return 400.
+- GET /api/v1/dashboards/entity-options/ returns accessible entity lists.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ def _auth(username: str, password: str = "testpass") -> dict[str, str]:
 
 
 SUMMARY_URL = "/api/v1/dashboards/summary/"
+ENTITY_OPTIONS_URL = "/api/v1/dashboards/entity-options/"
 
 
 # ---------------------------------------------------------------------------
@@ -406,4 +408,69 @@ def test_openapi_schema_includes_dashboards_summary(client, api_data):
     paths = schema.get("paths", {})
     assert any("dashboards/summary" in p for p in paths), (
         f"Expected dashboards/summary in OpenAPI paths, got: {list(paths.keys())}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Entity options endpoint (P5.T3)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_entity_options_unauthenticated_returns_401_or_403(client, api_data):
+    """Unauthenticated GET on entity-options is rejected."""
+    response = client.get(ENTITY_OPTIONS_URL)
+    assert response.status_code in (401, 403)
+
+
+@pytest.mark.django_db
+def test_entity_options_admin_returns_200_with_all_keys(client, api_data):
+    """Admin GET returns 200 with all expected entity-type keys."""
+    response = client.get(ENTITY_OPTIONS_URL, **_auth("adm"))
+    assert response.status_code == 200
+    data = response.json()
+    for key in ("persons", "companies", "orders", "undertakings", "engagements"):
+        assert key in data, f"Missing key {key!r} in entity-options response"
+
+
+@pytest.mark.django_db
+def test_entity_options_items_have_id_and_name(client, api_data):
+    """Each entity in the entity-options response has 'id' and 'name' fields."""
+    response = client.get(ENTITY_OPTIONS_URL, **_auth("adm"))
+    assert response.status_code == 200
+    data = response.json()
+    for key in ("persons", "companies", "orders", "undertakings", "engagements"):
+        for item in data[key]:
+            assert "id" in item, f"Item in {key!r} is missing 'id': {item}"
+            assert "name" in item, f"Item in {key!r} is missing 'name': {item}"
+
+
+@pytest.mark.django_db
+def test_entity_options_admin_sees_all_persons(client, api_data):
+    """Admin entity-options includes all persons."""
+    response = client.get(ENTITY_OPTIONS_URL, **_auth("adm"))
+    assert response.status_code == 200
+    person_ids = {item["id"] for item in response.json()["persons"]}
+    assert "A00001" in person_ids
+    assert "B00001" in person_ids
+
+
+@pytest.mark.django_db
+def test_entity_options_person_role_sees_only_own_person(client, api_data):
+    """Person-role entity-options only includes the authenticated user's person."""
+    response = client.get(ENTITY_OPTIONS_URL, **_auth("prs"))
+    assert response.status_code == 200
+    person_ids = {item["id"] for item in response.json()["persons"]}
+    assert "A00001" in person_ids
+    assert "B00001" not in person_ids, "person-role must not see other persons in entity-options"
+
+
+@pytest.mark.django_db
+def test_entity_options_openapi_schema_includes_endpoint(client, api_data):
+    """The OpenAPI schema includes the entity-options path."""
+    response = client.get("/api/v1/schema/", **_auth("adm"))
+    assert response.status_code == 200
+    paths = response.json().get("paths", {})
+    assert any("entity-options" in p for p in paths), (
+        f"Expected entity-options in OpenAPI paths, got: {list(paths.keys())}"
     )

@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Vendor Manager – Dashboard{% endblock %}
+
+{% block content %}
+<h2>Cost Dashboard</h2>
+
+<form id="dashboard-filters">
+  <div class="filter-row">
+    <div class="filter-col">
+      <label for="id_class_">Group by</label>
+      <select id="id_class_" name="class_">
+        <option value="Person">Person</option>
+        <option value="Company">Company</option>
+        <option value="Order">Order</option>
+        <option value="Undertaking">Undertaking</option>
+        <option value="Engagement">Engagement</option>
+      </select>
+    </div>
+    <div class="filter-col">
+      <label for="id_granularity">Granularity</label>
+      <select id="id_granularity" name="granularity">
+        <option value="Total">Total</option>
+        <option value="Monthly">Monthly</option>
+        <option value="Daily">Daily</option>
+      </select>
+    </div>
+    <div class="filter-col">
+      <label for="id_date_from">From</label>
+      <input type="date" id="id_date_from" name="date_from">
+    </div>
+    <div class="filter-col">
+      <label for="id_date_to">To</label>
+      <input type="date" id="id_date_to" name="date_to">
+    </div>
+  </div>
+
+  <br>
+
+  <div class="filter-row filter-row--wrap">
+    <div class="filter-col">
+      <label for="id_person_ids">Persons</label>
+      <select id="id_person_ids" name="person_ids" multiple size="5">
+      </select>
+    </div>
+    <div class="filter-col">
+      <label for="id_company_ids">Companies</label>
+      <select id="id_company_ids" name="company_ids" multiple size="5">
+      </select>
+    </div>
+    <div class="filter-col">
+      <label for="id_order_ids">Orders</label>
+      <select id="id_order_ids" name="order_ids" multiple size="5">
+      </select>
+    </div>
+    <div class="filter-col">
+      <label for="id_undertaking_ids">Undertakings</label>
+      <select id="id_undertaking_ids" name="undertaking_ids" multiple size="5">
+      </select>
+    </div>
+    <div class="filter-col">
+      <label for="id_engagement_ids">Engagements</label>
+      <select id="id_engagement_ids" name="engagement_ids" multiple size="5">
+      </select>
+    </div>
+  </div>
+
+  <br>
+
+  <button type="submit">Apply</button>
+  <button type="button" id="reset-btn">Reset</button>
+</form>
+
+<div id="dashboard-error" class="alert alert-danger" style="display:none;"></div>
+
+<h3 id="chart-title">Cost Chart</h3>
+<div id="cost-chart" style="width:100%;min-height:400px;"></div>
+
+<h3>Cost Table</h3>
+<div id="cost-table-wrapper" style="overflow-x:auto;">
+  <table id="cost-table" class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Cost</th>
+        <th>Period</th>
+      </tr>
+    </thead>
+    <tbody id="cost-table-body">
+    </tbody>
+  </table>
+</div>
+
+{# Plotly.js 2.35.2 from the official CDN — versioned for reproducible builds #}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" crossorigin="anonymous"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  var SUMMARY_URL = "{% url 'api-v1:dashboards-summary' %}";
+  var OPTIONS_URL = "{% url 'api-v1:dashboards-entity-options' %}";
+
+  // ── Populate entity-filter dropdowns ────────────────────────────────────
+
+  function populateSelect(selectId, items) {
+    var sel = document.getElementById(selectId);
+    sel.innerHTML = "";
+    items.forEach(function (item) {
+      var opt = document.createElement("option");
+      opt.value = item.id;
+      opt.textContent = item.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  fetch(OPTIONS_URL, { credentials: "same-origin" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("Failed to load entity options: " + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      populateSelect("id_person_ids", data.persons);
+      populateSelect("id_company_ids", data.companies);
+      populateSelect("id_order_ids", data.orders);
+      populateSelect("id_undertaking_ids", data.undertakings);
+      populateSelect("id_engagement_ids", data.engagements);
+    })
+    .catch(function (err) {
+      console.error(err);
+    });
+
+  // ── Collect selected values from a <select multiple> ────────────────────
+
+  function getSelectedValues(selectId) {
+    var sel = document.getElementById(selectId);
+    var vals = [];
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].selected) {
+        vals.push(sel.options[i].value);
+      }
+    }
+    return vals;
+  }
+
+  // ── Build query-string URL from form values ──────────────────────────────
+
+  function buildUrl() {
+    var params = new URLSearchParams();
+    params.set("class_", document.getElementById("id_class_").value);
+    params.set("granularity", document.getElementById("id_granularity").value);
+
+    var dateFrom = document.getElementById("id_date_from").value;
+    var dateTo   = document.getElementById("id_date_to").value;
+    if (dateFrom) params.set("date_from", dateFrom);
+    if (dateTo)   params.set("date_to", dateTo);
+
+    getSelectedValues("id_person_ids").forEach(function (v) {
+      params.append("person_ids", v);
+    });
+    getSelectedValues("id_company_ids").forEach(function (v) {
+      params.append("company_ids", v);
+    });
+    getSelectedValues("id_order_ids").forEach(function (v) {
+      params.append("order_ids", v);
+    });
+    getSelectedValues("id_undertaking_ids").forEach(function (v) {
+      params.append("undertaking_ids", v);
+    });
+    getSelectedValues("id_engagement_ids").forEach(function (v) {
+      params.append("engagement_ids", v);
+    });
+
+    return SUMMARY_URL + "?" + params.toString();
+  }
+
+  // ── Render the Plotly chart ──────────────────────────────────────────────
+
+  function renderChart(payload) {
+    var rows = payload.rows;
+    var granularity = payload.granularity;
+
+    // Build traces: one trace per entity (name), x = time bucket, y = cost.
+    // For Total granularity we use a bar chart grouped by name.
+    var names = [];
+    rows.forEach(function (row) {
+      if (names.indexOf(row.name) === -1) names.push(row.name);
+    });
+
+    var traces;
+
+    if (granularity === "Total") {
+      // Simple bar: one bar per entity name
+      var xVals = names;
+      var yVals = names.map(function (n) {
+        var total = 0;
+        rows.forEach(function (r) { if (r.name === n) total += r.cost; });
+        return total;
+      });
+      traces = [{
+        type: "bar",
+        x: xVals,
+        y: yVals,
+        marker: { color: "#0d6efd" }
+      }];
+    } else {
+      // Multi-trace line chart: one trace per entity name, x = date or month
+      traces = names.map(function (name) {
+        var filtered = rows.filter(function (r) { return r.name === name; });
+        filtered.sort(function (a, b) {
+          var ka = granularity === "Daily" ? a.date : a.month;
+          var kb = granularity === "Daily" ? b.date : b.month;
+          return ka < kb ? -1 : ka > kb ? 1 : 0;
+        });
+        return {
+          type: "scatter",
+          mode: "lines+markers",
+          name: name,
+          x: filtered.map(function (r) { return granularity === "Daily" ? r.date : r.month; }),
+          y: filtered.map(function (r) { return r.cost; })
+        };
+      });
+    }
+
+    var layout = {
+      autosize: true,
+      margin: { t: 40, b: 80, l: 80, r: 20 },
+      xaxis: { title: granularity === "Total" ? payload.class_ : "Period" },
+      yaxis: { title: "Cost" }
+    };
+
+    Plotly.react("cost-chart", traces, layout, { responsive: true });
+  }
+
+  // ── Render the HTML table ────────────────────────────────────────────────
+
+  function renderTable(payload) {
+    var rows = payload.rows;
+    var granularity = payload.granularity;
+    var tbody = document.getElementById("cost-table-body");
+    tbody.innerHTML = "";
+
+    rows.forEach(function (row) {
+      var period = "";
+      if (granularity === "Daily") {
+        period = row.date || "";
+      } else if (granularity === "Monthly") {
+        period = row.month || "";
+      }
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + escHtml(String(row.name)) + "</td>" +
+        "<td>" + Number(row.cost).toFixed(2) + "</td>" +
+        "<td>" + escHtml(period) + "</td>";
+      tbody.appendChild(tr);
+    });
+  }
+
+  function escHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ── Show / hide error banner ─────────────────────────────────────────────
+
+  function showError(msg) {
+    var el = document.getElementById("dashboard-error");
+    el.textContent = msg;
+    el.style.display = "";
+  }
+
+  function clearError() {
+    var el = document.getElementById("dashboard-error");
+    el.style.display = "none";
+    el.textContent = "";
+  }
+
+  // ── Main fetch + render cycle ────────────────────────────────────────────
+
+  function loadDashboard() {
+    clearError();
+    var url = buildUrl();
+
+    fetch(url, { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) {
+          return r.json().then(function (body) {
+            throw new Error(JSON.stringify(body));
+          });
+        }
+        return r.json();
+      })
+      .then(function (data) {
+        var title = "Cost by " + data.class_ + " (" + data.granularity + ")";
+        document.getElementById("chart-title").textContent = title;
+        renderChart(data);
+        renderTable(data);
+      })
+      .catch(function (err) {
+        showError("Could not load dashboard data: " + err.message);
+      });
+  }
+
+  // ── Wire up form ─────────────────────────────────────────────────────────
+
+  document.getElementById("dashboard-filters").addEventListener("submit", function (e) {
+    e.preventDefault();
+    loadDashboard();
+  });
+
+  document.getElementById("reset-btn").addEventListener("click", function () {
+    document.getElementById("dashboard-filters").reset();
+    loadDashboard();
+  });
+
+  // Initial load
+  loadDashboard();
+}());
+</script>
+{% endblock %}

@@ -3,6 +3,10 @@
 Exposes ``GET /api/v1/dashboards/summary/`` and
 ``POST /api/v1/dashboards/summary/`` which both delegate to
 :func:`dashboards.services.build_summary`.
+
+Also exposes ``GET /api/v1/dashboards/entity-options/`` which returns the
+lists of entities accessible to the requesting user, used to populate the
+dashboard filter dropdowns (FR-43, FR-46).
 """
 
 from __future__ import annotations
@@ -17,7 +21,12 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from companies.models import Company
 from dashboards.services import VALID_CLASSES, VALID_GRANULARITIES, build_summary
+from engagements.models import Engagement
+from orders.models import Order
+from people.models import Person
+from undertakings.models import Undertaking
 
 
 class _SummaryRequestSerializer(serializers.Serializer):  # type: ignore[type-arg]
@@ -230,3 +239,70 @@ class DashboardSummaryView(APIView):
             200 with the summary payload, or 400 on validation failure.
         """
         return self._run(dict(request.data))
+
+
+class _EntityOptionSerializer(serializers.Serializer):  # type: ignore[type-arg]
+    """Represents a single selectable entity option."""
+
+    id = serializers.JSONField(help_text="Primary key of the entity.")
+    name = serializers.CharField(help_text="Human-readable display name.")
+
+
+class _EntityOptionsResponseSerializer(serializers.Serializer):  # type: ignore[type-arg]
+    """Represents the entity options response payload."""
+
+    persons = _EntityOptionSerializer(many=True, help_text="Persons accessible to the requesting user.")
+    companies = _EntityOptionSerializer(many=True, help_text="Companies accessible to the requesting user.")
+    orders = _EntityOptionSerializer(many=True, help_text="Orders accessible to the requesting user.")
+    undertakings = _EntityOptionSerializer(many=True, help_text="Undertakings accessible to the requesting user.")
+    engagements = _EntityOptionSerializer(many=True, help_text="Engagements accessible to the requesting user.")
+
+
+@extend_schema(
+    summary="Dashboard entity options",
+    description=(
+        "Returns lists of entities accessible to the requesting user (FR-43, FR-46). "
+        "Use this endpoint to populate dashboard filter dropdowns; it always respects "
+        "the caller's role scope via accessible_to(user) — never returns a full list."
+    ),
+    responses={200: _EntityOptionsResponseSerializer},
+    tags=["dashboards"],
+)
+class DashboardEntityOptionsView(APIView):
+    """GET ``/api/v1/dashboards/entity-options/``.
+
+    Returns the accessible entity lists used to populate the dashboard
+    filter dropdowns.  Every queryset is scoped via ``accessible_to(user)``
+    so callers only see entities within their role scope.
+    """
+
+    def get(self, request: Request) -> Response:
+        """Handle ``GET /api/v1/dashboards/entity-options/``.
+
+        Args:
+            request: The incoming DRF request.
+
+        Returns:
+            200 response with lists of accessible entities grouped by type.
+        """
+        user = cast(User, request.user)
+
+        persons = [
+            {"id": p.pk, "name": str(p)} for p in Person.objects.accessible_to(user).order_by("last_name", "first_name")
+        ]
+        companies = [{"id": c.pk, "name": str(c)} for c in Company.objects.accessible_to(user).order_by("name")]
+        orders = [{"id": o.pk, "name": o.name} for o in Order.objects.accessible_to(user).order_by("name")]
+        undertakings = [{"id": u.pk, "name": str(u)} for u in Undertaking.objects.accessible_to(user).order_by("name")]
+        engagements = [
+            {"id": e.pk, "name": f"Engagement {e.pk}"} for e in Engagement.objects.accessible_to(user).order_by("pk")
+        ]
+
+        payload = {
+            "persons": persons,
+            "companies": companies,
+            "orders": orders,
+            "undertakings": undertakings,
+            "engagements": engagements,
+        }
+        resp_ser = _EntityOptionsResponseSerializer(payload)
+        return Response(resp_ser.data)
