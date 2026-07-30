@@ -2,21 +2,16 @@
 
 from rolepermissions.permissions import register_object_checker
 
-from vendor_manager.roles import Admin, UndertakingManager
-
 
 @register_object_checker()
 def access_order(role, user, order):
     """Check if a user has access to an order."""
-    if role == Admin:
-        return True
+    del role
+    return type(order).objects.accessible_to(user).filter(pk=order.pk).exists()
 
-    if role == UndertakingManager:
-        undertaking_orders = set()
-        for un in user.person.managed_undertakings.all():
-            for ass in un.engagement_assignments.all():
-                undertaking_orders.add(ass.engagement.order)
-        if order in undertaking_orders:
-            return True
 
-    return False
+@register_object_checker()
+def access_order_version(role, user, order_version):
+    """Check if a user has access to an order version."""
+    del role
+    return type(order_version).objects.accessible_to(user).filter(pk=order_version.pk).exists()

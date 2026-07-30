@@ -2,21 +2,23 @@
 
 from rolepermissions.permissions import register_object_checker
 
-from vendor_manager.roles import Admin, Person, UndertakingManager
-
 
 @register_object_checker()
 def access_engagement(role, user, engagement):
     """Check if user has access to the engagement."""
-    if role == Admin:
-        return True
+    del role
+    return type(engagement).objects.accessible_to(user).filter(pk=engagement.pk).exists()
 
-    if role == UndertakingManager:
-        undertaking_engagements = set()
-        for un in user.person.managed_undertakings.all():
-            for ass in un.engagement_assignments.all():
-                undertaking_engagements.add(ass.engagement)
-        if engagement in undertaking_engagements:
-            return True
 
-    return bool(role == Person and engagement.person == user.person)
+@register_object_checker()
+def access_engagement_order_version_assignment(role, user, assignment):
+    """Check if user has access to the engagement order version assignment."""
+    del role
+    return type(assignment).objects.accessible_to(user).filter(pk=assignment.pk).exists()
+
+
+@register_object_checker()
+def access_engagement_undertaking_assignment(role, user, assignment):
+    """Check if user has access to the engagement undertaking assignment."""
+    del role
+    return type(assignment).objects.accessible_to(user).filter(pk=assignment.pk).exists()
