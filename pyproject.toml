@@ -172,6 +172,8 @@ files = [
     # P5.T1: dashboard selectors and services
     "dashboards/selectors.py",
     "dashboards/services.py",
+    # P5.T2: dashboard summary API endpoint
+    "dashboards/api.py",
 ]
 
 [[tool.mypy.overrides]]
