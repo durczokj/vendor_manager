@@ -78,11 +78,17 @@ known-first-party = [
 python_version = "3.13"
 strict = true
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+# Excluded paths are never analyzed — even when imported from a P0-scope module.
 exclude = [
     "^.*/migrations/.*",
     "^staticfiles/.*",
     "^notebooks/.*",
     "^manage\\.py$",
+    # Going away in P5; annotating it is wasted work.
+    "^dashboards/summary_dashboard\\.py$",
+    # Tests get their own, looser regime — see the override below and P7/P8.
+    "^.*/tests\\.py$",
+    "^.*/tests/.*",
 ]
 
 # P0 scope: only new/edited files are strict-checked in CI. Existing untyped
