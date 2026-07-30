@@ -1,14 +1,9 @@
-"""Viewsets exposed under /api/v1/."""
+"""Viewsets exposed under /api/v1/.
 
-from rest_framework import viewsets
+All viewset implementations live in ``<app>/api.py``.  This module
+re-exports ``CompanyViewSet`` for backward compatibility.
+"""
 
-from companies.models import Company
+from companies.api import CompanyViewSet
 
-from .serializers import CompanySerializer
-
-
-class CompanyViewSet(viewsets.ModelViewSet):
-    """Company list/create/detail endpoints."""
-
-    queryset = Company.objects.all().order_by("id")
-    serializer_class = CompanySerializer
+__all__ = ["CompanyViewSet"]

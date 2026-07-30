@@ -1,15 +1,9 @@
-"""Serializers used by the API surface."""
+"""Serializers used by the API surface.
 
-from rest_framework import serializers
+All serializer implementations live in ``<app>/serializers.py``.  This module
+re-exports ``CompanySerializer`` for backward compatibility.
+"""
 
-from companies.models import Company
+from companies.serializers import CompanySerializer
 
-
-class CompanySerializer(serializers.ModelSerializer[Company]):
-    """Serialize company rows for API create/list operations."""
-
-    class Meta:
-        """Model serializer metadata."""
-
-        model = Company
-        fields = ["id", "name", "email"]
+__all__ = ["CompanySerializer"]
