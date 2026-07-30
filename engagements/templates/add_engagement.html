@@ -1,4 +1,4 @@
-{% extends "master.html" %}
+{% extends "base.html" %}
 
 {% block title %}
   Add Engagement
@@ -8,11 +8,11 @@
   <h1>
     Add Engagement
     <button type="submit" form="add-form">Save</button>
-    <a href="/engagements/">
+    <a href="{% url 'engagements' %}">
       <button type="button">Cancel</button>
     </a>
   </h1>
-  <form id="add-form" method="post" action="/engagements/">
+  <form id="add-form" method="post" action="{% url 'engagements' %}">
     {% csrf_token %}
     {{ form.as_p }}
   </form>

@@ -1,4 +1,4 @@
-{% extends "master.html" %}
+{% extends "base.html" %}
 
 {% block title %}
   Add Contract
@@ -8,11 +8,11 @@
   <h1>
     Add Contract
     <button type="submit" form="add-form">Save</button>
-    <a href="/contracts/">
+    <a href="{% url 'contracts' %}">
       <button type="button">Cancel</button>
     </a>
   </h1>
-  <form id="add-form" method="post" action="/contracts/">
+  <form id="add-form" method="post" action="{% url 'contracts' %}">
     {% csrf_token %}
     {{ form.as_p }}
   </form>

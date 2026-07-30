@@ -1,4 +1,4 @@
-{% extends "master.html" %}
+{% extends "base.html" %}
 {% load plotly_dash %}
 
 {% block title %}
@@ -11,20 +11,20 @@
 
 <form id="add-form" method="get">
   {% csrf_token %}
-  <div style="display: flex; gap: 1rem;">
-    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+  <div class="filter-row">
+    <div class="filter-col">
       {{ form.class_.label_tag }}
       {{ form.class_ }}
     </div>
-    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+    <div class="filter-col">
       {{ form.granularity.label_tag }}
       {{ form.granularity }}
     </div>
-    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+    <div class="filter-col">
       {{ form.min_date.label_tag }}
       {{ form.min_date }}
     </div>
-    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+    <div class="filter-col">
       {{ form.max_date.label_tag }}
       {{ form.max_date }}
     </div>
@@ -32,10 +32,10 @@
 
   <br/>
 
-  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+  <div class="filter-row filter-row--wrap">
     {% for field in form %}
       {% if field.name not in "class_ granularity min_date max_date" %}
-        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+        <div class="filter-col">
           {{ field.label_tag }}
           {{ field }}
         </div>
