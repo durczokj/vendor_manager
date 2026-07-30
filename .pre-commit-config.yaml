@@ -1,41 +1,44 @@
+# Pre-commit hooks — mirror the fast tools that also run in CI (NFR-32).
+# mypy is intentionally NOT here: it's slow and only runs in CI (NFR-31).
 default_language_version:
-  python: python3.9
+  python: python3.13
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
-        args: ['--maxkb=1024']
+        args: ["--maxkb=1024"]
       - id: trailing-whitespace
-      - id: check-json
-      - id: check-yaml
-      - id: check-toml
       - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
       - id: detect-private-key
-      - id: pretty-format-json
-        args: ['--autofix']
+      - id: check-merge-conflict
 
-  - repo: https://github.com/pycqa/isort
-    rev: "5.12.0"
+  # Ruff replaces black + isort + flake8 (NFR-29, NFR-32).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
     hooks:
-      - id: isort
-        name: isort (python)
-        args: ['--line-length=120']
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
 
-  - repo: https://github.com/psf/black
-    rev: "24.3.0"
+  # Nudge Django code toward the current supported version's idioms.
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.22.1
     hooks:
-      - id: black
-        args: ['--line-length=120']
+      - id: django-upgrade
+        args: ["--target-version", "5.1"]
 
-  - repo: https://github.com/pycqa/flake8
-    rev: "7.1.1"
+  # Enforce the deployment checklist locally so problems are caught before
+  # they hit CI. Uses the active virtualenv (assumed dev deps installed).
+  - repo: local
     hooks:
-      - id: flake8
-        additional_dependencies:
-        - flake8-docstrings
-        - flake8-quotes
-        - flake8-builtins
-        - flake8-variables-names
-        - pydocstyle
-        args: ["--extend-ignore=A003,VNE003,A002"]
+      - id: django-check-deploy
+        name: django check --deploy
+        entry: python manage.py check --deploy
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

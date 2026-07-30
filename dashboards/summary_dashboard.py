@@ -97,8 +97,10 @@ class SummaryDashboard:
 
         self.__summary_table = grouped_df
 
-    def get_form(self, data={}):
+    def get_form(self, data=None):
         """Return the form."""
+        if data is None:
+            data = {}
         if len(data) == 0:
             data = {
                 "class_": "Undertaking",

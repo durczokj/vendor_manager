@@ -20,7 +20,7 @@ class LeaveForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """Initialize the form with a user to filter the person queryset."""
         user = kwargs.pop("user", None)
-        super(LeaveForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if user:
             self.fields["person"].queryset = Person.objects.filter(
                 id__in=[

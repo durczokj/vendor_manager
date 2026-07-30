@@ -19,8 +19,4 @@ def access_person(role, user, person):
         if person in managed_people:
             return True
 
-    if role == Person:
-        if person.user == user:
-            return True
-
-    return False
+    return bool(role == Person and person.user == user)

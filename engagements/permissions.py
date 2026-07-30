@@ -19,8 +19,4 @@ def access_engagement(role, user, engagement):
         if engagement in undertaking_engagements:
             return True
 
-    if role == Person:
-        if engagement.person == user.person:
-            return True
-
-    return False
+    return bool(role == Person and engagement.person == user.person)

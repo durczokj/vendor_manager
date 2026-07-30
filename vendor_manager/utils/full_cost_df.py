@@ -152,7 +152,7 @@ def get_full_cost_df():
         over = total_per[total_per > 1]
         if not over.empty:
             eid, dt = over.index[0]
-            raise Exception("Total coverage for engagement %s on date %s is greater than 1" % (eid, dt))
+            raise Exception(f"Total coverage for engagement {eid} on date {dt} is greater than 1")
 
         total_merged = calendar[["engagement_id", "date", "active"]].merge(
             total_per.reset_index(name="total_coverage"),

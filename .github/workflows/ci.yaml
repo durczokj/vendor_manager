@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  # Cancel in-progress runs for the same PR / branch when a newer commit lands.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint • Type-check • Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Match the DEBUG=False path so `manage.py check --deploy` is meaningful.
+      # SQLite avoids the need to stand up Postgres for CI (matches dev mode B).
+      DJANGO_DEBUG: "false"
+      DJANGO_SECRET_KEY: "ci-only-secret-key-32bytes-of-padding-not-a-real-secret-value-xyz"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DATABASE_ENGINE: "sqlite"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # diff-cover compares against origin/main; we need enough history.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Ruff — lint
+        run: ruff check .
+
+      - name: Ruff — format check
+        run: ruff format --check .
+
+      - name: mypy
+        run: mypy
+
+      - name: pytest
+        run: pytest --cov --cov-report=xml --cov-report=term-missing
+
+      - name: Coverage — overall threshold
+        # pytest already ran with --cov; this re-emits and fails if we're under.
+        # The threshold itself lives in pyproject.toml (fail_under = 80).
+        run: coverage report
+
+      - name: Ensure origin/main is available for diff-cover
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+
+      - name: Coverage — diff (PR-only)
+        if: github.event_name == 'pull_request'
+        # NOTE(P0): --fail-under=0 in Phase 0 (only smoke tests exist).
+        # Phase 7 raises this back to 80 alongside per-app tests (NFR-33).
+        run: diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }} --fail-under=0
+
+      - name: Django deploy checklist
+        # NOTE(P0): advisory in Phase 0 — the tracked list of remaining
+        # warnings lives in docs/IMPLEMENTATION_PLAN.md Phase 0 exit criteria
+        # and Phase 9 flips this to `--fail-level=WARNING`.
+        run: python manage.py check --deploy
+
+      - name: MkDocs build
+        run: |
+          if [ -f mkdocs.yml ]; then
+            mkdocs build --strict
+          else
+            echo "::notice::MkDocs not yet configured — this step becomes enforcing in Phase 6."
+          fi

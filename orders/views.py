@@ -1,5 +1,7 @@
 """Views for the orders app."""
 
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
@@ -12,6 +14,8 @@ from vendor_manager.views import BaseDetailView, BaseListView
 
 from .forms import CloneLatestVersionForm, OrderForm, OrderVersionForm
 from .models import Order, OrderVersion
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator([has_permission_decorator("view_order")], name="dispatch")
@@ -55,7 +59,7 @@ class OrderView(BaseDetailView):
         """Handle form submission for creating or updating an item."""
         if request.GET.get("clone_latest_version") == "True":
             data = request.POST
-            print(instance)
+            logger.debug("Cloning latest version for order: %s", instance)
             form = CloneLatestVersionForm(data)
             if form.is_valid():
                 instance.create_new_version(

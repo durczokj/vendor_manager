@@ -1,14 +1,40 @@
-django
-django-role-permissions
-plotly
-pandas
-nbformat
-djangorestframework
+# Runtime dependencies for vendor_manager.
+# Installed inside the production Docker image and in dev environments.
+# Kept minimal and pinned where the upstream cadence is churn-prone.
+#
+# Split from dev deps — see requirements-dev.txt.
+
+# --- Framework ---
+django>=5.1,<5.2
+djangorestframework>=3.15,<3.16
+django-role-permissions>=3.2,<4.0
+
+# --- API / OpenAPI ---
+# Added for P3 (REST API surface). Safe to include now — no runtime effect
+# until Phase 3 wires them up.
+drf-spectacular>=0.28,<0.29
+drf-nested-routers>=0.94,<0.95
+django-filter>=24.3,<26.0
+
+# --- UI helpers (kept from current dev; consumed in P4) ---
+django-crispy-forms>=2.3,<3.0
+crispy-bootstrap5>=2024.10
+django-tables2>=2.7,<3.0
+
+# --- Server / infrastructure ---
 gunicorn==23.0.0
 asgiref==3.8.1
 sqlparse==0.5.2
 psycopg2-binary==2.9.10
-whitenoise
-dash
-django-plotly-dash
-mssql-django
+whitenoise>=6.7,<7.0
+
+# --- Observability / logging ---
+python-json-logger>=2.0,<4.0
+
+# --- Data / plotting (dashboard rework replaces django-plotly-dash in P5) ---
+pandas>=2.2,<3.0
+plotly>=5.24,<7.0
+# Still an INSTALLED_APP + middleware in vendor_manager/settings.py; removed in
+# Phase 5 together with the dashboards/ package.
+django-plotly-dash>=2.4,<3.0
+

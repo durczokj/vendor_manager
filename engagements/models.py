@@ -161,7 +161,7 @@ class Engagement(models.Model):
         over = total_per_date[total_per_date > 1]
         if not over.empty:
             bad_date = over.index[0]
-            raise Exception("Total coverage for engagement %s on date %s is greater than 1" % (self, bad_date))
+            raise Exception(f"Total coverage for engagement {self} on date {bad_date} is greater than 1")
 
         # 5. Active flags (single query, same logic as costs)
         ov_ranges = list(
@@ -185,7 +185,7 @@ class Engagement(models.Model):
 
         if not under_dates.empty:
             for dt in under_dates:
-                logging.warning("Total coverage for engagement %s on date %s is less than 1" % (self, dt.date()))
+                logging.warning(f"Total coverage for engagement {self} on date {dt.date()} is less than 1")
 
             unassigned = pd.DataFrame(
                 {
@@ -213,9 +213,8 @@ class EngagementOrderVersionAssignment(models.Model):
     def clean(self):
         """Clean the class."""
         engagement_order = self.engagement.order
-        if engagement_order:
-            if engagement_order != self.order_version.order:
-                raise ValidationError("The engagement must belong to only one order.")
+        if engagement_order and engagement_order != self.order_version.order:
+            raise ValidationError("The engagement must belong to only one order.")
 
     def save(self):
         """Clean before saving."""
