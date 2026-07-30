@@ -298,6 +298,275 @@ def test_openapi_schema_lists_all_viewsets():
         "/api/v1/engagement-order-version-assignments/",
         "/api/v1/engagement-undertaking-assignments/",
         "/api/v1/leaves/",
+        "/api/v1/engagements/{engagement_pk}/undertaking-assignments/",
+        "/api/v1/engagements/{engagement_pk}/order-version-assignments/",
     ]
     for prefix in expected_prefixes:
         assert any(p.startswith(prefix) for p in paths), f"Missing path prefix: {prefix}"
+
+
+# ---------------------------------------------------------------------------
+# P3.T4 — Custom @action endpoints
+# ---------------------------------------------------------------------------
+
+
+def test_clone_latest_version_happy_path(basic_dataset, admin_user):
+    """Admin can POST to clone-latest and receives a new OrderVersion (201)."""
+    order = basic_dataset["order"]
+    contract2 = Contract.objects.create(id=9002, name="Contract Two", status="active", size=3)
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = reverse("api-v1:orders-clone-latest-version", args=[order.id])
+    response = client.post(
+        url,
+        data={
+            "contract_id": contract2.id,
+            "start_date": "2026-01-01",
+            "end_date": "2026-12-31",
+            "copy_engagement_assignments": True,
+        },
+        content_type="application/json",
+        HTTP_AUTHORIZATION=auth,
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["order"] == order.id
+    assert data["version_number"] == 2
+    assert data["contract"] == contract2.id
+
+
+def test_clone_latest_version_unauthenticated(basic_dataset):
+    """Unauthenticated requests to clone-latest must return 401."""
+    order = basic_dataset["order"]
+    client = Client()
+    url = reverse("api-v1:orders-clone-latest-version", args=[order.id])
+    response = client.post(url, data={}, content_type="application/json")
+    assert response.status_code == 401
+
+
+def test_clone_latest_version_person_role_denied(basic_dataset):
+    """A Person-role user who has no access to the order receives 404 (not found in their queryset)."""
+    order = basic_dataset["order"]
+    contract2 = Contract.objects.create(id=9003, name="Contract Three", status="active", size=2)
+
+    stranger_user = User.objects.create_user("stranger", None, "pw")
+    assign_role(stranger_user, "person")
+    Person.objects.create(id="S00001", first_name="Stranger", last_name="User", user=stranger_user)
+
+    client = Client()
+    auth = _basic_auth_header("stranger", "pw")
+    url = reverse("api-v1:orders-clone-latest-version", args=[order.id])
+    response = client.post(
+        url,
+        data={
+            "contract_id": contract2.id,
+            "start_date": "2026-01-01",
+            "end_date": "2026-12-31",
+        },
+        content_type="application/json",
+        HTTP_AUTHORIZATION=auth,
+    )
+    # The order is not in the stranger's queryset → 404
+    assert response.status_code == 404
+
+
+def test_engagement_costs_happy_path(basic_dataset, admin_user):
+    """Admin can GET /engagements/{id}/costs/ and receives a day-level cost list."""
+    engagement = basic_dataset["engagement"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = reverse("api-v1:engagements-costs", args=[engagement.id])
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    rows = response.json()
+    assert isinstance(rows, list)
+    assert len(rows) == 365  # 2025 has 365 days
+    assert "date" in rows[0]
+    assert "cost" in rows[0]
+
+
+def test_engagement_costs_unauthenticated(basic_dataset):
+    """Unauthenticated requests to /costs/ return 401."""
+    engagement = basic_dataset["engagement"]
+    client = Client()
+    url = reverse("api-v1:engagements-costs", args=[engagement.id])
+    response = client.get(url)
+    assert response.status_code == 401
+
+
+def test_engagement_cost_coverage_happy_path(basic_dataset, admin_user):
+    """Admin can GET /engagements/{id}/cost-coverage/ and receives undertaking rows."""
+    engagement = basic_dataset["engagement"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = reverse("api-v1:engagements-cost-coverage", args=[engagement.id])
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    rows = response.json()
+    assert isinstance(rows, list)
+    # At least one row should exist (undertaking covers Jan–Jun 2025)
+    assert len(rows) > 0
+
+
+def test_engagement_cost_coverage_unauthenticated(basic_dataset):
+    """Unauthenticated requests to /cost-coverage/ return 401."""
+    engagement = basic_dataset["engagement"]
+    client = Client()
+    url = reverse("api-v1:engagements-cost-coverage", args=[engagement.id])
+    response = client.get(url)
+    assert response.status_code == 401
+
+
+def test_person_assignments_happy_path(basic_dataset, admin_user):
+    """Admin can GET /people/{id}/assignments/ and receives undertaking assignment list."""
+    person = basic_dataset["person"]
+    eua = basic_dataset["undertaking_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = reverse("api-v1:people-assignments", args=[person.id])
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["id"] == eua.id
+
+
+def test_person_assignments_unauthenticated(basic_dataset):
+    """Unauthenticated requests to /people/{id}/assignments/ return 401."""
+    person = basic_dataset["person"]
+    client = Client()
+    url = reverse("api-v1:people-assignments", args=[person.id])
+    response = client.get(url)
+    assert response.status_code == 401
+
+
+def test_person_assignments_person_role_sees_own_only(basic_dataset):
+    """A Person-role user sees only their own assignments via /people/{id}/assignments/."""
+    person = basic_dataset["person"]
+    person_user = User.objects.get(username="person-api")
+    # Downgrade the test user from admin to person role
+    assign_role(person_user, "person")
+
+    client = Client()
+    auth = _basic_auth_header("person-api", "personpass")
+    url = reverse("api-v1:people-assignments", args=[person.id])
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1  # person has their own assignment
+
+
+def test_openapi_schema_includes_custom_action_paths(basic_dataset, admin_user):
+    """The OpenAPI schema must document all four P3.T4 custom action paths."""
+    import json
+
+    auth = _basic_auth_header("admin-api", "adminpass")
+    client = Client()
+    response = client.get(reverse("api-v1:schema"), HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    schema = json.loads(response.content)
+    paths = schema["paths"]
+
+    expected_action_paths = [
+        "/api/v1/orders/{id}/versions/clone-latest/",
+        "/api/v1/engagements/{id}/costs/",
+        "/api/v1/engagements/{id}/cost-coverage/",
+        "/api/v1/people/{id}/assignments/",
+    ]
+    for path in expected_action_paths:
+        assert path in paths, f"Custom action path missing from OpenAPI schema: {path}"
+
+
+# ---------------------------------------------------------------------------
+# Nested endpoints — scoping and routing (P3.T3)
+# ---------------------------------------------------------------------------
+
+
+def test_nested_undertaking_assignments_list(basic_dataset, admin_user):
+    """GET /api/v1/engagements/<pk>/undertaking-assignments/ returns only that engagement's assignments."""
+    engagement = basic_dataset["engagement"]
+    eua = basic_dataset["undertaking_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagements/{engagement.id}/undertaking-assignments/"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == eua.id
+
+
+def test_nested_order_version_assignments_list(basic_dataset, admin_user):
+    """GET /api/v1/engagements/<pk>/order-version-assignments/ returns only that engagement's assignments."""
+    engagement = basic_dataset["engagement"]
+    ova = basic_dataset["order_version_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagements/{engagement.id}/order-version-assignments/"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == ova.id
+
+
+def test_nested_undertaking_assignments_scoped_to_engagement(basic_dataset, admin_user):
+    """Nested list for engagement without assignments returns empty result."""
+    from datetime import date
+
+    from engagements.models import Engagement
+
+    engagement2 = Engagement.objects.create(
+        person=basic_dataset["person"],
+        start_date=date(2026, 1, 1),
+        end_date=date(2026, 12, 31),
+        daily_rate=basic_dataset["engagement"].daily_rate,
+        fte=basic_dataset["engagement"].fte,
+    )
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagements/{engagement2.id}/undertaking-assignments/"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+
+
+def test_nested_routes_require_authentication(basic_dataset):
+    """Nested assignment endpoints reject unauthenticated requests with 401."""
+    engagement = basic_dataset["engagement"]
+    client = Client()
+    for url in [
+        f"/api/v1/engagements/{engagement.id}/undertaking-assignments/",
+        f"/api/v1/engagements/{engagement.id}/order-version-assignments/",
+    ]:
+        response = client.get(url)
+        assert response.status_code == 401, f"Expected 401 for {url}"
+
+
+def test_flat_undertaking_assignments_filter_by_engagement(basic_dataset, admin_user):
+    """Flat endpoint supports ?engagement= filter for reporting."""
+    engagement = basic_dataset["engagement"]
+    eua = basic_dataset["undertaking_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagement-undertaking-assignments/?engagement={engagement.id}"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == eua.id
+
+
+def test_flat_order_version_assignments_filter_by_engagement(basic_dataset, admin_user):
+    """Flat endpoint supports ?engagement= filter for reporting."""
+    engagement = basic_dataset["engagement"]
+    ova = basic_dataset["order_version_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagement-order-version-assignments/?engagement={engagement.id}"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == ova.id
