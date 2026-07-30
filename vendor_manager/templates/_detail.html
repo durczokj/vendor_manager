@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load django_tables2 %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1>
+  {{ page_title }}
+  {% if can_manage %}
+    {% if delete_url %}
+      <form onsubmit="deleteResource(event, '{{ delete_url }}', '', '{{ csrf_token }}', '{{ back_url }}');" class="inline" id="delete-form">
+        <button type="submit" onclick="return confirm('Are you sure you want to delete this item?');">Delete</button>
+      </form>
+    {% endif %}
+    {% if edit_url %}
+      <a href="{{ edit_url }}"><button>Edit</button></a>
+    {% endif %}
+  {% endif %}
+</h1>
+
+{% if fields %}
+<h2>Details</h2>
+{% for label, value in fields %}
+  <p><strong>{{ label }}:</strong> {{ value }}</p>
+{% endfor %}
+{% endif %}
+
+{% for block in related_blocks %}
+  <h2>{{ block.title }}</h2>
+  {% render_table block.table %}
+{% endfor %}
+
+{% if back_url %}
+  <p>Back to <a href="{{ back_url }}">{{ back_url }}</a></p>
+{% endif %}
+
+<script src="{% static 'js/deleteResource.js' %}"></script>
+{% endblock %}

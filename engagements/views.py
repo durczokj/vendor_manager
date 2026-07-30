@@ -8,6 +8,11 @@ from vendor_manager.views import BaseDetailView, BaseListView
 
 from .forms import EngagementForm, EngagementOrderVersionAssignmentForm, EngagementUndertakingAssignmentForm
 from .models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
+from .tables import (
+    EngagementOrderVersionAssignmentTable,
+    EngagementTable,
+    EngagementUndertakingAssignmentTable,
+)
 
 
 @method_decorator([has_permission_decorator("view_engagement")], name="dispatch")
@@ -17,12 +22,13 @@ class EngagementsView(BaseListView):
     model = Engagement
     redirect_to = "engagement"
     form_class = EngagementForm
-    template_name_list = "all_engagements.html"
-    template_name_add = "add_engagement.html"
     permission_view = "view_engagement"
     permission_manage = "manage_engagement"
     permission_add = "add_engagement"
     permission_change = "change_engagement"
+    table_class = EngagementTable
+    page_title = "Engagements"
+    add_url_name = "engagements"
 
 
 @method_decorator([login_required, has_permission_decorator("view_engagement")], name="dispatch")
@@ -31,17 +37,28 @@ class EngagementView(BaseDetailView):
 
     model = Engagement
     form_class = EngagementForm
-    template_name_details = "engagement_details.html"
-    template_name_edit = "edit_engagement.html"
     permission_view = "view_engagement"
     permission_manage = "manage_engagement"
     permission_change = "change_engagement"
     permission_delete = "delete_engagement"
     redirect_to = "engagement"
-
-    def get_related_objects(self, engagement):
-        """Return related objects for the engagement."""
-        return {"undertaking_assignments": engagement.undertaking_assignments.all()}
+    item_url_name = "engagement"
+    list_url_name = "engagements"
+    detail_fields = [
+        ("ID", "id"),
+        ("Person", "person"),
+        ("Start Date", "start_date"),
+        ("End Date", "end_date"),
+        ("Daily Rate", "daily_rate"),
+        ("FTE", "fte"),
+    ]
+    related_table_specs = [
+        (
+            "Undertaking Assignments",
+            lambda e: e.undertaking_assignments.all(),
+            EngagementUndertakingAssignmentTable,
+        ),
+    ]
 
 
 @method_decorator([has_permission_decorator("view_engagement_undertaking_assignment")], name="dispatch")
@@ -51,12 +68,13 @@ class EngagementUndertakingAssignmentsView(BaseListView):
     model = EngagementUndertakingAssignment
     redirect_to = "engagement_undertaking_assignment"
     form_class = EngagementUndertakingAssignmentForm
-    template_name_list = "all_engagement_undertaking_assignments.html"
-    template_name_add = "add_engagement_undertaking_assignment.html"
     permission_view = "view_engagement_undertaking_assignment"
     permission_manage = "manage_engagement"
     permission_add = "add_engagement_undertaking_assignment"
     permission_change = "change_engagement_undertaking_assignment"
+    table_class = EngagementUndertakingAssignmentTable
+    page_title = "Engagement Undertaking Assignments"
+    add_url_name = "engagement_undertaking_assignments"
 
 
 @method_decorator([login_required, has_permission_decorator("view_engagement_undertaking_assignment")], name="dispatch")
@@ -65,13 +83,21 @@ class EngagementUndertakingAssignmentView(BaseDetailView):
 
     model = EngagementUndertakingAssignment
     form_class = EngagementUndertakingAssignmentForm
-    template_name_details = "engagement_undertaking_assignment_details.html"
-    template_name_edit = "edit_engagement_undertaking_assignment.html"
     permission_view = "view_engagement_undertaking_assignment"
     permission_manage = "manage_engagement_undertaking_assignment"
     permission_change = "change_engagement_undertaking_assignment"
     permission_delete = "delete_engagement_undertaking_assignment"
     redirect_to = "engagement_undertaking_assignment"
+    item_url_name = "engagement_undertaking_assignment"
+    list_url_name = "engagement_undertaking_assignments"
+    detail_fields = [
+        ("ID", "id"),
+        ("Engagement", "engagement"),
+        ("Undertaking", "undertaking"),
+        ("Percentage", "percentage"),
+        ("Start Date", "start_date"),
+        ("End Date", "end_date"),
+    ]
 
 
 @method_decorator([has_permission_decorator("view_engagement_order_version_assignment")], name="dispatch")
@@ -81,12 +107,13 @@ class EngagementOrderVersionAssignmentsView(BaseListView):
     model = EngagementOrderVersionAssignment
     redirect_to = "engagement_order_version_assignment"
     form_class = EngagementOrderVersionAssignmentForm
-    template_name_list = "all_engagement_order_version_assignments.html"
-    template_name_add = "add_engagement_order_version_assignment.html"
     permission_view = "view_engagement_order_version_assignment"
     permission_manage = "manage_engagement_order_version_assignment"
     permission_add = "add_engagement_order_version_assignment"
     permission_change = "change_engagement_order_version_assignment"
+    table_class = EngagementOrderVersionAssignmentTable
+    page_title = "Engagement Order Version Assignments"
+    add_url_name = "engagement_order_version_assignments"
 
 
 @method_decorator(
@@ -97,10 +124,15 @@ class EngagementOrderVersionAssignmentView(BaseDetailView):
 
     model = EngagementOrderVersionAssignment
     form_class = EngagementOrderVersionAssignmentForm
-    template_name_details = "engagement_order_version_assignment_details.html"
-    template_name_edit = "edit_engagement_order_version_assignment.html"
     permission_view = "view_engagement_order_version_assignment"
     permission_manage = "manage_engagement_order_version_assignment"
     permission_change = "change_engagement_order_version_assignment"
     permission_delete = "delete_engagement_order_version_assignment"
     redirect_to = "engagement_order_version_assignment"
+    item_url_name = "engagement_order_version_assignment"
+    list_url_name = "engagement_order_version_assignments"
+    detail_fields = [
+        ("ID", "id"),
+        ("Engagement", "engagement"),
+        ("Order Version", "order_version"),
+    ]

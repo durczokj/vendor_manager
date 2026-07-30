@@ -123,7 +123,15 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",
     "django_plotly_dash.apps.DjangoPlotlyDashConfig",
+    "crispy_forms",
+    "crispy_bootstrap5",
+    "django_tables2",
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 

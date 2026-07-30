@@ -5,10 +5,12 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
 from rolepermissions.decorators import has_permission_decorator
 
+from engagements.tables import EngagementUndertakingAssignmentTable
 from vendor_manager.views import BaseDetailView, BaseListView
 
 from .forms import UndertakingForm
 from .models import CostCenter, Undertaking
+from .tables import UndertakingTable
 
 
 @method_decorator([has_permission_decorator("view_undertaking")], name="dispatch")
@@ -18,12 +20,12 @@ class UndertakingsView(BaseListView):
     model = Undertaking
     redirect_to = "undertakings"
     form_class = UndertakingForm
-    template_name_list = "all_undertakings.html"
-    template_name_add = "add_undertaking.html"
     permission_view = "view_undertaking"
     permission_manage = "manage_undertaking"
     permission_add = "add_undertaking"
     permission_change = "change_undertaking"
+    table_class = UndertakingTable
+    page_title = "Undertakings"
 
 
 @method_decorator([login_required, has_permission_decorator("view_undertaking")], name="dispatch")
@@ -32,19 +34,21 @@ class UndertakingView(BaseDetailView):
 
     model = Undertaking
     form_class = UndertakingForm
-    template_name_details = "undertaking_details.html"
-    template_name_edit = "edit_undertaking.html"
     permission_view = "view_undertaking"
     permission_manage = "manage_undertaking"
     permission_change = "change_undertaking"
     permission_delete = "delete_undertaking"
     redirect_to = "undertaking"
-
-    def get_related_objects(self, undertaking):
-        """Return related objects for the undertaking."""
-        return {
-            "engagement_assignments": undertaking.engagement_assignments.all(),
-        }
+    item_url_name = "undertaking"
+    list_url_name = "undertakings"
+    detail_fields = [("Name", "name"), ("Cost Center", "cost_center"), ("Manager", "manager")]
+    related_table_specs = [
+        (
+            "Engagement Assignments",
+            lambda u: u.engagement_assignments.all(),
+            EngagementUndertakingAssignmentTable,
+        ),
+    ]
 
 
 @login_required

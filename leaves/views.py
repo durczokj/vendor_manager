@@ -11,6 +11,7 @@ from rolepermissions.checkers import has_object_permission
 
 from leaves.forms import LeaveForm
 from leaves.models import Leave
+from leaves.tables import LeaveTable
 from leaves.utils.leave_calendar import LeaveCalendar
 
 
@@ -46,10 +47,20 @@ def leaves(request):
     # Generate the calendar
     calendar = LeaveCalendar(year=year, month=month, leaves=myleaves).formatmonth()
 
+    table = LeaveTable(myleaves)
+
     return render(
         request,
-        "all_leaves.html",
-        {"myleaves": myleaves, "form": form, "calendar": calendar, "month": month, "year": year},
+        "leaves.html",
+        {
+            "table": table,
+            "add_url": None,
+            "page_title": "Leaves",
+            "form": form,
+            "calendar": calendar,
+            "month": month,
+            "year": year,
+        },
     )
 
 
