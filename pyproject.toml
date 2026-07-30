@@ -94,7 +94,6 @@ files = [
     "vendor_manager/wsgi.py",
     "vendor_manager/asgi.py",
     "vendor_manager/roles.py",
-    "vendor_manager/deployment.py",
     "vendor_manager/utils",
 ]
 

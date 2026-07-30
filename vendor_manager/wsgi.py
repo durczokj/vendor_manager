@@ -1,5 +1,4 @@
-"""
-WSGI config for vendor_manager project.
+"""WSGI config for vendor_manager project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,8 +10,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-settings_module = "vendor_manager.deployment" if "WEBSITE_HOSTNAME" in os.environ else "vendor_manager.settings"
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vendor_manager.settings")
 
 application = get_wsgi_application()
