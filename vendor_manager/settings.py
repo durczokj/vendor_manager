@@ -270,6 +270,10 @@ STATIC_URL = FORCE_SCRIPT_NAME.rstrip("/") + "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "vendor_manager/static/")]
 
+# MkDocs build output directory (FR-51, FR-54). Populated by `mkdocs build`
+# at image build time; see P6.T3.
+DOCS_ROOT = os.path.join(BASE_DIR, "site")
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type

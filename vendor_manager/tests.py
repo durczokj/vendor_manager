@@ -387,3 +387,84 @@ def test_main_view_signed_in_returns_200() -> None:
     assert b"plotly" in response.content.lower()
     # Template must include the chart container.
     assert b"cost-chart" in response.content
+
+
+# ---------------------------------------------------------------------------
+# MkDocs docs-serving view tests (P6.T2 / FR-51, FR-54)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_docs_index_unsigned_out_redirects_to_login() -> None:
+    """Unauthenticated GET on /docs/ redirects to login (FR-54)."""
+    c = Client()
+    response = c.get(reverse("docs-index"))
+    assert response.status_code == 302
+    assert "/accounts/login/" in response["Location"]
+
+
+@pytest.mark.django_db
+def test_docs_path_signed_out_redirects_to_login() -> None:
+    """Unauthenticated GET on /docs/<path> redirects to login (FR-54)."""
+    c = Client()
+    response = c.get(reverse("docs", kwargs={"path": "architecture.html"}))
+    assert response.status_code == 302
+    assert "/accounts/login/" in response["Location"]
+
+
+@pytest.mark.django_db
+def test_docs_index_signed_in_serves_file(tmp_path, settings) -> None:
+    """Authenticated GET on /docs/ serves index.html from DOCS_ROOT (FR-51)."""
+    # Arrange: create a minimal docs site in a temp directory.
+    site_dir = tmp_path / "site"
+    site_dir.mkdir()
+    (site_dir / "index.html").write_text("<html><body>Docs home</body></html>")
+    settings.DOCS_ROOT = str(site_dir)
+
+    user = User.objects.create_user("docs-read-user", None, "strong-password")
+    assign_role(user, "admin")
+    c = Client()
+    c.force_login(user)
+
+    response = c.get(reverse("docs-index"))
+    assert response.status_code == 200
+    # FileResponse uses streaming_content; consume it to get the bytes.
+    content = b"".join(response.streaming_content)  # type: ignore[attr-defined]
+    response.close()
+    assert b"Docs home" in content
+
+
+@pytest.mark.django_db
+def test_docs_path_signed_in_serves_file(tmp_path, settings) -> None:
+    """Authenticated GET on /docs/<path> serves the named file from DOCS_ROOT (FR-51)."""
+    site_dir = tmp_path / "site"
+    site_dir.mkdir()
+    (site_dir / "architecture.html").write_text("<html><body>Architecture</body></html>")
+    settings.DOCS_ROOT = str(site_dir)
+
+    user = User.objects.create_user("docs-arch-user", None, "strong-password")
+    assign_role(user, "admin")
+    c = Client()
+    c.force_login(user)
+
+    response = c.get(reverse("docs", kwargs={"path": "architecture.html"}))
+    assert response.status_code == 200
+    content = b"".join(response.streaming_content)  # type: ignore[attr-defined]
+    response.close()
+    assert b"Architecture" in content
+
+
+@pytest.mark.django_db
+def test_docs_missing_file_returns_404(tmp_path, settings) -> None:
+    """Authenticated GET for a file that doesn't exist returns 404."""
+    site_dir = tmp_path / "site"
+    site_dir.mkdir()
+    settings.DOCS_ROOT = str(site_dir)
+
+    user = User.objects.create_user("docs-404-user", None, "strong-password")
+    assign_role(user, "admin")
+    c = Client()
+    c.force_login(user)
+
+    response = c.get(reverse("docs", kwargs={"path": "nonexistent.html"}))
+    assert response.status_code == 404

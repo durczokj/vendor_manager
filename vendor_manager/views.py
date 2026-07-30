@@ -2,6 +2,7 @@
 
 import logging
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView as DjangoLoginView
@@ -10,6 +11,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.static import serve as static_serve
 
 from vendor_manager.utils.check_user_person_assignment import NoPersonAssignedToUser, check_user_person_assignment
 
@@ -69,3 +71,27 @@ class MainView(View):
             HTTP 200 response rendering ``dashboards/summary.html``.
         """
         return render(request=request, template_name="dashboards/summary.html")
+
+
+@login_required
+def serve_docs(request: HttpRequest, path: str = "") -> HttpResponse:
+    """Serve files from the built MkDocs ``site/`` directory (FR-51, FR-54).
+
+    Login-guarded so only authenticated users can access the documentation.
+    Falls back to ``index.html`` when no path segment is provided.
+
+    ``django.views.static.serve`` is used intentionally here — the docs
+    are low-traffic internal pages and the auth wrapper cannot be satisfied
+    by WhiteNoise alone.
+
+    Args:
+        request: The incoming HTTP request.
+        path: The file path within the ``site/`` directory, e.g. ``architecture/``.
+
+    Returns:
+        The requested static file served from ``settings.DOCS_ROOT``, or a
+        redirect to the login page if the user is not authenticated.
+    """
+    if not path:
+        path = "index.html"
+    return static_serve(request, path, document_root=settings.DOCS_ROOT)

@@ -37,6 +37,9 @@ urlpatterns = [
         ),
         name="swagger-ui",
     ),
+    # docs/api/ must be listed before docs/<path:path> so it takes priority.
+    path("docs/", views.serve_docs, {"path": ""}, name="docs-index"),
+    path("docs/<path:path>", views.serve_docs, name="docs"),
     path("people/", include("people.urls")),
     path("contracts/", include("contracts.urls")),
     path("orders/", include("orders.urls")),
