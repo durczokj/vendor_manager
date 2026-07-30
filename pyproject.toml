@@ -186,8 +186,6 @@ disallow_incomplete_defs = false
 # Third-party libraries without stubs. Add as needed; keep the list explicit.
 module = [
     "rolepermissions.*",
-    "django_plotly_dash.*",
-    "dash.*",
     "whitenoise.*",
     "crispy_forms.*",
     "django_tables2.*",
@@ -221,8 +219,6 @@ addopts = [
 ]
 filterwarnings = [
     "error",
-    # Third-party deprecations we don't own — narrow as they come up.
-    "ignore::DeprecationWarning:django_plotly_dash.*",
     # drf-nested-routers re-registers the DRF format-suffix URL converter when
     # both the flat router and the nested router include their URL sets.
     # Harmless double-registration; remove once drf-nested-routers upgrades.
