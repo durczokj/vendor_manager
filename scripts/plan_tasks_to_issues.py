@@ -25,9 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 PLAN_PATH = Path(__file__).resolve().parent.parent / "docs" / "IMPLEMENTATION_PLAN.md"
-PLAN_URL_TMPL = (
-    "https://github.com/durczokj/vendor_manager/blob/main/docs/IMPLEMENTATION_PLAN.md"
-)
+PLAN_URL_TMPL = "https://github.com/durczokj/vendor_manager/blob/main/docs/IMPLEMENTATION_PLAN.md"
 
 TASK_HEADER = re.compile(r"^### (P\d+\.T\d+)\s+—\s+(.+?)\s*(\[.*\])?\s*$", re.MULTILINE)
 PHASE_HEADER = re.compile(r"^## Phase (\d+)\b", re.MULTILINE)
@@ -35,10 +33,12 @@ PHASE_HEADER = re.compile(r"^## Phase (\d+)\b", re.MULTILINE)
 
 @dataclass
 class Task:
-    task_id: str          # e.g. "P3.T2"
-    phase: int            # e.g. 3
-    title: str            # e.g. "Contracts/orders viewsets"
-    body: str             # the raw markdown between the `###` and the next `###`/`##`
+    """A single plan task extracted from ``docs/IMPLEMENTATION_PLAN.md``."""
+
+    task_id: str  # e.g. "P3.T2"
+    phase: int  # e.g. 3
+    title: str  # e.g. "Contracts/orders viewsets"
+    body: str  # the raw markdown between the `###` and the next `###`/`##`
 
 
 def _anchor(task_id: str) -> str:
@@ -66,6 +66,7 @@ def _next_h2(text: str, from_pos: int) -> int:
 
 
 def render_issue_body(task: Task) -> str:
+    """Render the GitHub issue body for a task, including the plan link."""
     link = f"{PLAN_URL_TMPL}#{_anchor(task.task_id)}"
     return (
         f"> Executes task **{task.task_id}** from the implementation plan.\n"
@@ -83,10 +84,12 @@ def render_issue_body(task: Task) -> str:
 
 
 def render_issue_title(task: Task) -> str:
+    """Render the GitHub issue title as ``<task_id>: <title>``."""
     return f"{task.task_id}: {task.title}"
 
 
 def main() -> int:
+    """Parse CLI args, filter tasks, and print or create issues."""
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--phase", type=int, help="Only tasks in this phase.")
     p.add_argument("--task", help="Only this task ID, e.g. P3.T2.")
