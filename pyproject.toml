@@ -1,0 +1,176 @@
+[project]
+name = "vendor-manager"
+version = "0.0.0"
+description = "Vendor Manager — Django application for tracking companies, contracts, engagements, and undertakings."
+requires-python = ">=3.13"
+readme = "README.md"
+
+# Runtime deps are declared in requirements.txt (pinned) for the Docker build.
+# Dev deps are declared in requirements-dev.txt.
+# This section exists so the project is a valid PEP 621 package for tooling.
+dependencies = []
+
+# ---------------------------------------------------------------------------
+# Ruff — lint + format. Replaces black + isort + flake8.
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = [
+    "**/migrations/**",
+    "staticfiles/**",
+    "notebooks/**",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint]
+# Rule sets:
+#   E, W    — pycodestyle
+#   F       — pyflakes
+#   I       — isort
+#   UP      — pyupgrade
+#   B       — flake8-bugbear
+#   SIM     — flake8-simplify
+#   DJ      — flake8-django
+#   PT      — flake8-pytest-style
+#   D       — pydocstyle (preserves current flake8-docstrings coverage)
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "DJ", "PT", "D"]
+# The historical .flake8 ignored A003; we're not enabling flake8-builtins (A),
+# so A003 is not applicable. Keep the ignore list intentionally short.
+ignore = [
+    "D100", # missing module docstring — noisy for Django apps.py, urls.py, etc.
+    "D104", # missing docstring in public package — same rationale.
+    "D203", # 1 blank line before class docstring — conflicts with D211.
+    "D213", # multi-line summary second line — conflicts with D212.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests.py" = ["D"]
+"**/tests/**" = ["D"]
+"conftest.py" = ["D"]
+"manage.py" = ["D"]
+"vendor_manager/settings.py" = ["E501"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "vendor_manager",
+    "companies",
+    "contracts",
+    "dashboards",
+    "engagements",
+    "leaves",
+    "orders",
+    "people",
+    "undertakings",
+]
+
+# ---------------------------------------------------------------------------
+# mypy — strict typing. Scope escalates per phase (P0.T4 → P8).
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+exclude = [
+    "^.*/migrations/.*",
+    "^staticfiles/.*",
+    "^notebooks/.*",
+    "^manage\\.py$",
+]
+
+# P0 scope: only new/edited files are strict-checked in CI. Existing untyped
+# modules are handled in P8. New files landing in P0 must pass mypy --strict.
+files = [
+    "vendor_manager/settings.py",
+    "vendor_manager/urls.py",
+    "vendor_manager/views.py",
+    "vendor_manager/wsgi.py",
+    "vendor_manager/asgi.py",
+    "vendor_manager/roles.py",
+    "vendor_manager/deployment.py",
+    "vendor_manager/utils",
+]
+
+[[tool.mypy.overrides]]
+# tests are covered under a less-strict regime; annotate as we go in P7/P8.
+module = ["*.tests", "*.tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+# Third-party libraries without stubs. Add as needed; keep the list explicit.
+module = [
+    "rolepermissions.*",
+    "django_plotly_dash.*",
+    "dash.*",
+    "whitenoise.*",
+    "crispy_forms.*",
+    "django_tables2.*",
+    "factory.*",
+    "pythonjsonlogger.*",
+]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "vendor_manager.settings"
+
+# ---------------------------------------------------------------------------
+# pytest + pytest-django
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "vendor_manager.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+filterwarnings = [
+    "error",
+    # Third-party deprecations we don't own — narrow as they come up.
+    "ignore::DeprecationWarning:django_plotly_dash.*",
+]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = [
+    "vendor_manager",
+    "companies",
+    "contracts",
+    "dashboards",
+    "engagements",
+    "leaves",
+    "orders",
+    "people",
+    "undertakings",
+]
+omit = [
+    "*/migrations/*",
+    "*/tests.py",
+    "*/tests/*",
+    "manage.py",
+    "*/wsgi.py",
+    "*/asgi.py",
+]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+precision = 1
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
