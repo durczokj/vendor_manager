@@ -65,13 +65,6 @@ class Engagement(models.Model):
     def save(self, *args, **kwargs):
         """Clean before saving."""
         self.clean()
-
-        # Update assignments' start and end dates
-        for assignment in self.undertaking_assignments.all():
-            assignment.start_date = max(self.start_date, assignment.start_date)
-            assignment.end_date = min(self.end_date, assignment.end_date)
-            assignment.save()
-
         super().save(*args, **kwargs)
 
 
