@@ -119,8 +119,16 @@ class EngagementOrderVersionAssignmentViewSet(viewsets.ModelViewSet):  # type: i
     ordering_fields = ["id"]
 
     def get_queryset(self) -> Any:
-        """Return engagement–order-version assignments accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        """Return engagement–order-version assignments accessible to the requesting user.
+
+        When called from the nested route the queryset is additionally scoped to
+        the parent engagement identified by ``engagement_pk``.
+        """
+        qs = super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        engagement_pk = self.kwargs.get("engagement_pk")
+        if engagement_pk is not None:
+            qs = qs.filter(engagement_id=engagement_pk)
+        return qs
 
 
 class EngagementUndertakingAssignmentViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
@@ -133,5 +141,13 @@ class EngagementUndertakingAssignmentViewSet(viewsets.ModelViewSet):  # type: ig
     ordering_fields = ["id", "start_date", "end_date", "percentage"]
 
     def get_queryset(self) -> Any:
-        """Return engagement–undertaking assignments accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        """Return engagement–undertaking assignments accessible to the requesting user.
+
+        When called from the nested route the queryset is additionally scoped to
+        the parent engagement identified by ``engagement_pk``.
+        """
+        qs = super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        engagement_pk = self.kwargs.get("engagement_pk")
+        if engagement_pk is not None:
+            qs = qs.filter(engagement_id=engagement_pk)
+        return qs
