@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load django_tables2 %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1>
+  {{ page_title }}
+  {% if add_url %}
+    <a href="{{ add_url }}"><button>Add</button></a>
+  {% endif %}
+</h1>
+
+{% render_table table %}
+
+{% block extra_content %}{% endblock %}
+
+<script src="{% static 'js/deleteResource.js' %}"></script>
+{% endblock %}

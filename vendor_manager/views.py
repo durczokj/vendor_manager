@@ -1,5 +1,6 @@
 """Views for the vendor_manager application."""
 
+import contextlib
 import json
 import logging
 
@@ -99,12 +100,19 @@ class BaseListView(View):
     model = None
     redirect_to = None
     form_class = None
-    template_name_list = None
-    template_name_add = None
+    template_name_list = "_list.html"
+    template_name_add = "_form.html"
     permission_view = None
     permission_manage = None
     permission_add = None
     permission_change = None
+
+    # Generic template attributes (P4.T2)
+    table_class = None
+    page_title = ""
+    # add_url_name: override the URL name used for the "Add" button and add-form
+    # action when redirect_to points to a detail URL that requires kwargs.
+    add_url_name: str | None = None
 
     def _get_add_permission(self):
         """Return permission codename used to guard create actions."""
@@ -113,6 +121,11 @@ class BaseListView(View):
     def _get_change_permission(self):
         """Return permission codename used to guard update-related UI actions."""
         return self.permission_change or self.permission_manage
+
+    def _get_list_url(self):
+        """Return the URL of this list view (used for Add button and form action)."""
+        url_name = self.add_url_name or self.redirect_to
+        return reverse(url_name)
 
     def get(self, request):
         """List all items or show the add form."""
@@ -127,12 +140,27 @@ class BaseListView(View):
             for item in self.model.objects.all()
             if has_object_permission(f"access_{self.model.__name__.lower()}", request.user, item)
         ]
+        can_manage = has_permission(request.user, self._get_change_permission())
+        can_add = has_permission(request.user, self._get_add_permission())
+        list_url = self._get_list_url()
+        add_url = (list_url + "?form=True") if can_add else None
+        if self.table_class is not None:
+            table = self.table_class(items, can_manage=can_manage)
+            return render(
+                request,
+                self.template_name_list,
+                {
+                    "table": table,
+                    "add_url": add_url,
+                    "page_title": self.page_title or self.model.__name__,
+                },
+            )
         return render(
             request,
             self.template_name_list,
             {
                 "items": items,
-                self.permission_manage: has_permission(request.user, self._get_change_permission()),
+                self.permission_manage: can_manage,
             },
         )
 
@@ -140,7 +168,19 @@ class BaseListView(View):
         @method_decorator([has_permission_decorator(self._get_add_permission())])
         def inner(self, request):
             form = self.form_class()
-            return render(request, self.template_name_add, {"form": form})
+            model_name = self.model.__name__ if self.model else ""
+            list_url = self._get_list_url()
+            return render(
+                request,
+                self.template_name_add,
+                {
+                    "form": form,
+                    "submit_label": "Save",
+                    "page_title": f"Add {model_name}",
+                    "cancel_url": list_url,
+                    "form_action": list_url,
+                },
+            )
 
         return inner(self, request)
 
@@ -180,13 +220,24 @@ class BaseDetailView(View):
 
     model = None
     form_class = None
-    template_name_details = None
-    template_name_edit = None
+    template_name_details = "_detail.html"
+    template_name_edit = "_form.html"
     permission_view = None
     permission_manage = None
     permission_change = None
     permission_delete = None
     redirect_to = None
+
+    # Generic template attributes (P4.T2)
+    # detail_fields: list of (label, attr_path) tuples shown in _detail.html
+    detail_fields: list = []
+    # item_url_name: URL name of the single-item detail endpoint (e.g. "company")
+    item_url_name: str | None = None
+    # list_url_name: URL name of the list endpoint (e.g. "companies")
+    list_url_name: str | None = None
+    # related_table_specs: list of (title, qs_getter, TableClass) tuples
+    # qs_getter may be a callable taking the item or a dot-separated attr path
+    related_table_specs: list = []
 
     def _get_change_permission(self):
         """Return permission codename used to guard update actions."""
@@ -196,6 +247,13 @@ class BaseDetailView(View):
         """Return permission codename used to guard delete actions."""
         return self.permission_delete or self.permission_manage
 
+    @staticmethod
+    def _resolve_attr(obj, path):
+        """Resolve a dot-separated attribute path on *obj*."""
+        for part in path.split("."):
+            obj = getattr(obj, part)
+        return obj
+
     def get(self, request, item_id):
         """Retrieve item details."""
         item = get_object_or_404(self.model, id=item_id)
@@ -204,16 +262,52 @@ class BaseDetailView(View):
         return self.__get_details(request, item)
 
     def __get_details(self, request, item):
-        related_objects = self.get_related_objects(item)
         if is_api_request(request):
-            return JsonResponse({"id": item.id, "name": item.name})
+            return JsonResponse({"id": item.id, "name": str(item)})
+        can_manage = has_permission(request.user, self._get_change_permission())
+
+        # Build simple field list for _detail.html
+        fields = [(label, self._resolve_attr(item, attr)) for label, attr in self.detail_fields]
+
+        # Build related blocks from specs
+        related_blocks = []
+        for title, qs_getter, table_cls in self.related_table_specs:
+            qs = qs_getter(item) if callable(qs_getter) else self._resolve_attr(item, qs_getter)
+            related_blocks.append(
+                {
+                    "title": title,
+                    "table": table_cls(qs, can_manage=can_manage),
+                }
+            )
+
+        # Derive URLs for edit/delete/back actions
+        detail_url_name = self.item_url_name
+        list_url_name = self.list_url_name
+        edit_url = ""
+        delete_url = ""
+        back_url = ""
+        if detail_url_name:
+            with contextlib.suppress(Exception):
+                edit_url = reverse(detail_url_name, kwargs={"item_id": item.id}) + "?form=True"
+                delete_url = reverse(detail_url_name, kwargs={"item_id": 0})
+        if list_url_name:
+            with contextlib.suppress(Exception):
+                back_url = reverse(list_url_name)
+
         return render(
             request,
             self.template_name_details,
             {
-                "item": item,
-                "related_objects": related_objects,
-                self.permission_manage: has_permission(request.user, self._get_change_permission()),
+                "object": item,
+                "fields": fields,
+                "related_blocks": related_blocks,
+                "can_manage": can_manage,
+                "edit_url": edit_url,
+                "delete_url": delete_url,
+                "back_url": back_url,
+                "page_title": f"{type(item).__name__}: {item}",
+                # Legacy key kept for backward-compatibility with remaining templates
+                self.permission_manage: can_manage,
             },
         )
 
@@ -221,7 +315,28 @@ class BaseDetailView(View):
         @method_decorator([has_permission_decorator(self._get_change_permission())])
         def inner(self, request, item):
             form = self.form_class(instance=item)
-            return render(request, self.template_name_edit, {"form": form, "item": item})
+            detail_url_name = self.item_url_name
+            list_url_name = self.list_url_name or self.redirect_to
+            form_action = ""
+            cancel_url = ""
+            if detail_url_name:
+                with contextlib.suppress(Exception):
+                    form_action = reverse(detail_url_name, kwargs={"item_id": item.id})
+                    cancel_url = form_action
+            elif list_url_name:
+                with contextlib.suppress(Exception):
+                    cancel_url = reverse(list_url_name)
+            return render(
+                request,
+                self.template_name_edit,
+                {
+                    "form": form,
+                    "submit_label": "Save",
+                    "page_title": f"Edit {type(item).__name__}: {item}",
+                    "cancel_url": cancel_url,
+                    "form_action": form_action,
+                },
+            )
 
         return inner(self, request, item)
 

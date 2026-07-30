@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1>
+  {{ page_title }}
+  <button type="submit" form="entity-form">{{ submit_label }}</button>
+  {% if cancel_url %}
+    <a href="{{ cancel_url }}"><button type="button">Cancel</button></a>
+  {% endif %}
+</h1>
+<form id="entity-form" method="post" action="{{ form_action }}">
+  {% csrf_token %}
+  {% crispy form %}
+</form>
+{% endblock %}

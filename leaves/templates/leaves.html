@@ -1,0 +1,18 @@
+{% extends "_list.html" %}
+{% load crispy_forms_tags %}
+
+{% block extra_content %}
+<h2>Add a Leave</h2>
+<form method="post">
+  {% csrf_token %}
+  {% crispy form %}
+  <button type="submit">Add Leave</button>
+</form>
+
+<h2>Calendar — {{ month }}/{{ year }}</h2>
+<div class="calendar">
+  {{ calendar }}
+</div>
+
+<p>Back to <a href="{% url 'main' %}">Home</a></p>
+{% endblock %}
