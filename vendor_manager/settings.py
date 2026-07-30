@@ -9,6 +9,7 @@ Environment variables:
     DATABASE_ENGINE       "sqlite" (default) or "postgresql"
                           PostgreSQL requires DATABASE_NAME, DATABASE_USERNAME,
                           DATABASE_PASSWORD, DATABASE_HOST, DATABASE_PORT.
+    SPECTACULAR_SERVERS   comma-separated OpenAPI server URLs; optional
 
 MSSQL is no longer supported (see docs/REQUIREMENTS.md NFR-23).
 """
@@ -20,6 +21,8 @@ from pathlib import Path
 
 from django.contrib.messages import constants as message_constants
 from django.core.exceptions import ImproperlyConfigured
+
+from vendor_manager import __version__
 
 # ---------------------------------------------------------------------------
 # Environment helpers
@@ -117,7 +120,8 @@ INSTALLED_APPS = [
     "contracts",
     "rolepermissions",
     "rest_framework",
-    "rest_framework.authtoken",
+    "django_filters",
+    "drf_spectacular",
     "django_plotly_dash.apps.DjangoPlotlyDashConfig",
 ]
 
@@ -168,8 +172,27 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "vendor_manager.api_pagination.DefaultPageNumberPagination",
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "vendor_manager.api_exceptions.drf_exception_handler",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Vendor Manager API",
+    "DESCRIPTION": "REST API for vendor_manager.",
+    "VERSION": __version__,
+    "SERVERS": [{"url": url} for url in env_list("SPECTACULAR_SERVERS")],
 }
 
 # ---------------------------------------------------------------------------
