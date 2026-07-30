@@ -21,6 +21,8 @@ class EngagementsView(BaseListView):
     template_name_add = "add_engagement.html"
     permission_view = "view_engagement"
     permission_manage = "manage_engagement"
+    permission_add = "add_engagement"
+    permission_change = "change_engagement"
 
 
 @method_decorator([login_required, has_permission_decorator("view_engagement")], name="dispatch")
@@ -33,6 +35,8 @@ class EngagementView(BaseDetailView):
     template_name_edit = "edit_engagement.html"
     permission_view = "view_engagement"
     permission_manage = "manage_engagement"
+    permission_change = "change_engagement"
+    permission_delete = "delete_engagement"
     redirect_to = "engagement"
 
     def get_related_objects(self, engagement):
@@ -40,7 +44,7 @@ class EngagementView(BaseDetailView):
         return {"undertaking_assignments": engagement.undertaking_assignments.all()}
 
 
-@method_decorator([has_permission_decorator("view_engagement")], name="dispatch")
+@method_decorator([has_permission_decorator("view_engagement_undertaking_assignment")], name="dispatch")
 class EngagementUndertakingAssignmentsView(BaseListView):
     """View for listing all engagement undertaking assignments and creating a new engagement undertaking assignment."""
 
@@ -51,9 +55,11 @@ class EngagementUndertakingAssignmentsView(BaseListView):
     template_name_add = "add_engagement_undertaking_assignment.html"
     permission_view = "view_engagement_undertaking_assignment"
     permission_manage = "manage_engagement"
+    permission_add = "add_engagement_undertaking_assignment"
+    permission_change = "change_engagement_undertaking_assignment"
 
 
-@method_decorator([login_required, has_permission_decorator("view_engagement")], name="dispatch")
+@method_decorator([login_required, has_permission_decorator("view_engagement_undertaking_assignment")], name="dispatch")
 class EngagementUndertakingAssignmentView(BaseDetailView):
     """View for retrieving, updating, and deleting an engagement undertaking assignment."""
 
@@ -63,6 +69,8 @@ class EngagementUndertakingAssignmentView(BaseDetailView):
     template_name_edit = "edit_engagement_undertaking_assignment.html"
     permission_view = "view_engagement_undertaking_assignment"
     permission_manage = "manage_engagement_undertaking_assignment"
+    permission_change = "change_engagement_undertaking_assignment"
+    permission_delete = "delete_engagement_undertaking_assignment"
     redirect_to = "engagement_undertaking_assignment"
 
 
@@ -77,9 +85,13 @@ class EngagementOrderVersionAssignmentsView(BaseListView):
     template_name_add = "add_engagement_order_version_assignment.html"
     permission_view = "view_engagement_order_version_assignment"
     permission_manage = "manage_engagement_order_version_assignment"
+    permission_add = "add_engagement_order_version_assignment"
+    permission_change = "change_engagement_order_version_assignment"
 
 
-@method_decorator([login_required, has_permission_decorator("view_engagement")], name="dispatch")
+@method_decorator(
+    [login_required, has_permission_decorator("view_engagement_order_version_assignment")], name="dispatch"
+)
 class EngagementOrderVersionAssignmentView(BaseDetailView):
     """View for retrieving, updating, and deleting an engagement order version assignment."""
 
@@ -89,4 +101,6 @@ class EngagementOrderVersionAssignmentView(BaseDetailView):
     template_name_edit = "edit_engagement_order_version_assignment.html"
     permission_view = "view_engagement_order_version_assignment"
     permission_manage = "manage_engagement_order_version_assignment"
+    permission_change = "change_engagement_order_version_assignment"
+    permission_delete = "delete_engagement_order_version_assignment"
     redirect_to = "engagement_order_version_assignment"

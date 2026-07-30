@@ -21,6 +21,8 @@ class PeopleView(BaseListView):
     template_name_add = "add_person.html"
     permission_view = "view_person"
     permission_manage = "manage_person"
+    permission_add = "add_person"
+    permission_change = "change_person"
 
 
 @method_decorator([login_required, has_permission_decorator("view_person")], name="dispatch")
@@ -33,6 +35,8 @@ class PersonView(BaseDetailView):
     template_name_edit = "edit_person.html"
     permission_view = "view_person"
     permission_manage = "manage_person"
+    permission_change = "change_person"
+    permission_delete = "delete_person"
     redirect_to = "person"
 
     def get_related_objects(self, person):
