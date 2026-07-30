@@ -21,6 +21,8 @@ class CompaniesView(BaseListView):
     template_name_add = "add_company.html"
     permission_view = "view_company"
     permission_manage = "manage_company"
+    permission_add = "add_company"
+    permission_change = "change_company"
 
 
 @method_decorator([login_required, has_permission_decorator("view_company")], name="dispatch")
@@ -33,6 +35,8 @@ class CompanyView(BaseDetailView):
     template_name_edit = "edit_company.html"
     permission_view = "view_company"
     permission_manage = "manage_company"
+    permission_change = "change_company"
+    permission_delete = "delete_company"
     redirect_to = "companies"
 
     def get_related_objects(self, company):

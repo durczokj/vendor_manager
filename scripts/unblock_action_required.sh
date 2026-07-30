@@ -18,25 +18,26 @@ set -euo pipefail
 BRANCH="${1:-}"
 
 if [[ -n "${BRANCH}" ]]; then
-    LIST_ARGS=(--branch "${BRANCH}")
+    RUN_IDS=$(gh run list --branch "${BRANCH}" --limit 50 \
+        --json databaseId,conclusion \
+        --jq '.[] | select(.conclusion=="action_required") | .databaseId')
 else
-    LIST_ARGS=()
+    RUN_IDS=$(gh run list --limit 50 \
+        --json databaseId,conclusion \
+        --jq '.[] | select(.conclusion=="action_required") | .databaseId')
 fi
 
-mapfile -t RUN_IDS < <(
-    gh run list "${LIST_ARGS[@]}" --limit 50 \
-        --json databaseId,conclusion,status \
-        --jq '.[] | select(.conclusion=="action_required") | .databaseId'
-)
-
-if [[ "${#RUN_IDS[@]}" -eq 0 ]]; then
+if [[ -z "${RUN_IDS}" ]]; then
     echo "No action_required runs found."
     exit 0
 fi
 
-for run_id in "${RUN_IDS[@]}"; do
+COUNT=0
+while IFS= read -r run_id; do
+    [[ -z "${run_id}" ]] && continue
     echo "Re-firing run ${run_id}..."
     gh run rerun "${run_id}"
-done
+    COUNT=$((COUNT + 1))
+done <<< "${RUN_IDS}"
 
-echo "Done. ${#RUN_IDS[@]} run(s) re-queued."
+echo "Done. ${COUNT} run(s) re-queued."

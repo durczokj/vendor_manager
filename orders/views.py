@@ -30,6 +30,8 @@ class OrdersView(BaseListView):
     template_name_add = "add_order.html"
     permission_view = "view_order"
     permission_manage = "manage_order"
+    permission_add = "add_order"
+    permission_change = "change_order"
 
 
 @method_decorator([login_required, has_permission_decorator("view_order")], name="dispatch")
@@ -42,6 +44,8 @@ class OrderView(BaseDetailView):
     template_name_edit = "edit_order.html"
     permission_view = "view_order"
     permission_manage = "manage_order"
+    permission_change = "change_order"
+    permission_delete = "delete_order"
     redirect_to = "orders"
 
     def get_related_objects(self, order):
@@ -90,6 +94,8 @@ class OrderVersionsView(BaseListView):
     template_name_add = "add_order_version.html"
     permission_view = "view_order"
     permission_manage = "manage_order"
+    permission_add = "add_order"
+    permission_change = "change_order"
 
 
 @method_decorator([login_required, has_permission_decorator("view_order")], name="dispatch")
@@ -102,6 +108,8 @@ class OrderVersionView(BaseDetailView):
     template_name_edit = "edit_order_version.html"
     permission_view = "view_order"
     permission_manage = "manage_order"
+    permission_change = "change_order"
+    permission_delete = "delete_order"
     redirect_to = "order_version"
 
     def get_related_objects(self, order_version):
