@@ -1,6 +1,7 @@
 """Views for the vendor_manager application."""
 
 import json
+import logging
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -10,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_protect
 from rolepermissions.checkers import has_object_permission, has_permission
 from rolepermissions.decorators import has_permission_decorator
 
@@ -18,41 +19,12 @@ from dashboards.summary_dashboard import SummaryDashboard
 from vendor_manager.utils.check_user_person_assignment import NoPersonAssignedToUser, check_user_person_assignment
 from vendor_manager.utils.is_api_request import is_api_request
 
+logger = logging.getLogger(__name__)
+
 
 def health(request):
     """Liveness/readiness probe target. Returns 200 with a plain-text body."""
     return HttpResponse("ok", content_type="text/plain")
-
-
-def decorator(permission_name):
-    """Print the permission name."""
-
-    def print_permission_decorator(function):
-        def print_permission_wrapper(*args, **kwargs):
-            print(f"Permission: {permission_name}")
-            return function(*args, **kwargs)
-
-        return print_permission_wrapper
-
-    return print_permission_decorator
-
-
-@ensure_csrf_cookie
-@csrf_exempt
-def login_api(request):
-    """Log in a user."""
-    if request.method == "POST":
-        data = json.loads(request.body)
-        username = data.get("username")
-        password = data.get("password")
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return JsonResponse({"message": "Login successful"}, status=200)
-        else:
-            return JsonResponse({"error": "Invalid credentials"}, status=400)
-    else:
-        return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 @csrf_protect
