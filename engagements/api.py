@@ -2,8 +2,13 @@
 
 from typing import Any
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import serializers as drf_serializers
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from engagements.filters import (
     EngagementFilterSet,
@@ -11,6 +16,7 @@ from engagements.filters import (
     EngagementUndertakingAssignmentFilterSet,
 )
 from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
+from engagements.selectors import engagement_cost_coverage, engagement_costs
 from engagements.serializers import (
     EngagementOrderVersionAssignmentSerializer,
     EngagementSerializer,
@@ -42,6 +48,65 @@ class EngagementViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TOD
         for attr, value in serializer.validated_data.items():
             setattr(engagement, attr, value)
         update_engagement(engagement=engagement)
+
+    @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
+        summary="Day-level cost breakdown for an engagement",
+        description=(
+            "Returns a list of {date, cost} records covering the engagement's full date range. "
+            "Cost is zero on days the engagement is not covered by an active order version or when "
+            "the person is on leave."
+        ),
+    )
+    @action(detail=True, methods=["get"], url_path="costs")
+    def costs(self, request: Request, pk: Any = None) -> Response:
+        """Return day-level cost rows for the engagement (FR-31).
+
+        Args:
+            request: The incoming DRF request.
+            pk: The primary key of the Engagement.
+
+        Returns:
+            200 with a list of {date, cost} dicts.
+
+        """
+        engagement: Engagement = self.get_object()
+        rows = engagement_costs(engagement)
+        return Response([{"date": str(row["date"])[:10], "cost": float(row["cost"])} for row in rows])
+
+    @extend_schema(
+        responses={200: OpenApiTypes.OBJECT},
+        summary="Day-level undertaking cost-coverage for an engagement",
+        description=(
+            "Returns a list of {date, undertaking, percentage} records showing how each active day "
+            "of the engagement is covered by undertaking assignments. "
+            "Days with under-coverage are included with undertaking=null."
+        ),
+    )
+    @action(detail=True, methods=["get"], url_path="cost-coverage")
+    def cost_coverage(self, request: Request, pk: Any = None) -> Response:
+        """Return day-level undertaking coverage rows for the engagement (FR-31).
+
+        Args:
+            request: The incoming DRF request.
+            pk: The primary key of the Engagement.
+
+        Returns:
+            200 with a list of {date, undertaking, percentage} dicts.
+
+        """
+        engagement: Engagement = self.get_object()
+        rows = engagement_cost_coverage(engagement)
+        return Response(
+            [
+                {
+                    "date": str(row["date"])[:10],
+                    "undertaking": row["undertaking"].pk if row["undertaking"] is not None else None,
+                    "percentage": float(row["percentage"]),
+                }
+                for row in rows
+            ]
+        )
 
 
 class EngagementOrderVersionAssignmentViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
