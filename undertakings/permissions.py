@@ -2,24 +2,16 @@
 
 from rolepermissions.permissions import register_object_checker
 
-from vendor_manager.roles import Admin, Person, UndertakingManager
-
 
 @register_object_checker()
 def access_undertaking(role, user, undertaking):
     """Check if the user has access to the undertaking."""
-    if role == Admin:
-        return True
+    del role
+    return type(undertaking).objects.accessible_to(user).filter(pk=undertaking.pk).exists()
 
-    if role == UndertakingManager:
-        managed_undertakings = user.person.managed_undertakings.all()
-        if undertaking in managed_undertakings:
-            return True
 
-    if role == Person:
-        engagements = user.person.engagements.prefetch_related("undertaking_assignments__undertaking")
-        undertakings = [a.undertaking for e in engagements for a in e.undertaking_assignments.all()]
-        if undertaking in undertakings:
-            return True
-
-    return False
+@register_object_checker()
+def access_cost_center(role, user, cost_center):
+    """Check if the user has access to the cost center."""
+    del role
+    return type(cost_center).objects.accessible_to(user).filter(pk=cost_center.pk).exists()
