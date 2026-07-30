@@ -90,6 +90,16 @@ class BaseListView(View):
     template_name_add = None
     permission_view = None
     permission_manage = None
+    permission_add = None
+    permission_change = None
+
+    def _get_add_permission(self):
+        """Return permission codename used to guard create actions."""
+        return self.permission_add or self.permission_manage
+
+    def _get_change_permission(self):
+        """Return permission codename used to guard update-related UI actions."""
+        return self.permission_change or self.permission_manage
 
     def get(self, request):
         """List all items or show the add form."""
@@ -109,12 +119,12 @@ class BaseListView(View):
             self.template_name_list,
             {
                 "items": items,
-                self.permission_manage: has_permission(request.user, self.permission_manage),
+                self.permission_manage: has_permission(request.user, self._get_change_permission()),
             },
         )
 
     def __get_add_form(self, request):
-        @method_decorator([has_permission_decorator(self.permission_manage)])
+        @method_decorator([has_permission_decorator(self._get_add_permission())])
         def inner(self, request):
             form = self.form_class()
             return render(request, self.template_name_add, {"form": form})
@@ -124,7 +134,7 @@ class BaseListView(View):
     def post(self, request):
         """Create a new item."""
 
-        @method_decorator([has_permission_decorator(self.permission_manage)])
+        @method_decorator([has_permission_decorator(self._get_add_permission())])
         def inner(self, request):
             return self._handle_form(request)
 
@@ -170,7 +180,17 @@ class BaseDetailView(View):
     template_name_edit = None
     permission_view = None
     permission_manage = None
+    permission_change = None
+    permission_delete = None
     redirect_to = None
+
+    def _get_change_permission(self):
+        """Return permission codename used to guard update actions."""
+        return self.permission_change or self.permission_manage
+
+    def _get_delete_permission(self):
+        """Return permission codename used to guard delete actions."""
+        return self.permission_delete or self.permission_manage
 
     def get(self, request, item_id):
         """Retrieve item details."""
@@ -189,12 +209,12 @@ class BaseDetailView(View):
             {
                 "item": item,
                 "related_objects": related_objects,
-                self.permission_manage: has_permission(request.user, self.permission_manage),
+                self.permission_manage: has_permission(request.user, self._get_change_permission()),
             },
         )
 
     def __get_edit_form(self, request, item):
-        @method_decorator([has_permission_decorator(self.permission_manage)])
+        @method_decorator([has_permission_decorator(self._get_change_permission())])
         def inner(self, request, item):
             form = self.form_class(instance=item)
             return render(request, self.template_name_edit, {"form": form, "item": item})
@@ -204,7 +224,7 @@ class BaseDetailView(View):
     def put(self, request, item_id):
         """Update item details."""
 
-        @method_decorator([has_permission_decorator(self.permission_manage)])
+        @method_decorator([has_permission_decorator(self._get_change_permission())])
         def inner(self, request, item_id):
             item = get_object_or_404(self.model, id=item_id)
             return self._handle_form(request, item)
@@ -218,7 +238,7 @@ class BaseDetailView(View):
     def delete(self, request, item_id):
         """Delete an item."""
 
-        @method_decorator([has_permission_decorator(self.permission_manage)])
+        @method_decorator([has_permission_decorator(self._get_delete_permission())])
         def inner(self, request, item_id):
             item = get_object_or_404(self.model, id=item_id)
             item.delete()
