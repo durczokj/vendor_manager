@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vendor-manager
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vendor-manager
+  template:
+    metadata:
+      labels:
+        app: vendor-manager
+    spec:
+      initContainers:
+        - name: migrate
+          image: durczokj/vendor-manager:__IMAGE_TAG__
+          command: ["python", "manage.py", "migrate", "--noinput"]
+          envFrom:
+            - configMapRef: { name: vendor-manager-config }
+            - secretRef:    { name: vendor-manager-secrets }
+      containers:
+        - name: vendor-manager
+          image: durczokj/vendor-manager:__IMAGE_TAG__
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef: { name: vendor-manager-config }
+            - secretRef:    { name: vendor-manager-secrets }
+          readinessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: vendor-manager.durczok.ovh
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: vendor-manager.durczok.ovh
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 50m,  memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
