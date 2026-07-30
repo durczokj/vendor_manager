@@ -27,11 +27,9 @@ class Migration(migrations.Migration):
     ]
 
     dependencies = [
-        ("orders", "0004_order_company"),
-        ("orders", "0005_orderversion_end_date_orderversion_start_date"),
-        ("orders", "0006_orderversion_contract_delete_contract"),
-        ("people", "0003_person_location_alter_person_id"),
-        ("undertakings", "0001_initial"),
+        ("orders", "0001_initial_squashed_0008_rename_identifier_order_id"),
+        ("people", "0001_initial_squashed_0006_rename_identifier_person_id"),
+        ("undertakings", "0001_initial_squashed_0004_undertaking_manager"),
     ]
 
     operations = [

@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
     ]
 
     dependencies = [
-        ("companies", "0001_initial"),
-        ("contracts", "0001_initial"),
+        ("companies", "0001_initial_squashed_0003_rename_identifier_company_id"),
+        ("contracts", "0001_initial_squashed_0003_rename_identifier_contract_id"),
     ]
 
     operations = [
