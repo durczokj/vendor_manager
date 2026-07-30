@@ -21,13 +21,9 @@
       <button type="submit">Log Out</button>
     </form>
 
-    <h3><a href="{% url 'people' %}">People</a></h3>
-    <h3><a href="{% url 'companies' %}">Companies</a></h3>
-    <h3><a href="{% url 'undertakings' %}">Undertakings</a></h3>
-    <h3><a href="{% url 'engagements' %}">Engagements</a></h3>
-    <h3><a href="{% url 'leaves' %}">Leaves</a></h3>
-    <h3><a href="{% url 'contracts' %}">Contracts</a></h3>
-    <h3><a href="{% url 'orders' %}">Orders</a></h3>
+    {% for entry in nav %}
+      <h3><a href="{% url entry.url_name %}">{{ entry.label }}</a></h3>
+    {% endfor %}
   </div>
 
   <div class="content">
