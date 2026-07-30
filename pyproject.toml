@@ -166,6 +166,8 @@ files = [
     "leaves/serializers.py",
     "leaves/filters.py",
     "leaves/api.py",
+    # P3.T5: auth glue and health
+    "vendor_manager/api_permissions.py",
 ]
 
 [[tool.mypy.overrides]]
