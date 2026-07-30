@@ -8,10 +8,13 @@ from django.utils import timezone
 
 from companies.models import Company
 from contracts.models import Contract
+from orders.managers import OrderManager, OrderVersionManager
 
 
 class Order(models.Model):
     """Define Order model."""
+
+    objects = OrderManager()
 
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -46,6 +49,8 @@ class Order(models.Model):
 
 class OrderVersion(models.Model):
     """Define OrderVersion model."""
+
+    objects = OrderVersionManager()
 
     order = models.ForeignKey(Order, related_name="versions", on_delete=models.CASCADE)
     contract = models.OneToOneField(Contract, related_name="order_version", on_delete=models.CASCADE)

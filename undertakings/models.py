@@ -2,9 +2,13 @@
 
 from django.db import models
 
+from undertakings.managers import CostCenterManager, UndertakingManager
+
 
 class CostCenter(models.Model):
     """Model for a cost center."""
+
+    objects = CostCenterManager()
 
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -12,6 +16,8 @@ class CostCenter(models.Model):
 
 class Undertaking(models.Model):
     """Model for an undertaking."""
+
+    objects = UndertakingManager()
 
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)

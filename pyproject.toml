@@ -135,6 +135,13 @@ files = [
     "vendor_manager/wsgi.py",
     "vendor_manager/asgi.py",
     "vendor_manager/tests.py",
+    "companies/managers.py",
+    "contracts/managers.py",
+    "people/managers.py",
+    "orders/managers.py",
+    "undertakings/managers.py",
+    "engagements/managers.py",
+    "leaves/managers.py",
 ]
 
 [[tool.mypy.overrides]]

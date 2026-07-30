@@ -3,9 +3,13 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from people.managers import PersonManager
+
 
 class Person(models.Model):
     """Model for a person."""
+
+    objects = PersonManager()
 
     id = models.CharField(primary_key=True, max_length=6)
     first_name = models.CharField(max_length=255)

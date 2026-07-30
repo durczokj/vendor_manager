@@ -3,11 +3,14 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from leaves.managers import LeaveManager
 from people.models import Person
 
 
 class Leave(models.Model):
     """Model for leave requests."""
+
+    objects = LeaveManager()
 
     person = models.ForeignKey(Person, related_name="leaves", on_delete=models.CASCADE)
     start_date = models.DateField()
