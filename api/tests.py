@@ -298,6 +298,102 @@ def test_openapi_schema_lists_all_viewsets():
         "/api/v1/engagement-order-version-assignments/",
         "/api/v1/engagement-undertaking-assignments/",
         "/api/v1/leaves/",
+        "/api/v1/engagements/{engagement_pk}/undertaking-assignments/",
+        "/api/v1/engagements/{engagement_pk}/order-version-assignments/",
     ]
     for prefix in expected_prefixes:
         assert any(p.startswith(prefix) for p in paths), f"Missing path prefix: {prefix}"
+
+
+# ---------------------------------------------------------------------------
+# Nested endpoints — scoping and routing (P3.T3)
+# ---------------------------------------------------------------------------
+
+
+def test_nested_undertaking_assignments_list(basic_dataset, admin_user):
+    """GET /api/v1/engagements/<pk>/undertaking-assignments/ returns only that engagement's assignments."""
+    engagement = basic_dataset["engagement"]
+    eua = basic_dataset["undertaking_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagements/{engagement.id}/undertaking-assignments/"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == eua.id
+
+
+def test_nested_order_version_assignments_list(basic_dataset, admin_user):
+    """GET /api/v1/engagements/<pk>/order-version-assignments/ returns only that engagement's assignments."""
+    engagement = basic_dataset["engagement"]
+    ova = basic_dataset["order_version_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagements/{engagement.id}/order-version-assignments/"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == ova.id
+
+
+def test_nested_undertaking_assignments_scoped_to_engagement(basic_dataset, admin_user):
+    """Nested list for engagement without assignments returns empty result."""
+    from datetime import date
+
+    from engagements.models import Engagement
+
+    engagement2 = Engagement.objects.create(
+        person=basic_dataset["person"],
+        start_date=date(2026, 1, 1),
+        end_date=date(2026, 12, 31),
+        daily_rate=basic_dataset["engagement"].daily_rate,
+        fte=basic_dataset["engagement"].fte,
+    )
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagements/{engagement2.id}/undertaking-assignments/"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+
+
+def test_nested_routes_require_authentication(basic_dataset):
+    """Nested assignment endpoints reject unauthenticated requests with 401."""
+    engagement = basic_dataset["engagement"]
+    client = Client()
+    for url in [
+        f"/api/v1/engagements/{engagement.id}/undertaking-assignments/",
+        f"/api/v1/engagements/{engagement.id}/order-version-assignments/",
+    ]:
+        response = client.get(url)
+        assert response.status_code == 401, f"Expected 401 for {url}"
+
+
+def test_flat_undertaking_assignments_filter_by_engagement(basic_dataset, admin_user):
+    """Flat endpoint supports ?engagement= filter for reporting."""
+    engagement = basic_dataset["engagement"]
+    eua = basic_dataset["undertaking_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagement-undertaking-assignments/?engagement={engagement.id}"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == eua.id
+
+
+def test_flat_order_version_assignments_filter_by_engagement(basic_dataset, admin_user):
+    """Flat endpoint supports ?engagement= filter for reporting."""
+    engagement = basic_dataset["engagement"]
+    ova = basic_dataset["order_version_assignment"]
+    client = Client()
+    auth = _basic_auth_header("admin-api", "adminpass")
+    url = f"/api/v1/engagement-order-version-assignments/?engagement={engagement.id}"
+    response = client.get(url, HTTP_AUTHORIZATION=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["count"] == 1
+    assert data["results"][0]["id"] == ova.id

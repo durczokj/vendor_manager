@@ -187,6 +187,7 @@ module = [
     "pythonjsonlogger.*",
     "django_filters",
     "django_filters.*",
+    "rest_framework_nested.*",
 ]
 ignore_missing_imports = true
 
@@ -208,6 +209,10 @@ filterwarnings = [
     "error",
     # Third-party deprecations we don't own — narrow as they come up.
     "ignore::DeprecationWarning:django_plotly_dash.*",
+    # drf-nested-routers re-registers the DRF format-suffix URL converter when
+    # both the flat router and the nested router include their URL sets.
+    # Harmless double-registration; remove once drf-nested-routers upgrades.
+    "ignore::django.utils.deprecation.RemovedInDjango60Warning:rest_framework.*",
 ]
 
 # ---------------------------------------------------------------------------

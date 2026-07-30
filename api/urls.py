@@ -4,6 +4,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularJSONAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.routers import DefaultRouter
+from rest_framework_nested.routers import NestedDefaultRouter
 
 from companies.api import CompanyViewSet
 from contracts.api import ContractViewSet
@@ -38,8 +39,22 @@ router.register(
 )
 router.register("leaves", LeaveViewSet, basename="leaves")
 
+# Nested router: /api/v1/engagements/<engagement_pk>/…
+engagements_router = NestedDefaultRouter(router, "engagements", lookup="engagement")
+engagements_router.register(
+    "undertaking-assignments",
+    EngagementUndertakingAssignmentViewSet,
+    basename="engagements-undertaking-assignments",
+)
+engagements_router.register(
+    "order-version-assignments",
+    EngagementOrderVersionAssignmentViewSet,
+    basename="engagements-order-version-assignments",
+)
+
 urlpatterns = [
     path("", include(router.urls)),
+    path("", include(engagements_router.urls)),
     path(
         "schema/",
         SpectacularJSONAPIView.as_view(permission_classes=[IsAuthenticated]),
