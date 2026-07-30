@@ -86,6 +86,7 @@ def create_engagement(*, person, start_date, end_date, daily_rate, fte):
     """Create and persist a new Engagement."""
     ...
 
+
 # engagements/selectors.py
 def get_active_engagements(person):
     """Return engagements that overlap today."""
