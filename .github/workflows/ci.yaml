@@ -2,6 +2,10 @@ name: CI
 
 on:
   pull_request:
+    # Include ready_for_review so CI runs when a draft PR (e.g. one opened by
+    # the Copilot coding agent) transitions to ready. The default triggers
+    # (opened, synchronize, reopened) don't cover that transition.
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
