@@ -22,7 +22,6 @@ class Person(AbstractUserRole):
         "manage_undertaking": False,
         "manage_engagement": False,
         "manage_engagement_order_version_assignment": False,
-        "view_engagement_undertaking_version_assignment": False,
         "manage_leave": True,
         "manage_contract": False,
     }
@@ -47,7 +46,6 @@ class UndertakingManager(AbstractUserRole):
         "manage_undertaking": True,
         "manage_engagement": False,
         "manage_engagement_order_version_assignment": False,
-        "view_engagement_undertaking_version_assignment": False,
         "manage_leave": False,
         "manage_contract": False,
     }
@@ -72,7 +70,6 @@ class Admin(AbstractUserRole):
         "manage_undertaking": True,
         "manage_engagement": True,
         "manage_engagement_order_version_assignment": True,
-        "view_engagement_undertaking_version_assignment": True,
         "manage_leave": True,
         "manage_contract": False,
     }

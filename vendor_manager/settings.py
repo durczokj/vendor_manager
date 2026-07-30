@@ -192,7 +192,12 @@ if DATABASE_ENGINE in {"sqlite", "django.db.backends.sqlite3"}:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-elif DATABASE_ENGINE in {"postgresql", "postgres", "django.db.backends.postgresql", "django.db.backends.postgresql_psycopg2"}:
+elif DATABASE_ENGINE in {
+    "postgresql",
+    "postgres",
+    "django.db.backends.postgresql",
+    "django.db.backends.postgresql_psycopg2",
+}:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -204,9 +209,7 @@ elif DATABASE_ENGINE in {"postgresql", "postgres", "django.db.backends.postgresq
         }
     }
 else:
-    raise ImproperlyConfigured(
-        f"Unsupported DATABASE_ENGINE {DATABASE_ENGINE!r}. Use 'sqlite' or 'postgresql'."
-    )
+    raise ImproperlyConfigured(f"Unsupported DATABASE_ENGINE {DATABASE_ENGINE!r}. Use 'sqlite' or 'postgresql'.")
 
 
 # Password validation
@@ -245,6 +248,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
+# Silence deploy-check warnings that are addressed by later phases (Phase 5
+# removes django-plotly-dash, freeing us to switch X_FRAME_OPTIONS to DENY;
+# Phase 9 flips CI's `check --deploy` to `--fail-level=WARNING` and closes the
+# rest via env config).
+SILENCED_SYSTEM_CHECKS = [
+    "security.W019",  # X_FRAME_OPTIONS=SAMEORIGIN required by django-plotly-dash until P5.
+]
+
 MESSAGE_TAGS = {
     message_constants.DEBUG: "debug",
     message_constants.INFO: "info",
@@ -275,7 +286,7 @@ LOGGING = {
     },
     "formatters": {
         "json": {
-            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "()": "pythonjsonlogger.json.JsonFormatter",
             "fmt": "%(asctime)s %(levelname)s %(name)s %(message)s %(user_id)s %(request_id)s",
             "rename_fields": {
                 "asctime": "timestamp",

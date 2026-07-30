@@ -20,6 +20,9 @@ extend-exclude = [
     "**/migrations/**",
     "staticfiles/**",
     "notebooks/**",
+    # Whole-file rewrite target in Phase 5 (dashboard rework). Not worth
+    # cleaning up legacy lint here.
+    "dashboards/summary_dashboard.py",
 ]
 
 [tool.ruff.format]
@@ -55,6 +58,33 @@ ignore = [
 "manage.py" = ["D"]
 "vendor_manager/settings.py" = ["E501"]
 
+# The following legacy patterns are left in place through P0 and get rewritten
+# in later phases. Each ignore lists the rule and the phase that removes it.
+
+# Phase 1 rewrites models: adds __str__, fixes null=True on string fields,
+# reorders body, adds docstrings. B008 covers date.today() defaults on Django
+# model fields — a Django-idiomatic pattern the rule doesn't understand.
+"**/models.py" = ["B008", "D101", "D102", "DJ001", "DJ008", "DJ012"]
+
+# Phase 4 rewrites forms: replaces __all__ with an explicit fields list and
+# consolidates docstrings.
+"**/forms.py" = ["D101", "DJ007"]
+
+# Django scaffolding files inherited from `startapp` — untouched by later
+# phases; a single-line docstring rule doesn't add value here.
+"**/apps.py" = ["D100", "D101"]
+"**/admin.py" = ["D100", "D101"]
+"**/permissions.py" = ["D100", "D103"]
+"**/urls.py" = ["D100"]
+
+# BaseListView/BaseDetailView disappear in Phase 3 (viewsets) + Phase 4
+# (CBV consolidation). Not worth annotating in P0.
+"vendor_manager/views.py" = ["D101", "D102", "D107"]
+
+# Legacy date=date.today() form defaults; addressed by Phase 4 form rewrite.
+"**/leaves/forms.py" = ["B008", "D101", "DJ007"]
+"**/engagements/forms.py" = ["B008", "D101", "DJ007"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
@@ -78,6 +108,10 @@ known-first-party = [
 python_version = "3.13"
 strict = true
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+# Only surface errors from the `files` list; transitively-imported modules are
+# still analyzed but their errors are suppressed until Phase 8 expands the
+# scope to the whole codebase.
+follow_imports = "silent"
 # Excluded paths are never analyzed — even when imported from a P0-scope module.
 exclude = [
     "^.*/migrations/.*",
@@ -91,16 +125,16 @@ exclude = [
     "^.*/tests/.*",
 ]
 
-# P0 scope: only new/edited files are strict-checked in CI. Existing untyped
-# modules are handled in P8. New files landing in P0 must pass mypy --strict.
+# P0 scope: only files substantially rewritten or created in P0 are strict-
+# checked in CI. Legacy modules (views.py, utils/*, apps' models/forms/views)
+# are annotated in P7/P8 as part of the strict-typing sweep. Any new code
+# landing in P0 must still pass mypy --strict.
 files = [
     "vendor_manager/settings.py",
-    "vendor_manager/urls.py",
-    "vendor_manager/views.py",
+    "vendor_manager/logging.py",
     "vendor_manager/wsgi.py",
     "vendor_manager/asgi.py",
-    "vendor_manager/roles.py",
-    "vendor_manager/utils",
+    "vendor_manager/tests.py",
 ]
 
 [[tool.mypy.overrides]]

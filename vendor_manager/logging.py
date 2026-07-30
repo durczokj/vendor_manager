@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Callable
 from contextvars import ContextVar
-from typing import Any
 
 from django.http import HttpRequest, HttpResponse
 
@@ -31,6 +31,7 @@ class RequestContextFilter(logging.Filter):
     """Attach ``user_id`` and ``request_id`` from contextvars to every record."""
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Populate ``record`` with the current request's context and always emit."""
         record.user_id = _user_id_var.get()
         record.request_id = _request_id_var.get()
         return True
@@ -46,10 +47,12 @@ class RequestContextMiddleware:
       anonymous requests.
     """
 
-    def __init__(self, get_response: Any) -> None:
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        """Store the wrapped ``get_response`` callable provided by Django."""
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
+        """Set request/user context, invoke the view, then reset the contextvars."""
         request_id = request.headers.get("X-Request-Id") or uuid.uuid4().hex
         rid_token = _request_id_var.set(request_id)
         user = getattr(request, "user", None)
@@ -57,7 +60,7 @@ class RequestContextMiddleware:
             str(user.pk) if user is not None and getattr(user, "is_authenticated", False) else _UNSET
         )
         try:
-            response = self.get_response(request)
+            response: HttpResponse = self.get_response(request)
             response.headers["X-Request-Id"] = request_id
             return response
         finally:

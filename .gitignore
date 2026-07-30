@@ -328,3 +328,25 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Local Python venv
+.venv/
+venv/
+
+# Local SQLite DB
+db.sqlite3
+*.sqlite3-journal
+
+# Local env files
+*.env
+!vm-docker.env
+
+# Coverage artifacts
+.coverage
+coverage.xml
+htmlcov/
+
+# pytest / mypy caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

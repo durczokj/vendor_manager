@@ -132,10 +132,7 @@ class BaseListView(View):
 
     def _handle_form(self, request, instance=None):
         """Handle form submission for creating or updating an item."""
-        if is_api_request(request):
-            data = json.loads(request.body)
-        else:
-            data = request.POST
+        data = json.loads(request.body) if is_api_request(request) else request.POST
 
         form = self.form_class(data, instance=instance)
         form.user = request.user
@@ -231,10 +228,7 @@ class BaseDetailView(View):
 
     def _handle_form(self, request, instance=None):
         """Handle form submission for creating or updating an item."""
-        if is_api_request(request):
-            data = json.loads(request.body)
-        else:
-            data = request.POST
+        data = json.loads(request.body) if is_api_request(request) else request.POST
 
         form = self.form_class(data, instance=instance)
         form.user = request.user
