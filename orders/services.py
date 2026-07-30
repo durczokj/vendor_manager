@@ -21,7 +21,7 @@ def create_new_order_version(
         last_version = order.versions.order_by("-version_number").first()
 
         last_version.end_date = start_date - timedelta(days=1)
-        last_version.full_clean(validate_unique=False)
+        last_version.clean()
         last_version.save()
 
         contract.save()
@@ -34,7 +34,7 @@ def create_new_order_version(
             end_date=end_date,
         )
 
-        new_version.full_clean(validate_unique=False)
+        new_version.clean()
         new_version.save()
 
         if copy_engagement_assignments:
