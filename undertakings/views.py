@@ -22,6 +22,8 @@ class UndertakingsView(BaseListView):
     template_name_add = "add_undertaking.html"
     permission_view = "view_undertaking"
     permission_manage = "manage_undertaking"
+    permission_add = "add_undertaking"
+    permission_change = "change_undertaking"
 
 
 @method_decorator([login_required, has_permission_decorator("view_undertaking")], name="dispatch")
@@ -34,6 +36,8 @@ class UndertakingView(BaseDetailView):
     template_name_edit = "edit_undertaking.html"
     permission_view = "view_undertaking"
     permission_manage = "manage_undertaking"
+    permission_change = "change_undertaking"
+    permission_delete = "delete_undertaking"
     redirect_to = "undertaking"
 
     def get_related_objects(self, undertaking):

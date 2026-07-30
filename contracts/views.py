@@ -21,6 +21,8 @@ class ContractsView(BaseListView):
     template_name_add = "add_contract.html"
     permission_view = "view_contract"
     permission_manage = "manage_contract"
+    permission_add = "add_contract"
+    permission_change = "change_contract"
 
 
 @method_decorator([login_required, has_permission_decorator("view_contract")], name="dispatch")
@@ -33,4 +35,6 @@ class ContractView(BaseDetailView):
     template_name_edit = "edit_contract.html"
     permission_view = "view_contract"
     permission_manage = "manage_contract"
+    permission_change = "change_contract"
+    permission_delete = "delete_contract"
     redirect_to = "contract"
