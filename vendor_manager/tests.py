@@ -321,3 +321,38 @@ def test_base_html_has_no_hardcoded_entity_url_tags() -> None:
         name_match = re.search(r"""['"]([\w]+)['"]""", match)
         if name_match:
             assert name_match.group(1) not in entity_url_names, f"base.html contains hard-coded entity URL tag: {match}"
+
+
+@pytest.mark.django_db
+def test_company_delete_confirmation_page_renders_before_delete() -> None:
+    """GET on delete URL renders shared confirmation page; POST performs delete."""
+    user = User.objects.create_user("delete-admin", None, "strong-password")
+    assign_role(user, "admin")
+    company = Company.objects.create(id=2101, name="Delete Me", email="delete-me@example.com")
+    client = Client()
+    client.force_login(user)
+
+    get_response = client.get(reverse("company-delete", kwargs={"pk": company.pk}))
+    assert get_response.status_code == 200
+    assert f"Delete {company}?".encode() in get_response.content
+    assert b">Yes<" in get_response.content
+    assert b">Cancel<" in get_response.content
+
+    post_response = client.post(reverse("company-delete", kwargs={"pk": company.pk}))
+    assert post_response.status_code == 302
+    assert post_response.headers["Location"] == reverse("company-list")
+    assert not Company.objects.filter(pk=company.pk).exists()
+
+
+@pytest.mark.django_db
+def test_company_delete_requires_delete_permission() -> None:
+    """Users without delete permission are denied access to delete endpoint."""
+    user = User.objects.create_user("delete-person", None, "strong-password")
+    assign_role(user, "person")
+    company = Company.objects.create(id=2102, name="Do Not Delete", email="do-not-delete@example.com")
+    client = Client()
+    client.force_login(user)
+
+    response = client.get(reverse("company-delete", kwargs={"pk": company.pk}))
+    assert response.status_code in (302, 403)
+    assert Company.objects.filter(pk=company.pk).exists()
