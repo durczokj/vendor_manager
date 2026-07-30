@@ -11,7 +11,6 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from dashboards.summary_dashboard import SummaryDashboard
 from vendor_manager.utils.check_user_person_assignment import NoPersonAssignedToUser, check_user_person_assignment
 
 logger = logging.getLogger(__name__)
@@ -58,29 +57,15 @@ class PersonLinkedLoginView(DjangoLoginView):
 
 @method_decorator([login_required], name="dispatch")
 class MainView(View):
-    """Render the dashboard page with a sample Plotly chart."""
+    """Render the cost dashboard using the Plotly.js summary template (P5.T3)."""
 
-    dashboard = None
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Render the dashboard page.
 
-    def get(self, request):
-        """Render the dashboard page."""
-        user = request.user
+        Args:
+            request: The incoming HTTP request from an authenticated user.
 
-        if MainView.dashboard is None:
-            MainView.dashboard = SummaryDashboard()
-
-        if request.GET.get("recalculate") == "True":
-            self.dashboard.recalculate()
-
-        form = self.dashboard.get_form(data=request.GET)
-        self.dashboard.update(form)
-
-        context = {
-            "user": user,
-            "form": form,
-            "plot": self.dashboard.get_plot(),
-            "table": self.dashboard.get_table(),
-            "granularity": self.dashboard.granularity,
-            "class_param_name": self.dashboard.class_param.__name__,
-        }
-        return render(request=request, template_name="main.html", context=context)
+        Returns:
+            HTTP 200 response rendering ``dashboards/summary.html``.
+        """
+        return render(request=request, template_name="dashboards/summary.html")

@@ -356,3 +356,34 @@ def test_company_delete_requires_delete_permission() -> None:
     response = client.get(reverse("company-delete", kwargs={"pk": company.pk}))
     assert response.status_code in (302, 403)
     assert Company.objects.filter(pk=company.pk).exists()
+
+
+# ---------------------------------------------------------------------------
+# Main dashboard view tests (P5.T3 / FR-43, FR-46)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_main_view_signed_out_redirects_to_login() -> None:
+    """Unauthenticated GET on / is redirected to /accounts/login/ (FR-46)."""
+    c = Client()
+    response = c.get(reverse("main"))
+    assert response.status_code == 302
+    assert "/accounts/login/" in response["Location"]
+
+
+@pytest.mark.django_db
+def test_main_view_signed_in_returns_200() -> None:
+    """Authenticated GET on / returns 200 and renders the Plotly dashboard (FR-43, FR-46)."""
+    user = User.objects.create_user("dashboard-user", None, "strong-password")
+    assign_role(user, "admin")
+    Person.objects.create(id="D00001", first_name="Dash", last_name="User", user=user)
+    c = Client()
+    c.force_login(user)
+
+    response = c.get(reverse("main"))
+    assert response.status_code == 200
+    # Template must include a Plotly CDN script tag.
+    assert b"plotly" in response.content.lower()
+    # Template must include the chart container.
+    assert b"cost-chart" in response.content

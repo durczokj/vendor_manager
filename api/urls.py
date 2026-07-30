@@ -8,7 +8,7 @@ from rest_framework_nested.routers import NestedDefaultRouter
 
 from companies.api import CompanyViewSet
 from contracts.api import ContractViewSet
-from dashboards.api import DashboardSummaryView
+from dashboards.api import DashboardEntityOptionsView, DashboardSummaryView
 from engagements.api import (
     EngagementOrderVersionAssignmentViewSet,
     EngagementUndertakingAssignmentViewSet,
@@ -57,6 +57,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("", include(engagements_router.urls)),
     path("dashboards/summary/", DashboardSummaryView.as_view(), name="dashboards-summary"),
+    path("dashboards/entity-options/", DashboardEntityOptionsView.as_view(), name="dashboards-entity-options"),
     path(
         "schema/",
         SpectacularJSONAPIView.as_view(permission_classes=[IsAuthenticated]),
