@@ -1,0 +1,54 @@
+name: Implementation plan task
+description: One task from docs/IMPLEMENTATION_PLAN.md, ready to hand off to the coding agent.
+title: "[Task] "
+labels: ["plan-task"]
+body:
+  - type: input
+    id: task_id
+    attributes:
+      label: Task ID
+      description: The task ID from the plan, e.g. P1.T2 or P3.T4.
+      placeholder: P1.T1
+    validations:
+      required: true
+  - type: input
+    id: phase_link
+    attributes:
+      label: Plan section
+      description: Deep link to the task in docs/IMPLEMENTATION_PLAN.md.
+      placeholder: https://github.com/durczokj/vendor_manager/blob/main/docs/IMPLEMENTATION_PLAN.md#p1t1
+    validations:
+      required: true
+  - type: textarea
+    id: satisfies
+    attributes:
+      label: Satisfies
+      description: Copy the "Satisfies" bullet from the plan verbatim.
+      placeholder: FR-1, FR-16, NFR-8
+    validations:
+      required: true
+  - type: textarea
+    id: do
+    attributes:
+      label: Do
+      description: Copy the "Do" bullets from the plan verbatim.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: Copy the "Acceptance" bullets from the plan verbatim. These are your PR merge criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Depends on
+      description: Other task IDs whose PRs must merge before this one starts.
+      placeholder: P0.* (already landed); P1.T1
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / caveats
+      description: Anything that isn't in the plan but the agent should know.
