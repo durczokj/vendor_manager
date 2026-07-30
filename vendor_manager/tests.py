@@ -210,7 +210,7 @@ def test_api_user_without_linked_person_gets_403() -> None:
     )
 
     assert response.status_code == 403
-    assert "not assigned to any person" in response.json()["detail"]
+    assert "is not assigned to any person" in response.json()["detail"]
 
 
 @pytest.mark.django_db

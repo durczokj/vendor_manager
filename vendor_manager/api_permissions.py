@@ -51,4 +51,7 @@ class HasLinkedPerson(BasePermission):
             check_user_person_assignment(request.user)
             return True
         except NoPersonAssignedToUser as exc:
-            raise PermissionDenied(detail=str(exc)) from exc
+            logger.debug("API access blocked for user '%s': %s", request.user.get_username(), exc)
+            raise PermissionDenied(
+                detail=f"User '{request.user.get_username()}' is not assigned to any person."
+            ) from exc
