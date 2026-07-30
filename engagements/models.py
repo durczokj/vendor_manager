@@ -8,6 +8,11 @@ import pandas as pd
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from engagements.managers import (
+    EngagementManager,
+    EngagementOrderVersionAssignmentManager,
+    EngagementUndertakingAssignmentManager,
+)
 from orders.models import Order, OrderVersion
 from people.models import Person
 from undertakings.models import Undertaking
@@ -15,6 +20,8 @@ from undertakings.models import Undertaking
 
 class Engagement(models.Model):
     """Model for an engagement."""
+
+    objects = EngagementManager()
 
     id = models.AutoField(primary_key=True)
     person = models.ForeignKey(Person, related_name="engagements", on_delete=models.CASCADE)
@@ -202,6 +209,8 @@ class Engagement(models.Model):
 class EngagementOrderVersionAssignment(models.Model):
     """Model for the assignment of an order version to an engagement."""
 
+    objects = EngagementOrderVersionAssignmentManager()
+
     engagement = models.ForeignKey(Engagement, related_name="order_version_assignments", on_delete=models.CASCADE)
     order_version = models.ForeignKey(OrderVersion, related_name="engagement_assignments", on_delete=models.CASCADE)
 
@@ -224,6 +233,8 @@ class EngagementOrderVersionAssignment(models.Model):
 
 class EngagementUndertakingAssignment(models.Model):
     """Model for the assignment of an undertaking to an engagement."""
+
+    objects = EngagementUndertakingAssignmentManager()
 
     engagement = models.ForeignKey(Engagement, related_name="undertaking_assignments", on_delete=models.CASCADE)
     undertaking = models.ForeignKey(Undertaking, related_name="engagement_assignments", on_delete=models.CASCADE)
