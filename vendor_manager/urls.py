@@ -21,6 +21,7 @@ from django.urls import include, path
 from . import views
 
 urlpatterns = [
+    path("api/v1/", include(("api.urls", "api"), namespace="api-v1")),
     path("", views.MainView.as_view(), name="main"),
     path("health/", views.health, name="health"),
     path("accounts/login/", views.login_web, name="login"),

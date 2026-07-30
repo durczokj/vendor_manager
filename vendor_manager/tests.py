@@ -5,10 +5,17 @@ These are intentionally minimal. Real test coverage lives in the per-app
 implementation plan.
 """
 
+import base64
+import json
+
+import pytest
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import Client
 from django.urls import reverse
 
+from companies.models import Company
 from vendor_manager.roles import Admin, Person, UndertakingManager
 
 
@@ -84,3 +91,85 @@ def test_roles_have_expected_permission_sets() -> None:
     assert Admin.available_permissions["add_engagement_undertaking_assignment"] is True
     assert Admin.available_permissions["delete_engagement"] is True
     assert Admin.available_permissions["change_contract"] is False
+
+
+@pytest.mark.django_db
+def test_api_schema_requires_auth_and_returns_openapi() -> None:
+    """Schema endpoint authenticates with HTTP Basic and returns OpenAPI JSON."""
+    user = User.objects.create_user("staff-user", None, "strong-password", is_staff=True)
+    auth = base64.b64encode(f"{user.username}:strong-password".encode()).decode()
+
+    client = Client()
+    response = client.get(reverse("api-v1:schema"), HTTP_AUTHORIZATION=f"Basic {auth}")
+
+    assert response.status_code == 200
+    assert json.loads(response.content)["openapi"].startswith("3.")
+
+
+@pytest.mark.django_db
+def test_api_companies_anonymous_request_is_401_with_basic_challenge() -> None:
+    """Anonymous clients are challenged with HTTP Basic for API endpoints."""
+    client = Client()
+    response = client.get(reverse("api-v1:companies-list"))
+
+    assert response.status_code == 401
+    assert response.headers["WWW-Authenticate"] == 'Basic realm="api"'
+
+
+@pytest.mark.django_db
+def test_api_companies_session_post_without_csrf_is_403() -> None:
+    """Session-authenticated writes enforce CSRF protection."""
+    user = User.objects.create_user("session-user", None, "strong-password", is_staff=True)
+    client = Client(enforce_csrf_checks=True)
+    client.force_login(user)
+
+    response = client.post(
+        reverse("api-v1:companies-list"),
+        data=json.dumps({"id": 2001, "name": "Session Co", "email": "session@example.com"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_api_companies_basic_post_without_csrf_is_201() -> None:
+    """HTTP Basic-authenticated writes are CSRF-exempt and can create records."""
+    user = User.objects.create_user("basic-user", None, "strong-password", is_staff=True)
+    auth = base64.b64encode(f"{user.username}:strong-password".encode()).decode()
+    client = Client(enforce_csrf_checks=True)
+
+    response = client.post(
+        reverse("api-v1:companies-list"),
+        data=json.dumps({"id": 2002, "name": "Basic Co", "email": "basic@example.com"}),
+        content_type="application/json",
+        HTTP_AUTHORIZATION=f"Basic {auth}",
+    )
+
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
+def test_api_companies_model_validation_error_returns_drf_400_shape(monkeypatch) -> None:
+    """Django model ValidationError maps to DRF's 400 error response shape."""
+    user = User.objects.create_user("invalid-company-user", None, "strong-password", is_staff=True)
+    auth = base64.b64encode(f"{user.username}:strong-password".encode()).decode()
+    client = Client()
+    original_save = Company.save
+
+    def fail_save(self, *args, **kwargs):
+        if self.pk == 2003:
+            raise DjangoValidationError("bad company data")
+        return original_save(self, *args, **kwargs)
+
+    monkeypatch.setattr(Company, "save", fail_save)
+
+    response = client.post(
+        reverse("api-v1:companies-list"),
+        data=json.dumps({"id": 2003, "name": "Invalid Co", "email": "invalid@example.com"}),
+        content_type="application/json",
+        HTTP_AUTHORIZATION=f"Basic {auth}",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"non_field_errors": ["bad company data"]}
