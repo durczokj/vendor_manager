@@ -16,7 +16,10 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.contrib.auth.views import LogoutView
 from django.urls import include, path
+from drf_spectacular.views import SpectacularSwaggerView
+from rest_framework.permissions import IsAuthenticated
 
 from . import views
 
@@ -24,8 +27,16 @@ urlpatterns = [
     path("api/v1/", include(("api.urls", "api"), namespace="api-v1")),
     path("", views.MainView.as_view(), name="main"),
     path("health/", views.health, name="health"),
-    path("accounts/login/", views.login_web, name="login"),
-    path("accounts/logout/", views.logout_view, name="logout"),
+    path("accounts/login/", views.PersonLinkedLoginView.as_view(), name="login"),
+    path("accounts/logout/", LogoutView.as_view(), name="logout"),
+    path(
+        "docs/api/",
+        SpectacularSwaggerView.as_view(
+            url_name="api-v1:schema",
+            permission_classes=[IsAuthenticated],
+        ),
+        name="swagger-ui",
+    ),
     path("people/", include("people.urls")),
     path("contracts/", include("contracts.urls")),
     path("orders/", include("orders.urls")),

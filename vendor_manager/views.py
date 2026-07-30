@@ -4,14 +4,15 @@ import json
 import logging
 
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.views import LoginView as DjangoLoginView
+from django.db import connection
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.csrf import csrf_protect
 from rolepermissions.checkers import has_object_permission, has_permission
 from rolepermissions.decorators import has_permission_decorator
 
@@ -22,31 +23,43 @@ from vendor_manager.utils.is_api_request import is_api_request
 logger = logging.getLogger(__name__)
 
 
-def health(request):
-    """Liveness/readiness probe target. Returns 200 with a plain-text body."""
+def health(request: HttpRequest) -> HttpResponse:
+    """Liveness/readiness probe target.
+
+    Returns 200 with a plain-text body and proves DB connectivity by
+    executing a trivial SELECT 1 via connection.cursor().
+    """
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
     return HttpResponse("ok", content_type="text/plain")
 
 
-@csrf_protect
-def login_web(request):
-    """Render the login page and handle login logic."""
-    if request.method == "POST":
-        username = request.POST["username"]
-        password = request.POST["password"]
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            try:
-                check_user_person_assignment(user)
-            except NoPersonAssignedToUser as e:
-                messages.error(request, str(e))
-                return render(request, "registration/login.html")
+class PersonLinkedLoginView(DjangoLoginView):
+    """LoginView subclass that verifies the authenticated user has a linked Person.
 
-            login(request, user)
-            return redirect("main")  # Redirect to a success page.
-        else:
-            messages.error(request, "Invalid username or password.")
+    After credential validation, the user's Person link is checked.
+    Users whose Person has been deleted or was never created are blocked
+    with a non-field form error rather than being logged in.
+    """
 
-    return render(request, "registration/login.html")
+    def form_valid(self, form: AuthenticationForm) -> HttpResponse:
+        """Check Person linkage before completing the login.
+
+        Args:
+            form: A validated AuthenticationForm whose get_user()
+                returns the authenticated User instance.
+
+        Returns:
+            Redirect to LOGIN_REDIRECT_URL on success, or the login form
+            rendered with an error if the user has no linked Person.
+        """
+        user = form.get_user()
+        try:
+            check_user_person_assignment(user)
+        except NoPersonAssignedToUser as exc:
+            form.add_error(None, str(exc))
+            return self.form_invalid(form)
+        return super().form_valid(form)
 
 
 @method_decorator([login_required], name="dispatch")
@@ -159,15 +172,6 @@ class BaseListView(View):
             else:
                 messages.error(request, form.errors)
                 return self.__get_add_form(request)
-
-
-@csrf_protect
-def logout_view(request):
-    """Log out a user."""
-    if request.method == "POST":
-        logout(request)
-        return redirect("main")
-    return redirect("main")
 
 
 @method_decorator([login_required], name="dispatch")

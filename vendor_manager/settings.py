@@ -177,6 +177,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+        "vendor_manager.api_permissions.HasLinkedPerson",
     ],
     "DEFAULT_PAGINATION_CLASS": "vendor_manager.api_pagination.DefaultPageNumberPagination",
     "DEFAULT_FILTER_BACKENDS": [
