@@ -3,13 +3,40 @@
 ## Prerequisites
 
 - Python 3.13
-- Docker (optional, for running via `compose.yml`)
-- A running PostgreSQL instance **or** `DATABASE_ENGINE=sqlite` for a lightweight SQLite dev DB
+- Docker (optional — only needed for Mode A with a real PostgreSQL database)
+- `pip`
 
-## Quick start
+## Dev mode A — Compose DB + host app (default)
+
+Start **only PostgreSQL** in Docker; the Django app runs on the host for fast reloads and
+easy debugging.
 
 ```bash
-# 1. Install dependencies
+# 1. Start PostgreSQL
+docker compose up -d
+
+# 2. Install Python dependencies
+pip install -r requirements.txt -r requirements-dev.txt
+
+# 3. Apply migrations
+python manage.py migrate
+
+# 4. Create a superuser
+python manage.py createsuperuser
+
+# 5. Start the development server
+python manage.py runserver
+```
+
+Open <http://localhost:8000> in your browser.
+
+## Dev mode B — Pure SQLite (no Docker)
+
+Run everything on the host using an SQLite database file. No containers required. Useful
+for quick experiments and CI-like environments.
+
+```bash
+# 1. Install Python dependencies
 pip install -r requirements.txt -r requirements-dev.txt
 
 # 2. Apply migrations (SQLite dev DB)
@@ -21,6 +48,8 @@ DJANGO_DEBUG=true DJANGO_SECRET_KEY=dev DATABASE_ENGINE=sqlite python manage.py 
 # 4. Start the development server
 DJANGO_DEBUG=true DJANGO_SECRET_KEY=dev DATABASE_ENGINE=sqlite python manage.py runserver
 ```
+
+Open <http://localhost:8000> in your browser.
 
 ## Populating sample data
 
@@ -49,8 +78,8 @@ python scripts/populate.py \
 
 ### What gets created
 
-See [`scripts/populate.md`](../scripts/populate.md) for the full entity list and
-endpoint coverage matrix.
+See [`scripts/populate.md`](https://github.com/durczokj/vendor_manager/blob/main/scripts/populate.md)
+for the full entity list and endpoint coverage matrix.
 
 ### Smoke-testing a deployment
 
