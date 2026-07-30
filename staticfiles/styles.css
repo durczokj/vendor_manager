@@ -2,22 +2,22 @@ body {
     font-family: Calibri, Arial, sans-serif;
 }
 
+/* Two-column layout: sidebar has a minimum width so it never disappears on
+   narrow viewports; the content column takes the remaining space. */
 .container {
-    display: flex;
-    height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+    min-height: 100vh;
 }
 
 .sidebar {
-    width: 20%;
     padding: 10px;
     background-color: #f4f4f4;
-    height: 100vh;
 }
 
 .content {
-    width: 80%;
     padding: 10px;
-    overflow-y: auto;
+    overflow-x: auto;
 }
 
 .header {
@@ -35,14 +35,45 @@ body {
 .messages {
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Align text at the top */
-    text-align: center; /* Match header alignment */
-    padding: 10px; /* Match header padding */
-    background-color: #333; /* Match header background color */
-    color: white; /* Match header text color */
+    align-items: flex-start;
+    text-align: center;
+    padding: 10px;
+    background-color: #333;
+    color: white;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     border-top: 1px solid #ccc;
+}
+
+/* Inline actions (delete form / edit link) inside table cells */
+.inline {
+    display: inline;
+}
+
+/* Filter bar used on the dashboard / leaves page */
+.filter-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 20px;
+}
+
+.filter-row--wrap {
+    flex-wrap: wrap;
+}
+
+.filter-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.filter-col label {
+    margin-bottom: 5px;
+}
+
+/* Calendar section on the leaves page */
+.calendar {
+    margin-top: 20px;
 }

@@ -1,4 +1,4 @@
-{% extends "master.html" %}
+{% extends "base.html" %}
 
 {% block title %}
   Edit Company
@@ -8,11 +8,11 @@
   <h1>
     Edit Company: {{ item.id }} ({{ item.name }})
     <button type="submit" form="edit-form">Save</button>
-    <a href="/companies/{{ item.id }}">
+    <a href="{% url 'company' item.id %}">
       <button type="button">Cancel</button>
     </a>
   </h1>
-  <form id="edit-form" method="post" action="/companies/{{ item.id }}">
+  <form id="edit-form" method="post" action="{% url 'company' item.id %}">
     {% csrf_token %}
     {{ form.as_p }}
   </form>

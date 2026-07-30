@@ -1,4 +1,4 @@
-{% extends "master.html" %}
+{% extends "base.html" %}
 
 {% block title %}
   Vendor Manager – Leaves
@@ -8,23 +8,23 @@
   <h1>Leaves</h1>
 
   <!-- Form to choose month and year -->
-  <div class="filters">
+  <div class="filter-row">
     <form method="get" action="{% url 'leaves' %}">
-      <div class="filter-item">
+      <div class="filter-col">
         <label for="month">Month:</label>
         <input type="number" id="month" name="month" value="{{ month }}" min="1" max="12">
       </div>
-      <div class="filter-item">
+      <div class="filter-col">
         <label for="year">Year:</label>
         <input type="number" id="year" name="year" value="{{ year }}" min="1970" max="9999">
       </div>
-      <div class="filter-item">
+      <div class="filter-col">
         <button type="submit">Go</button>
       </div>
     </form>
   </div>
 
-  <table border="1" style="border-color: black; width: 100%; margin-top: 20px;">
+  <table>
     <thead>
       <tr>
         <th>ID</th>
@@ -46,7 +46,7 @@
           <td>{{ x.end_date|date:"Y-m-d" }}</td>
           <td>{{ x.percentage }}</td>
           <td>
-            <form action="{% url 'delete_leave' x.id %}" method="post" style="display:inline;">
+            <form action="{% url 'delete_leave' x.id %}" method="post" class="inline">
               {% csrf_token %}
               <button type="submit">Delete</button>
             </form>
@@ -57,7 +57,7 @@
   </table>
 
   <h1>Add a Leave</h1>
-  <table border="1" style="border-color: black; width: 100%; margin-top: 20px;">
+  <table>
     <thead>
       <tr>
         <th>Person</th>
@@ -88,23 +88,5 @@
     {{ calendar }}
   </div>
 
-  <p>Back to <a href="/">Home</a></p>
+  <p>Back to <a href="{% url 'main' %}">Home</a></p>
 {% endblock %}
-
-<style>
-  .filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .filter-item {
-    display: flex;
-    flex-direction: column;
-  }
-  .filter-item label {
-    margin-bottom: 5px;
-  }
-  .calendar {
-    margin-top: 20px;
-  }
-</style>
