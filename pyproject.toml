@@ -169,6 +169,9 @@ files = [
     "leaves/api.py",
     # P3.T5: auth glue and health
     "vendor_manager/api_permissions.py",
+    # P5.T1: dashboard selectors and services
+    "dashboards/selectors.py",
+    "dashboards/services.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -191,6 +194,12 @@ module = [
     "django_filters",
     "django_filters.*",
     "rest_framework_nested.*",
+    # pandas-stubs not installed; numpy ships its own stubs but mypy still
+    # complains on some builds. Suppress until P8 strict-typing sweep.
+    "pandas",
+    "pandas.*",
+    "numpy",
+    "numpy.*",
 ]
 ignore_missing_imports = true
 
