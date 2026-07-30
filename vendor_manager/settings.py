@@ -122,7 +122,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
-    "django_plotly_dash.apps.DjangoPlotlyDashConfig",
     "crispy_forms",
     "crispy_bootstrap5",
     "django_tables2",
@@ -133,7 +132,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
 
-X_FRAME_OPTIONS = "SAMEORIGIN"
+X_FRAME_OPTIONS = "DENY"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -145,7 +144,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "vendor_manager.logging.RequestContextMiddleware",
-    "django_plotly_dash.middleware.BaseMiddleware",
 ]
 
 ROOT_URLCONF = "vendor_manager.urls"
@@ -281,13 +279,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
-# Silence deploy-check warnings that are addressed by later phases (Phase 5
-# removes django-plotly-dash, freeing us to switch X_FRAME_OPTIONS to DENY;
-# Phase 9 flips CI's `check --deploy` to `--fail-level=WARNING` and closes the
+# Silence deploy-check warnings that are addressed by later phases (Phase 9
+# flips CI's `check --deploy` to `--fail-level=WARNING` and closes the
 # rest via env config).
-SILENCED_SYSTEM_CHECKS = [
-    "security.W019",  # X_FRAME_OPTIONS=SAMEORIGIN required by django-plotly-dash until P5.
-]
+SILENCED_SYSTEM_CHECKS: list[str] = []
 
 MESSAGE_TAGS = {
     message_constants.DEBUG: "debug",
