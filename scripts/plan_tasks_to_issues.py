@@ -120,11 +120,16 @@ def main() -> int:
         title = render_issue_title(t)
         body = render_issue_body(t)
         if args.gh_create:
-            subprocess.run(
+            result = subprocess.run(
                 ["gh", "issue", "create", "--title", title, "--body", body, "--label", args.label],
-                check=True,
+                capture_output=True,
+                text=True,
+                check=False,
             )
-            print(f"created: {title}")
+            if result.returncode != 0:
+                print(f"FAILED: {title}\n{result.stderr}", file=sys.stderr)
+                continue
+            print(f"created: {title} — {result.stdout.strip()}")
         else:
             print("=" * 80)
             print(f"TITLE: {title}")
