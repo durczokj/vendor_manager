@@ -57,7 +57,7 @@ Open <http://localhost:8000> in your browser.
 
 ## Next steps
 
-- See [Local dev](local-dev.md) for the full local development guide (tests, linting,
+- See [Local dev](../developer-guide/local-dev.md) for the full local development guide (tests, linting,
   sample data seeding).
-- See [Architecture](architecture.md) to understand how the codebase is structured.
+- See [Architecture](../developer-guide/architecture.md) to understand how the codebase is structured.
 - See [API reference](/docs/api/) to explore the REST API interactively.

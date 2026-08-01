@@ -33,7 +33,7 @@
 | P3 | REST API surface | Explicit serializers, viewsets, HTTP Basic auth, `/api/v1/`, OpenAPI schema. | P2 |
 | P4 | UI consolidation | One `base.html`, one `_list.html`, one `_detail.html`, one `_form.html`, one delete-confirm template; crispy-forms + django-tables2; nav registry. | P3 (per app) |
 | P5 | Dashboard rework | Remove `django-plotly-dash`; new JSON endpoint + Plotly.js template; enforce `accessible_to(user)`. | P2, P3 |
-| P6 | Documentation site | MkDocs at `/docs/`, Swagger embedded at `/docs/api/`. | P3 |
+| P6 | Documentation site | MkDocs at `/docs/` with three top-level sections — User Guide, Developer Guide, API Reference (Swagger embedded at `/docs/api/`). | P3 |
 | P7 | Test hardening | Factories, model/service/API/permission suites, diff-coverage gate live. | Runs alongside P1–P6; final push here. |
 | P8 | Strict-typing sweep | Everything that isn't already annotated gets annotated; `mypy --strict` passes on the whole project. | P1–P6 |
 | P9 | Acceptance & release | Every `FR‑*` / `NFR‑*` mapped to a passing test; `check --deploy` clean; MkDocs green; k3s deploy verified. | P0–P8 |
@@ -701,37 +701,74 @@
 
 ## Phase 6 — Documentation site
 
-**Goal.** One documentation link — `/docs/` — served by the Django app. MkDocs Material powers the human docs; Swagger UI at `/docs/api/` covers the API reference.
+**Goal.** One documentation link — `/docs/` — served by the Django app. MkDocs Material powers the human docs; Swagger UI at `/docs/api/` is embedded under the API Reference section. The site is organised under **three top‑level sections**: **User Guide**, **Developer Guide**, and **API Reference** (per `FR‑52`).
 
 **Definition of done.**
 
-- `mkdocs.yaml` at the repo root.
-- `docs/` directory contains authored markdown (existing `docs/REQUIREMENTS.md`, `docs/ERD.md`, and new pages per `FR‑52`).
-- Dockerfile runs `mkdocs build` and copies the built site into the image.
+- `mkdocs.yml` at the repo root (file extension is `.yml`, not `.yaml` — the existing file on `main` uses `.yml` and the Dockerfile references `mkdocs.yml`).
+- The MkDocs nav has exactly three top‑level sections: **User Guide**, **Developer Guide**, **API Reference**. No page lives at the top level outside these three sections.
+- `docs/` contains one subdirectory per section (`docs/user-guide/`, `docs/developer-guide/`, `docs/api-reference/`) plus a top‑level `docs/index.md` landing page that describes the three sections and links into them.
+- Every page listed in `FR‑52` under each section exists and passes `mkdocs build --strict` (no warnings, no broken links).
+- Dockerfile runs `mkdocs build --strict` and copies the built site into the image.
 - Django serves the built site at `/docs/` (WhiteNoise) with auth in prod.
-- Swagger UI available at `/docs/api/` and linked from the MkDocs nav.
+- Swagger UI available at `/docs/api/` and reached from the API Reference section of the nav.
 - CI runs `mkdocs build --strict`.
+- README is under 60 lines and points at `/docs/`.
 
-### P6.T1 — Scaffold MkDocs [serial]
+### P6.T1 — Scaffold MkDocs with the three‑section nav [serial]
 
 **Satisfies.** `FR‑51`, `FR‑52`, `FR‑53`.
 
 **Do.**
 
-- `mkdocs.yaml` at repo root using the Material theme.
-- Nav includes at minimum: Overview / Getting started / Architecture / Data model / Roles & permissions / Local dev / Deployment / API reference (external link to `/docs/api/`).
-- Author the missing pages under `docs/`:
-  - `docs/index.md` — landing page.
-  - `docs/architecture.md` — one page describing the UI + API split, the services/selectors layer, and the three roles.
-  - `docs/deployment.md` — one page describing the k3s pipeline (`NFR‑24a`).
-  - `docs/local-dev.md` — the two dev modes from `NFR‑24`.
-- Existing pages (`REQUIREMENTS.md`, `ERD.md`) are linked from the nav.
-- Configure `mkdocs.yaml` with `strict: true`, `use_directory_urls: false` (simplifies serving through Django).
+- `mkdocs.yml` at repo root using the Material theme, with `strict: true` and `use_directory_urls: false`.
+- Restructure `docs/` into three subdirectories: `docs/user-guide/`, `docs/developer-guide/`, `docs/api-reference/`. Move existing pages into the developer guide using `git mv` (so file history is preserved) as follows:
+  - `docs/architecture.md` → `docs/developer-guide/architecture.md`
+  - `docs/local-dev.md` → `docs/developer-guide/local-dev.md`
+  - `docs/deployment.md` → `docs/developer-guide/deployment.md`
+  - `docs/roles-and-permissions.md` → `docs/developer-guide/roles-and-permissions.md`
+  - `docs/ERD.md` → `docs/developer-guide/data-model.md` (or leave in place and link from developer guide)
+  - `docs/getting-started.md` becomes the launcher for the User Guide (`docs/user-guide/getting-started.md`).
+  - `docs/REQUIREMENTS.md` and `docs/IMPLEMENTATION_PLAN.md` are linked from the Developer Guide index; they are not moved.
+- Author `docs/index.md` as a three‑card landing page that links into each section.
+- Nav structure (mkdocs.yml):
+
+  ```yaml
+  nav:
+    - Home: index.md
+    - User Guide:
+        - Overview: user-guide/index.md
+        - Getting started: user-guide/getting-started.md
+        - Roles at a glance: user-guide/roles.md
+        - Companies & contracts: user-guide/companies-and-contracts.md
+        - Orders & versions: user-guide/orders.md
+        - Undertakings & cost centers: user-guide/undertakings.md
+        - People & engagements: user-guide/people-and-engagements.md
+        - Leaves: user-guide/leaves.md
+        - Dashboard: user-guide/dashboard.md
+    - Developer Guide:
+        - Overview: developer-guide/index.md
+        - Architecture: developer-guide/architecture.md
+        - Data model: developer-guide/data-model.md
+        - Roles & permissions: developer-guide/roles-and-permissions.md
+        - Coding conventions: developer-guide/coding-conventions.md
+        - Testing: developer-guide/testing.md
+        - Local dev: developer-guide/local-dev.md
+        - Deployment: developer-guide/deployment.md
+        - Requirements: REQUIREMENTS.md
+        - Implementation plan: IMPLEMENTATION_PLAN.md
+    - API Reference:
+        - Overview: api-reference/index.md
+        - Using the API: api-reference/using-the-api.md
+        - Swagger UI: /docs/api/
+  ```
 
 **Acceptance.**
 
 - `mkdocs build --strict` produces a `site/` directory with no warnings.
 - Every internal link resolves.
+- The rendered site shows exactly three top‑level sections.
+- `grep -R 'mkdocs.yaml' .` returns zero hits.
 
 ### P6.T2 — Serve MkDocs at `/docs/` from Django [serial]
 
@@ -773,12 +810,67 @@
 
 **Do.**
 
-- README becomes short: project name, one-paragraph description, link to `/docs/` for everything else, minimal "how to run locally" (two commands) that mirrors `docs/local-dev.md`.
+- README becomes short: project name, one-paragraph description, link to `/docs/` for everything else, minimal "how to run locally" (two commands) that mirrors `developer-guide/local-dev.md`.
 
 **Acceptance.**
 
 - README is under 60 lines.
 - No architecture / permission / URL details in README that aren't also in MkDocs.
+
+### P6.T5 — Author the User Guide [serial]
+
+**Satisfies.** `FR‑52` (User Guide section).
+
+**Context.** The initial P6 sweep produced developer‑oriented pages only. Business users have no on‑ramp to the app. This task authors the User Guide section from the perspective of a signed‑in non‑developer.
+
+**Do.**
+
+- Every page lives under `docs/user-guide/` and uses plain business language — no shell commands, no Python, no ORM references.
+- Each entity workflow page follows the same shape: **Purpose** (one paragraph), **Who can do this** (which roles), **Screens** (list of the UI screens involved with paths like `/companies/`, `/orders/…/`), **Happy path** (numbered steps), **Common validation errors and how to fix them**, **Related workflows** (cross‑links).
+- Pages to author, one file each:
+  - `docs/user-guide/index.md` — overview: what the app is for, the three roles at a glance, how to navigate.
+  - `docs/user-guide/getting-started.md` — signing in, changing your password, where the nav is.
+  - `docs/user-guide/roles.md` — Admin vs. UndertakingManager vs. Person, with a table of what each can see/do. Cross‑links `developer-guide/roles-and-permissions.md` for the underlying model.
+  - `docs/user-guide/companies-and-contracts.md` — creating and editing companies; adding contracts to a company; deleting.
+  - `docs/user-guide/orders.md` — creating an order; adding the first version; **cloning the latest version** (the FR‑18 workflow); how versions chain start/end dates.
+  - `docs/user-guide/undertakings.md` — undertakings and cost centers; assigning a manager.
+  - `docs/user-guide/people-and-engagements.md` — creating a person; creating an engagement; assigning to an undertaking; assigning to an order version; FTE, start/end dates, and what happens when you edit the engagement's dates (FR‑15).
+  - `docs/user-guide/leaves.md` — recording a leave; date rules (FR‑17).
+  - `docs/user-guide/dashboard.md` — how to read the summary chart, what the filters do, and what "cost coverage" means to a business reader.
+- Every page MUST have at least one screenshot placeholder (`![Description](images/…)`) where a screenshot would sit; do NOT fabricate images. Add a `docs/user-guide/images/.gitkeep` and a follow‑up note in the PR that screenshots are captured separately.
+- Every FR that a User Guide page describes MUST be cited inline (e.g. "…per FR‑18"), so the traceability sweep in P9.T1 can grep for coverage.
+- Cross‑link the Developer Guide from every page footer for readers who want to know how the workflow is implemented.
+
+**Acceptance.**
+
+- `mkdocs build --strict` passes with every User Guide page present in the nav.
+- Every entity in `FR‑1` through `FR‑11` is covered by exactly one User Guide page (or is called out on a shared page).
+- `grep -R 'FR‑' docs/user-guide/` returns at least one hit per authored page.
+- No page under `docs/user-guide/` contains the strings `python manage.py`, `pytest`, `import `, or a fenced ` ```python ` block.
+
+### P6.T6 — Fill out the Developer Guide [serial]
+
+**Satisfies.** `FR‑52` (Developer Guide section), `NFR‑33`.
+
+**Context.** The existing pages (`architecture.md`, `local-dev.md`, `deployment.md`, `roles-and-permissions.md`) are a stub. This task promotes them into a full developer manual under `docs/developer-guide/` and adds the missing pages.
+
+**Do.**
+
+- Move the pages listed in P6.T1 into `docs/developer-guide/` and update every inbound link.
+- Author `docs/developer-guide/index.md` — a section landing page: how the app is organised (apps, services/selectors/managers), how to find things, links into every subsection.
+- Author `docs/developer-guide/coding-conventions.md` — the rules that live today only in `.github/copilot-instructions.md`: no `print()`, services vs. selectors vs. managers, thin views, Google‑style docstrings, `mypy --strict` scope, migrations are additive, URL naming per FR‑49/FR‑50. Include a short "how to add a new entity" checklist that walks through model → manager → service → serializer → viewset → filter → UI view → nav registry → tests.
+- Author `docs/developer-guide/testing.md` — the P7 regime: `factory_boy` factories, the permission‑matrix test, coverage gates from `NFR‑17`, how to run the verify loop from `.github/copilot-instructions.md`.
+- Expand `docs/developer-guide/architecture.md` to include: the request lifecycle (UI vs. API), the three layers (views/services/selectors), the role model (link to `vendor_manager/roles.py`), and a Mermaid diagram of the app dependency graph.
+- Expand `docs/developer-guide/data-model.md` (or link `docs/ERD.md`) so a new dev can find every entity in one place.
+- Add links from `docs/developer-guide/index.md` to `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md`.
+- Add `docs/api-reference/index.md` and `docs/api-reference/using-the-api.md` as part of this task (they are technically API Reference but the authoring style — auth, pagination, filtering, custom actions — is developer‑facing).
+
+**Acceptance.**
+
+- Every developer‑facing page listed in `FR‑52` under "Developer Guide" exists at the path the nav references.
+- `mkdocs build --strict` passes.
+- A new developer can, by reading only the Developer Guide, run the app locally, add a new entity, and understand where business logic goes.
+- `grep -R 'FR‑\|NFR‑' docs/developer-guide/` returns hits on the pages that describe FR/NFR‑backed behavior.
 
 ---
 

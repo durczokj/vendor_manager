@@ -150,7 +150,27 @@ Entities in scope:
 ### 3.10 Documentation
 
 - **FR‑51** The project MUST publish a single documentation site built with MkDocs (Material theme recommended) and served by the Django app at `/docs/`. `/docs/` is the single entry point users see; the README and any other developer‑facing markdown MUST link to it and MUST NOT duplicate its content.
-- **FR‑52** The MkDocs site MUST include, at minimum: (a) an overview / getting‑started page; (b) the architecture (apps, services/selectors, UI vs. API split); (c) the data model (embedding or linking [docs/ERD.md](ERD.md)); (d) the role & permission model; (e) local dev setup (Docker Compose + SQLite dev mode); (f) deployment (see §4.6); (g) an "API reference" page that embeds or directly links the Swagger UI at `/docs/api/`, which in turn is backed by the OpenAPI schema at `/api/v1/schema/` (FR‑35).
+- **FR‑52** The MkDocs site MUST be organized under **three top‑level sections** — **User Guide**, **Developer Guide**, and **API Reference** — and MUST include, at minimum, the following pages:
+  - **User Guide** (business‑user perspective; no code, no shell commands):
+    - Overview / what the app is for.
+    - Signing in and the three roles (`Admin`, `UndertakingManager`, `Person`) — what each role can see and do.
+    - Managing companies and contracts (day‑to‑day workflows).
+    - Managing orders and order versions, including how to clone a version.
+    - Managing undertakings and cost centers.
+    - Managing people and engagements (assignment lifecycle, FTE, dates).
+    - Recording and reviewing leaves.
+    - Reading the dashboard (filters, granularity, entity selection).
+    - Every workflow section MUST document the happy path with numbered steps and at least one screenshot placeholder (`![](images/…)`); error / validation messages that a user can hit MUST be listed with the corrective action.
+  - **Developer Guide** (contributor perspective):
+    - Architecture (apps, services/selectors/managers split, UI vs. API split).
+    - Data model (embedding or linking [docs/ERD.md](ERD.md)).
+    - Role & permission model (linking `vendor_manager/roles.py` and the permission‑matrix test).
+    - Local dev setup (the two dev modes from `NFR‑24`: Docker Compose + pure SQLite).
+    - Coding conventions (services vs. selectors vs. managers, thin views, no `print()`, docstring style, `mypy --strict`).
+    - Testing guide (`factory_boy` factories, permission‑matrix tests, coverage gates from `NFR‑17`).
+    - Deployment (see §4.6, the k3s pipeline per `NFR‑24a`).
+    - The Requirements document (this file) and the Implementation Plan MUST be linked from here.
+  - **API Reference**: a landing page that embeds or directly links the Swagger UI at `/docs/api/`, which in turn is backed by the OpenAPI schema at `/api/v1/schema/` (FR‑35). This section MUST also include a short "using the API" primer covering Basic auth, pagination, filtering, and the custom `@action` endpoints from FR‑31.
 - **FR‑53** The MkDocs site MUST be built as part of the CI pipeline (build‑only check on PRs; broken links and unresolved cross‑references MUST fail CI) and MUST be built into the production Docker image so it is served by the same process as the app. No separate docs host / no external docs URL.
 - **FR‑54** The MkDocs site MUST require authentication in production (same rule as FR‑35 / NFR‑11): reachable but not public. In local dev it MAY be served unauthenticated.
 

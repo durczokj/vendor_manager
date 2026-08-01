@@ -23,16 +23,16 @@ people, engagements, undertakings, and leaves. It provides:
 This documentation site is built with [MkDocs](https://www.mkdocs.org/) using the
 [Material theme](https://squidfunk.github.io/mkdocs-material/). It is served by the
 Django application itself at `/docs/` and rebuilt as part of every CI run and production
-Docker image build (see [Deployment](deployment.md)).
+Docker image build (see [Deployment](developer-guide/deployment.md)).
 
 Use the navigation on the left to explore:
 
-- **[Getting started](getting-started.md)** — run the app locally in under five minutes.
-- **[Architecture](architecture.md)** — how the codebase is structured, the UI/API split,
+- **[Getting started](user-guide/getting-started.md)** — run the app locally in under five minutes.
+- **[Architecture](developer-guide/architecture.md)** — how the codebase is structured, the UI/API split,
   and the services/selectors pattern.
 - **[Data model](ERD.md)** — entity-relationship diagram for all tracked entities.
-- **[Roles & permissions](roles-and-permissions.md)** — the three roles and their permission
+- **[Roles & permissions](developer-guide/roles-and-permissions.md)** — the three roles and their permission
   matrices.
-- **[Local dev](local-dev.md)** — full local development guide (both dev modes).
-- **[Deployment](deployment.md)** — the k3s continuous-deployment pipeline.
+- **[Local dev](developer-guide/local-dev.md)** — full local development guide (both dev modes).
+- **[Deployment](developer-guide/deployment.md)** — the k3s continuous-deployment pipeline.
 - **[Requirements](REQUIREMENTS.md)** — full functional and non-functional requirements.
