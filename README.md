@@ -21,7 +21,7 @@ python manage.py migrate && python manage.py runserver
 > `DEBUG=False`). `export` fixes that for the whole shell session.
 
 Open <http://localhost:8000>. Full local-dev guide (including the Compose+PostgreSQL
-mode) is at [docs/local-dev.md](docs/local-dev.md).
+mode) is at [docs/developer-guide/local-dev.md](docs/developer-guide/local-dev.md).
 
 ## License
 

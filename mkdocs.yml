@@ -35,12 +35,14 @@ markdown_extensions:
   - tables
 
 nav:
-  - Overview: index.md
-  - Getting started: getting-started.md
-  - Architecture: architecture.md
-  - Data model: ERD.md
-  - Roles & permissions: roles-and-permissions.md
-  - Local dev: local-dev.md
-  - Deployment: deployment.md
-  - Requirements: REQUIREMENTS.md
-  - API reference: /docs/api/
+  - Home: index.md
+  - User Guide:
+      - Getting started: user-guide/getting-started.md
+  - Developer Guide:
+      - Architecture: developer-guide/architecture.md
+      - Data model: ERD.md
+      - Roles & permissions: developer-guide/roles-and-permissions.md
+      - Local dev: developer-guide/local-dev.md
+      - Deployment: developer-guide/deployment.md
+      - Requirements: REQUIREMENTS.md
+  - API Reference: /docs/api/
