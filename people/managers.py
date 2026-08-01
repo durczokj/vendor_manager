@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import Q
 from rolepermissions.checkers import has_role
 
 
@@ -37,7 +38,9 @@ class PersonQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): ad
             return self.none()
 
         if has_role(user, "undertaking_manager"):
-            return self.filter(engagements__undertaking_assignments__undertaking__manager_id=person_pk).distinct()
+            return self.filter(
+                Q(pk=person_pk) | Q(engagements__undertaking_assignments__undertaking__manager_id=person_pk)
+            ).distinct()
 
         if has_role(user, "person"):
             return self.filter(user=user)

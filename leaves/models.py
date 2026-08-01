@@ -1,5 +1,6 @@
 """Models for leaves app."""
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -18,6 +19,17 @@ class Leave(models.Model):
     percentage = models.DecimalField(
         max_digits=3, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(1)]
     )
+
+    def clean(self) -> None:
+        """Validate that end_date is on or after start_date."""
+        super().clean()
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError({"end_date": "End date cannot be before start date."})
+
+    def save(self, *args, **kwargs):
+        """Run clean before saving."""
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         """Return a string representation of the leave."""

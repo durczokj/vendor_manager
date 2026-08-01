@@ -110,7 +110,7 @@ def test_roles_have_expected_permission_sets() -> None:
     assert Admin.available_permissions["view_engagement_undertaking_assignment"] is True
     assert Admin.available_permissions["add_engagement_undertaking_assignment"] is True
     assert Admin.available_permissions["delete_engagement"] is True
-    assert Admin.available_permissions["change_contract"] is False
+    assert Admin.available_permissions["change_contract"] is True
 
 
 @pytest.mark.django_db

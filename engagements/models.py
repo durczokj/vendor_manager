@@ -59,6 +59,9 @@ class Engagement(models.Model):
             max_id = Engagement.objects.aggregate(models.Max("id"))["id__max"]
             self.id = (max_id or 0) + 1
 
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError({"end_date": "End date cannot be before start date."})
+
         if not (0 < self.fte <= 1):
             raise ValidationError("FTE must be between 0 and 1.")
 
@@ -66,6 +69,10 @@ class Engagement(models.Model):
         """Clean before saving."""
         self.clean()
         super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        """Return a human-friendly summary of the engagement."""
+        return f"{self.person} · {self.start_date} → {self.end_date}"
 
 
 class EngagementOrderVersionAssignment(models.Model):
@@ -87,10 +94,14 @@ class EngagementOrderVersionAssignment(models.Model):
         if engagement_order and engagement_order != self.order_version.order:
             raise ValidationError("The engagement must belong to only one order.")
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """Clean before saving."""
         self.clean()
-        super().save()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        """Return a human-friendly summary of the assignment."""
+        return f"{self.engagement} → {self.order_version}"
 
 
 class EngagementUndertakingAssignment(models.Model):
@@ -117,6 +128,8 @@ class EngagementUndertakingAssignment(models.Model):
     def clean(self):
         """Clean the class."""
         super().clean()
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError({"end_date": "End date cannot be before start date."})
         if self.start_date < self.engagement.start_date or self.end_date > self.engagement.end_date:
             raise ValidationError("Assignment dates must be within the engagement period.")
 
@@ -133,3 +146,7 @@ class EngagementUndertakingAssignment(models.Model):
         """Clean before saving."""
         self.clean()
         super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        """Return a human-friendly summary of the assignment."""
+        return f"{self.engagement} → {self.undertaking} ({self.percentage})"

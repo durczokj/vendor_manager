@@ -32,8 +32,8 @@ class EngagementOrderVersionAssignmentDetailView(EntityDetailView):
     list_url_name = "engagement-order-version-assignment-list"
     detail_fields = [
         ("ID", "id"),
-        ("Engagement", "engagement"),
-        ("Order Version", "order_version"),
+        ("Engagement", "engagement", "engagement-detail"),
+        ("Order Version", "order_version", "order-version-detail"),
     ]
 
 

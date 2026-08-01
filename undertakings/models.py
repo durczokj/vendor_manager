@@ -13,6 +13,10 @@ class CostCenter(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
 
+    def __str__(self) -> str:
+        """Return the name of the cost center."""
+        return self.name
+
 
 class Undertaking(models.Model):
     """Model for an undertaking."""

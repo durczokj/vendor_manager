@@ -130,7 +130,11 @@ INSTALLED_APPS = [
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap5.html"
+# Use the plain django_tables2 template; the app's custom styles.css /
+# table_styles.css are designed for it. Do NOT switch to the bootstrap5
+# template pack: it forces Bootstrap classes that only look right when the
+# CDN is loaded, which breaks the pre-refactor layout.
+DJANGO_TABLES2_TEMPLATE = "django_tables2/table.html"
 
 X_FRAME_OPTIONS = "DENY"
 
@@ -362,6 +366,13 @@ LOGGING = {
             # Very noisy; only interesting when explicitly requested.
             "handlers": ["stdout"],
             "level": "WARNING",
+            "propagate": False,
+        },
+        "django.utils.autoreload": {
+            # Emits one DEBUG line per scanned file on every reload cycle
+            # when LOG_LEVEL=DEBUG. Never useful to app developers.
+            "handlers": ["stdout"],
+            "level": "INFO",
             "propagate": False,
         },
     },

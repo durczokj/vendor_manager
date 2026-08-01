@@ -14,6 +14,17 @@ table th {
     text-align: left;
 }
 
+/* Sort links inside table headers: white text, no underline */
+table th a,
+table th a:link,
+table th a:visited,
+table th a:hover,
+table th a:focus,
+table th a:active {
+    color: white;
+    text-decoration: none;
+}
+
 /* Style for table cells */
 table td {
     border: 1px solid black;

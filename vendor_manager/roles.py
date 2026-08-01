@@ -126,7 +126,7 @@ class Admin(AbstractUserRole):
         "add_leave": True,
         "change_leave": True,
         "delete_leave": True,
-        "add_contract": False,
-        "change_contract": False,
-        "delete_contract": False,
+        "add_contract": True,
+        "change_contract": True,
+        "delete_contract": True,
     }

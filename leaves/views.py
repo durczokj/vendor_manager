@@ -66,6 +66,7 @@ class LeaveCreateView(LoginRequiredMixin, CreateView):
 
     model = Leave
     form_class = LeaveForm
+    template_name = "_form.html"
     success_url = "/leaves/"
 
     def get_form_kwargs(self):
@@ -73,6 +74,19 @@ class LeaveCreateView(LoginRequiredMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        """Inject the context keys the shared _form.html expects."""
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(
+            {
+                "page_title": "Add Leave",
+                "submit_label": "Save",
+                "cancel_url": "/leaves/",
+                "form_action": self.request.path,
+            }
+        )
+        return ctx
 
     def form_invalid(self, form):
         """Show errors and redirect back to the leave list."""

@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models import Undertaking
+from .models import CostCenter, Undertaking
 
-# Register your models here.
 admin.site.register(Undertaking)
+admin.site.register(CostCenter)

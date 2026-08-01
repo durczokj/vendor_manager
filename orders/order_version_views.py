@@ -42,14 +42,20 @@ class OrderVersionDetailView(EntityDetailView):
     delete_url_name = "order-version-delete"
     list_url_name = "order-version-list"
     detail_fields = [
-        ("Order", "order"),
+        ("Order", "order", "order-detail"),
         ("Version Number", "version_number"),
-        ("Contract", "contract"),
+        ("Contract", "contract", "contract-detail"),
         ("Start Date", "start_date"),
         ("End Date", "end_date"),
     ]
     related_table_specs = [
-        ("Engagement Assignments", lambda ov: ov.engagement_assignments.all(), EngagementOrderVersionAssignmentTable),
+        (
+            "Engagement Assignments",
+            lambda ov: ov.engagement_assignments.all(),
+            EngagementOrderVersionAssignmentTable,
+            "engagement-order-version-assignment-create",
+            "add_engagement_order_version_assignment",
+        ),
     ]
 
 

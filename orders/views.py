@@ -34,9 +34,18 @@ class OrderDetailView(EntityDetailView):
     update_url_name = "order-update"
     delete_url_name = "order-delete"
     list_url_name = "order-list"
-    detail_fields = [("Name", "name"), ("Company", "company")]
+    detail_fields = [
+        ("Name", "name"),
+        ("Company", "company", "company-detail"),
+    ]
     related_table_specs = [
-        ("Versions", lambda o: o.versions.all(), OrderVersionTable),
+        (
+            "Versions",
+            lambda o: o.versions.all(),
+            OrderVersionTable,
+            "order-version-create",
+            "add_order",
+        ),
     ]
 
 

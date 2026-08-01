@@ -31,9 +31,19 @@ class UndertakingDetailView(EntityDetailView):
     update_url_name = "undertaking-update"
     delete_url_name = "undertaking-delete"
     list_url_name = "undertaking-list"
-    detail_fields = [("Name", "name"), ("Cost Center", "cost_center"), ("Manager", "manager")]
+    detail_fields = [
+        ("Name", "name"),
+        ("Cost Center", "cost_center"),
+        ("Manager", "manager", "person-detail"),
+    ]
     related_table_specs = [
-        ("Engagement Assignments", lambda u: u.engagement_assignments.all(), EngagementUndertakingAssignmentTable),
+        (
+            "Engagement Assignments",
+            lambda u: u.engagement_assignments.all(),
+            EngagementUndertakingAssignmentTable,
+            "engagement-undertaking-assignment-create",
+            "add_engagement_undertaking_assignment",
+        ),
     ]
 
 

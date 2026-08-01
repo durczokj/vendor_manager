@@ -20,6 +20,10 @@ class Order(models.Model):
     name = models.CharField(max_length=255)
     company = models.ForeignKey(Company, related_name="orders", on_delete=models.CASCADE)
 
+    def __str__(self) -> str:
+        """Return the name of the order."""
+        return self.name
+
     def create_new_version(self, contract, start_date, end_date, copy_engagement_assignments=True):
         """Create a new version of the order.
 
@@ -73,7 +77,7 @@ class OrderVersion(models.Model):
             raise ValidationError("End date must be a date.")
 
         if self.end_date < self.start_date:
-            raise ValidationError("End date cannot be before start date.")
+            raise ValidationError({"end_date": "End date cannot be before start date."})
 
         previous_versions = (
             OrderVersion.objects.filter(order=self.order).exclude(id=self.id).order_by("-version_number")

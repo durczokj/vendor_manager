@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
@@ -11,8 +10,24 @@
     <a href="{{ cancel_url }}"><button type="button">Cancel</button></a>
   {% endif %}
 </h1>
-<form id="entity-form" method="post" action="{{ form_action }}">
+<form id="entity-form" method="post" action="{{ form_action }}" novalidate>
   {% csrf_token %}
-  {% crispy form %}
+  {{ form.as_p }}
 </form>
+
+{% if form.errors %}
+<div class="error-bar" role="alert" aria-live="assertive">
+  <button type="button" class="error-bar__close" aria-label="Dismiss"
+          onclick="this.parentElement.classList.add('error-bar--dismissed')">&times;</button>
+  <strong class="error-bar__title">Please correct the following errors:</strong>
+  <ul class="error-bar__list">
+    {% for err in form.non_field_errors %}<li>{{ err }}</li>{% endfor %}
+    {% for field in form %}
+      {% for err in field.errors %}
+        <li><strong>{{ field.label }}:</strong> {{ err }}</li>
+      {% endfor %}
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 {% endblock %}

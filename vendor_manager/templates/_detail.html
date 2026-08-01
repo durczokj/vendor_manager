@@ -18,14 +18,23 @@
 
 {% if fields %}
 <h2>Details</h2>
-{% for label, value in fields %}
-  <p><strong>{{ label }}:</strong> {{ value }}</p>
+{% for field in fields %}
+  <p><strong>{{ field.label }}:</strong>
+    {% if field.url %}<a href="{{ field.url }}">{{ field.value }}</a>{% else %}{{ field.value }}{% endif %}
+  </p>
 {% endfor %}
 {% endif %}
 
 {% for block in related_blocks %}
-  <h2>{{ block.title }}</h2>
-  {% render_table block.table %}
+  <h2>
+    {{ block.title }}
+    {% if block.add_url %}
+      <a href="{{ block.add_url }}"><button type="button">Add</button></a>
+    {% endif %}
+  </h2>
+  {% with table=block.table %}
+    {% render_table table %}
+  {% endwith %}
 {% endfor %}
 
 {% if back_url %}

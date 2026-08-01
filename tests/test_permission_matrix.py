@@ -158,10 +158,13 @@ def seeded_access_data(db):
             EngagementUndertakingAssignment: {allowed_undertaking_assignment.id},
             Leave: {allowed_leave.id},
         },
+        "manager_extra_ids": {
+            Person: {manager_person.id},
+        },
         "blocked_ids": {
             Company: {blocked_company.id},
             Contract: {blocked_contract.id},
-            Person: {blocked_person.id, manager_person.id},
+            Person: {blocked_person.id},
             Order: {blocked_order.id},
             OrderVersion: {blocked_order_version.id},
             Undertaking: {blocked_undertaking.id},
@@ -219,10 +222,10 @@ def test_role_specific_accessible_to_results_are_expected(seeded_access_data, mo
     assert set(model_cls.objects.accessible_to(admin_user).values_list("pk", flat=True)) == set(
         model_cls.objects.values_list("pk", flat=True)
     )
-    assert (
-        set(model_cls.objects.accessible_to(manager_user).values_list("pk", flat=True))
-        == seeded_access_data["allowed_ids"][model_cls]
+    expected_manager_ids = seeded_access_data["allowed_ids"][model_cls] | seeded_access_data["manager_extra_ids"].get(
+        model_cls, set()
     )
+    assert set(model_cls.objects.accessible_to(manager_user).values_list("pk", flat=True)) == expected_manager_ids
     assert seeded_access_data["blocked_ids"][model_cls].isdisjoint(
         model_cls.objects.accessible_to(manager_user).values_list("pk", flat=True)
     )

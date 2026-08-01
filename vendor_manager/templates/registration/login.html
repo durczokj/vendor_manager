@@ -5,17 +5,25 @@
 {% block content %}
 <h2>Log In</h2>
 
-{% if form.non_field_errors %}
-<ul class="errorlist">
-  {% for error in form.non_field_errors %}
-    <li>{{ error }}</li>
-  {% endfor %}
-</ul>
-{% endif %}
-
-<form method="post" action="{% url 'login' %}">
+<form id="entity-form" method="post" action="{% url 'login' %}" novalidate>
   {% csrf_token %}
   {{ form.as_p }}
   <button type="submit">Login</button>
 </form>
+
+{% if form.errors %}
+<div class="error-bar" role="alert" aria-live="assertive">
+  <button type="button" class="error-bar__close" aria-label="Dismiss"
+          onclick="this.parentElement.classList.add('error-bar--dismissed')">&times;</button>
+  <strong class="error-bar__title">Please correct the following errors:</strong>
+  <ul class="error-bar__list">
+    {% for err in form.non_field_errors %}<li>{{ err }}</li>{% endfor %}
+    {% for field in form %}
+      {% for err in field.errors %}
+        <li><strong>{{ field.label }}:</strong> {{ err }}</li>
+      {% endfor %}
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 {% endblock %}

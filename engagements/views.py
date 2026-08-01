@@ -32,14 +32,20 @@ class EngagementDetailView(EntityDetailView):
     list_url_name = "engagement-list"
     detail_fields = [
         ("ID", "id"),
-        ("Person", "person"),
+        ("Person", "person", "person-detail"),
         ("Start Date", "start_date"),
         ("End Date", "end_date"),
         ("Daily Rate", "daily_rate"),
         ("FTE", "fte"),
     ]
     related_table_specs = [
-        ("Undertaking Assignments", lambda e: e.undertaking_assignments.all(), EngagementUndertakingAssignmentTable),
+        (
+            "Undertaking Assignments",
+            lambda e: e.undertaking_assignments.all(),
+            EngagementUndertakingAssignmentTable,
+            "engagement-undertaking-assignment-create",
+            "add_engagement_undertaking_assignment",
+        ),
     ]
 
 
@@ -92,8 +98,8 @@ class EngagementUndertakingAssignmentDetailView(EntityDetailView):
     list_url_name = "engagement-undertaking-assignment-list"
     detail_fields = [
         ("ID", "id"),
-        ("Engagement", "engagement"),
-        ("Undertaking", "undertaking"),
+        ("Engagement", "engagement", "engagement-detail"),
+        ("Undertaking", "undertaking", "undertaking-detail"),
         ("Percentage", "percentage"),
         ("Start Date", "start_date"),
         ("End Date", "end_date"),

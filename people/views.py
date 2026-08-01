@@ -44,8 +44,20 @@ class PersonDetailView(EntityDetailView):
         ("Location", "location"),
     ]
     related_table_specs = [
-        ("Engagements", lambda p: p.engagements.all(), _EngagementTable),
-        ("Active Assignments", lambda p: p.get_assignments(), EngagementUndertakingAssignmentTable),
+        (
+            "Engagements",
+            lambda p: p.engagements.all(),
+            _EngagementTable,
+            "engagement-create",
+            "add_engagement",
+        ),
+        (
+            "Active Assignments",
+            lambda p: p.get_assignments(),
+            EngagementUndertakingAssignmentTable,
+            "engagement-undertaking-assignment-create",
+            "add_engagement_undertaking_assignment",
+        ),
     ]
 
 

@@ -33,7 +33,13 @@ class CompanyDetailView(EntityDetailView):
     list_url_name = "company-list"
     detail_fields = [("Name", "name"), ("Email", "email")]
     related_table_specs = [
-        ("Orders", lambda item: item.orders.all(), OrderTable),
+        (
+            "Orders",
+            lambda item: item.orders.all(),
+            OrderTable,
+            "order-create",
+            "add_order",
+        ),
     ]
 
 

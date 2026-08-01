@@ -616,6 +616,10 @@ def main() -> None:
     """
     args = build_parser().parse_args()
 
+    # Normalise base URL: strip trailing slashes so ``f"{base_url}/foo"`` never
+    # produces ``http://host//foo``.
+    args.base_url = args.base_url.rstrip("/")
+
     # Deterministic randomness.
     rng = random.Random(args.seed)
     fake = Faker()
