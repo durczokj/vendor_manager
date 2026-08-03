@@ -60,8 +60,15 @@ COPY --chown=appuser:appuser . .
 # Copy the pre-built MkDocs site from docs-builder (FR-53)
 COPY --from=docs-builder --chown=appuser:appuser /app/site/ /app/site/
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Collect static files.
+# collectstatic imports Django settings, which require SECRET_KEY / ALLOWED_HOSTS
+# when DEBUG is False. These build-time values are throwaway — the real values
+# are provided at container runtime via the deployment environment.
+RUN DJANGO_DEBUG=false \
+    DJANGO_SECRET_KEY="build-time-placeholder-not-used-at-runtime" \
+    DJANGO_ALLOWED_HOSTS="localhost" \
+    DATABASE_ENGINE=sqlite \
+    python manage.py collectstatic --noinput
 
 # Set environment variables to optimize Python
 ENV PYTHONDONTWRITEBYTECODE=1
