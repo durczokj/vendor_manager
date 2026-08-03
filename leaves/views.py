@@ -12,12 +12,16 @@ from django.views.generic import CreateView, ListView
 from rolepermissions.checkers import has_object_permission
 from rolepermissions.decorators import has_permission_decorator
 
+from undertakings.models import Undertaking
 from vendor_manager.cbv import EntityDeleteView
 
 from .forms import LeaveForm
 from .models import Leave
 from .tables import LeaveTable
 from .utils.leave_calendar import LeaveCalendar
+from .utils.leave_matrix import LeaveMatrix
+
+_VALID_VIEWS = {"calendar", "matrix"}
 
 
 @method_decorator([has_permission_decorator("view_leave")], name="dispatch")
@@ -27,8 +31,23 @@ class LeaveListView(LoginRequiredMixin, ListView):
     model = Leave
     template_name = "leaves.html"
 
+    def _resolve_undertaking_id(self) -> int | None:
+        """Parse ``?undertaking=<pk>`` from the querystring; return None if absent/invalid."""
+        raw = self.request.GET.get("undertaking", "").strip()
+        if not raw:
+            return None
+        try:
+            return int(raw)
+        except ValueError:
+            return None
+
+    def _resolve_view(self) -> str:
+        """Parse ``?view=calendar|matrix``; default to ``calendar``."""
+        raw = self.request.GET.get("view", "calendar").strip().lower()
+        return raw if raw in _VALID_VIEWS else "calendar"
+
     def get_queryset(self):
-        """Return leaves for the current month, filtered by accessibility."""
+        """Return leaves for the current month, filtered by accessibility and undertaking."""
         month = int(self.request.GET.get("month", datetime.now().month))
         year = int(self.request.GET.get("year", datetime.now().year))
         first_day = datetime(year, month, 1)
@@ -38,14 +57,30 @@ class LeaveListView(LoginRequiredMixin, ListView):
             else datetime(year, month + 1, 1) - timedelta(days=1)
         )
         qs = Leave.objects.filter(Q(start_date__lte=last_day) & Q(end_date__gte=first_day))
+
+        undertaking_id = self._resolve_undertaking_id()
+        if undertaking_id is not None:
+            # A person is "assigned to" an undertaking if any of their engagements has
+            # an EngagementUndertakingAssignment pointing at it that overlaps the month.
+            qs = qs.filter(
+                person__engagements__undertaking_assignments__undertaking_id=undertaking_id,
+                person__engagements__undertaking_assignments__start_date__lte=last_day,
+                person__engagements__undertaking_assignments__end_date__gte=first_day,
+            ).distinct()
+
         return [leave for leave in qs if has_object_permission("access_person", self.request.user, leave.person)]
 
     def get_context_data(self, **kwargs):
-        """Add calendar, table, and form to context."""
+        """Add calendar/matrix, table, form, and filter selections to context."""
         ctx = super().get_context_data(**kwargs)
         month = int(self.request.GET.get("month", datetime.now().month))
         year = int(self.request.GET.get("year", datetime.now().year))
         leaves = self.get_queryset()
+        view_mode = self._resolve_view()
+        selected_undertaking_id = self._resolve_undertaking_id()
+
+        undertakings = Undertaking.objects.accessible_to(self.request.user).order_by("name")
+
         ctx.update(
             {
                 "table": LeaveTable(leaves),
@@ -53,8 +88,12 @@ class LeaveListView(LoginRequiredMixin, ListView):
                 "page_title": "Leaves",
                 "form": LeaveForm(user=self.request.user),
                 "calendar": LeaveCalendar(year=year, month=month, leaves=leaves).formatmonth(),
+                "matrix": LeaveMatrix(year=year, month=month, leaves=leaves).render(),
                 "month": month,
                 "year": year,
+                "view_mode": view_mode,
+                "undertakings": undertakings,
+                "selected_undertaking_id": selected_undertaking_id,
             }
         )
         return ctx
