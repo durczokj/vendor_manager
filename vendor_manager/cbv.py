@@ -260,8 +260,19 @@ class EntityUpdateView(LoginRequiredMixin, AccessibleQuerySetMixin, UpdateView):
     success_url_name: str = ""
 
     def get_form(self, form_class: type[forms.BaseForm] | None = None) -> forms.BaseForm:
-        """Return the form with HTML5 ISO date pickers applied."""
-        return _apply_iso_date_widgets(super().get_form(form_class))
+        """Return the form with HTML5 ISO date pickers and an immutable primary key.
+
+        Primary keys identify a row; editing them via a normal update flow would
+        cause Django's ``Model.save()`` to insert a new row instead of renaming
+        the existing one (the ``UPDATE ... WHERE id = <new>`` clause matches
+        zero rows, so the ORM falls back to ``INSERT``). Disable the pk field on
+        update so it renders read-only and any tampered POST value is ignored.
+        """
+        form = _apply_iso_date_widgets(super().get_form(form_class))
+        pk_name = self.model._meta.pk.name  # type: ignore[attr-defined]
+        if pk_name in form.fields:
+            form.fields[pk_name].disabled = True
+        return form
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Inject page_title, submit_label, cancel_url, and form_action.

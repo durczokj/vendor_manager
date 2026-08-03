@@ -3,9 +3,10 @@
 from rest_framework import serializers
 
 from contracts.models import Contract
+from vendor_manager.api_serializers import ImmutablePkSerializerMixin
 
 
-class ContractSerializer(serializers.ModelSerializer[Contract]):
+class ContractSerializer(ImmutablePkSerializerMixin, serializers.ModelSerializer[Contract]):
     """Serialize Contract rows for API operations."""
 
     class Meta:

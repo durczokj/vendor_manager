@@ -3,9 +3,10 @@
 from rest_framework import serializers
 
 from undertakings.models import CostCenter, Undertaking
+from vendor_manager.api_serializers import ImmutablePkSerializerMixin
 
 
-class CostCenterSerializer(serializers.ModelSerializer[CostCenter]):
+class CostCenterSerializer(ImmutablePkSerializerMixin, serializers.ModelSerializer[CostCenter]):
     """Serialize CostCenter rows for API operations."""
 
     class Meta:
@@ -15,7 +16,7 @@ class CostCenterSerializer(serializers.ModelSerializer[CostCenter]):
         fields = ["id", "name"]
 
 
-class UndertakingSerializer(serializers.ModelSerializer[Undertaking]):
+class UndertakingSerializer(ImmutablePkSerializerMixin, serializers.ModelSerializer[Undertaking]):
     """Serialize Undertaking rows for API operations."""
 
     class Meta:
