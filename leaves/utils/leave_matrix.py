@@ -3,47 +3,54 @@
 from __future__ import annotations
 
 import calendar
+import html
 from collections.abc import Iterable
 from datetime import date
 
 from django.utils.safestring import SafeString, mark_safe
 
-_COLOR_PALETTE = [
-    "#D2691E",
-    "#FFB6C1",
-    "#ADD8E6",
-    "#90EE90",
-    "#FFD700",
-    "#FFA07A",
-    "#20B2AA",
-    "#9370DB",
-    "#FF6347",
-    "#4682B4",
-]
+
+def _shade_for(percentage: float) -> str:
+    """Return an ``rgba()`` fill for a given leave percentage.
+
+    Uses a single hue and scales opacity linearly with percentage so that a
+    100% day is a saturated cell and a 25% day is faint. Percentages outside
+    [0, 1] are clamped.
+    """
+    pct = max(0.0, min(1.0, float(percentage)))
+    alpha = 0.20 + 0.70 * pct
+    return f"rgba(52, 152, 219, {alpha:.2f})"
 
 
 class LeaveMatrix:
     """Render an HTML table of leaves with people as rows and days as columns.
 
-    A cell is shaded if the person is on leave that day; the label shows the
-    leave percentage. Empty cells mean the person is at work that day.
+    A cell is shaded if the person is on leave that day; the shade intensity is
+    proportional to the leave percentage. If ``people`` is provided, every one
+    of them gets a row (even with no leaves that month); otherwise only people
+    with at least one overlapping leave are shown.
     """
 
-    def __init__(self, year: int, month: int, leaves: Iterable[object]) -> None:
-        """Initialize with the target month and the leaves overlapping it."""
+    def __init__(
+        self,
+        year: int,
+        month: int,
+        leaves: Iterable[object],
+        people: Iterable[object] | None = None,
+    ) -> None:
+        """Initialize with the target month, overlapping leaves, and (optionally) all people to show."""
         self.year = year
         self.month = month
         self.leaves = list(leaves)
+        self.people = list(people) if people is not None else None
         self.days_in_month = calendar.monthrange(year, month)[1]
-        self.colors = self._assign_colors()
-
-    def _assign_colors(self) -> dict[str, str]:
-        unique_people = {str(leave.person) for leave in self.leaves}  # type: ignore[attr-defined]
-        return {person: _COLOR_PALETTE[i % len(_COLOR_PALETTE)] for i, person in enumerate(sorted(unique_people))}
 
     def _rows(self) -> dict[str, list[object | None]]:
         """Group leaves per person, one slot per day of month."""
         rows: dict[str, list[object | None]] = {}
+        if self.people is not None:
+            for person in self.people:
+                rows[str(person)] = [None] * self.days_in_month
         for leave in self.leaves:
             key = str(leave.person)  # type: ignore[attr-defined]
             if key not in rows:
@@ -55,22 +62,28 @@ class LeaveMatrix:
         return dict(sorted(rows.items()))
 
     def render(self) -> SafeString:
-        """Return the matrix as safe HTML."""
+        """Return the matrix as safe HTML.
+
+        Relies on the global table styles for the header/border look and on
+        the template's ``.leave-matrix`` scoped CSS for row striping.
+        """
         rows = self._rows()
         header_cells = "".join(f"<th>{day}</th>" for day in range(1, self.days_in_month + 1))
 
-        body_rows = []
+        body_rows: list[str] = []
         for person, day_cells in rows.items():
-            color = self.colors.get(person, "#EEEEEE")
-            person_label = person.replace("\u2013", "&ndash;")
-            cell_html_parts = []
+            cell_html_parts: list[str] = []
             for leave in day_cells:
                 if leave is None:
-                    cell_html_parts.append("<td></td>")
+                    cell_html_parts.append('<td class="leave-cell"></td>')
                 else:
-                    pct = leave.percentage  # type: ignore[attr-defined]
-                    cell_html_parts.append(f'<td style="background-color: {color}; text-align: center;">{pct}</td>')
-            body_rows.append(f'<tr><th style="text-align: left;">{person_label}</th>{"".join(cell_html_parts)}</tr>')
+                    pct = float(leave.percentage)  # type: ignore[attr-defined]
+                    fill = _shade_for(pct)
+                    cell_html_parts.append(f'<td class="leave-cell" style="background-color: {fill};">{pct:.2f}</td>')
+            person_escaped = html.escape(person, quote=True)
+            body_rows.append(
+                f'<tr><th scope="row" title="{person_escaped}">{person_escaped}</th>{"".join(cell_html_parts)}</tr>'
+            )
 
         if not body_rows:
             body_rows.append(
@@ -79,29 +92,8 @@ class LeaveMatrix:
             )
 
         return mark_safe(
-            f"""
-            <style>
-                table.leave-matrix {{
-                    border-collapse: collapse;
-                    width: 100%;
-                    font-size: 0.9em;
-                }}
-                table.leave-matrix th, table.leave-matrix td {{
-                    border: 1px solid #ccc;
-                    padding: 3px 4px;
-                }}
-                table.leave-matrix thead th {{
-                    background-color: #f2f2f2;
-                    text-align: center;
-                }}
-            </style>
-            <table class="leave-matrix">
-                <thead>
-                    <tr><th style="text-align: left;">Person</th>{header_cells}</tr>
-                </thead>
-                <tbody>
-                    {"".join(body_rows)}
-                </tbody>
-            </table>
-            """
+            f'<table class="leave-matrix">'
+            f"<thead><tr><th>Person</th>{header_cells}</tr></thead>"
+            f"<tbody>{''.join(body_rows)}</tbody>"
+            f"</table>"
         )
