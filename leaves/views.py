@@ -12,6 +12,7 @@ from django.views.generic import CreateView, ListView
 from rolepermissions.checkers import has_object_permission
 from rolepermissions.decorators import has_permission_decorator
 
+from people.models import Person
 from undertakings.models import Undertaking
 from vendor_manager.cbv import EntityDeleteView
 
@@ -22,11 +23,12 @@ from .utils.leave_calendar import LeaveCalendar
 from .utils.leave_matrix import LeaveMatrix
 
 _VALID_VIEWS = {"calendar", "matrix"}
+_DEFAULT_VIEW = "matrix"
 
 
 @method_decorator([has_permission_decorator("view_leave")], name="dispatch")
 class LeaveListView(LoginRequiredMixin, ListView):
-    """List leaves for the selected month, with a calendar view and create form."""
+    """List leaves for the selected month, with a calendar/matrix view and create form."""
 
     model = Leave
     template_name = "leaves.html"
@@ -42,9 +44,14 @@ class LeaveListView(LoginRequiredMixin, ListView):
             return None
 
     def _resolve_view(self) -> str:
-        """Parse ``?view=calendar|matrix``; default to ``calendar``."""
-        raw = self.request.GET.get("view", "calendar").strip().lower()
-        return raw if raw in _VALID_VIEWS else "calendar"
+        """Parse ``?view=calendar|matrix``; default to ``matrix``."""
+        raw = self.request.GET.get("view", _DEFAULT_VIEW).strip().lower()
+        return raw if raw in _VALID_VIEWS else _DEFAULT_VIEW
+
+    def _resolve_include_all_people(self) -> bool:
+        """Parse ``?include_all_people=on`` (checkbox); default False."""
+        raw = self.request.GET.get("include_all_people", "").strip().lower()
+        return raw in {"1", "on", "true", "yes"}
 
     def get_queryset(self):
         """Return leaves for the current month, filtered by accessibility and undertaking."""
@@ -70,16 +77,42 @@ class LeaveListView(LoginRequiredMixin, ListView):
 
         return [leave for leave in qs if has_object_permission("access_person", self.request.user, leave.person)]
 
+    def _people_for_matrix(self, undertaking_id: int | None, first_day, last_day) -> list[Person]:
+        """Return the people whose rows should appear in the matrix when 'include all' is on.
+
+        Scope is limited to people the user can see; if an undertaking filter is
+        active, we further narrow to people assigned to that undertaking during
+        the displayed month.
+        """
+        people_qs = Person.objects.accessible_to(self.request.user)
+        if undertaking_id is not None:
+            people_qs = people_qs.filter(
+                engagements__undertaking_assignments__undertaking_id=undertaking_id,
+                engagements__undertaking_assignments__start_date__lte=last_day,
+                engagements__undertaking_assignments__end_date__gte=first_day,
+            ).distinct()
+        return list(people_qs.order_by("first_name", "last_name"))
+
     def get_context_data(self, **kwargs):
         """Add calendar/matrix, table, form, and filter selections to context."""
         ctx = super().get_context_data(**kwargs)
         month = int(self.request.GET.get("month", datetime.now().month))
         year = int(self.request.GET.get("year", datetime.now().year))
+        first_day = datetime(year, month, 1)
+        last_day = (
+            datetime(year + 1, 1, 1) - timedelta(days=1)
+            if month == 12
+            else datetime(year, month + 1, 1) - timedelta(days=1)
+        )
         leaves = self.get_queryset()
         view_mode = self._resolve_view()
         selected_undertaking_id = self._resolve_undertaking_id()
+        include_all_people = self._resolve_include_all_people()
 
         undertakings = Undertaking.objects.accessible_to(self.request.user).order_by("name")
+        matrix_people = (
+            self._people_for_matrix(selected_undertaking_id, first_day, last_day) if include_all_people else None
+        )
 
         ctx.update(
             {
@@ -88,12 +121,13 @@ class LeaveListView(LoginRequiredMixin, ListView):
                 "page_title": "Leaves",
                 "form": LeaveForm(user=self.request.user),
                 "calendar": LeaveCalendar(year=year, month=month, leaves=leaves).formatmonth(),
-                "matrix": LeaveMatrix(year=year, month=month, leaves=leaves).render(),
+                "matrix": LeaveMatrix(year=year, month=month, leaves=leaves, people=matrix_people).render(),
                 "month": month,
                 "year": year,
                 "view_mode": view_mode,
                 "undertakings": undertakings,
                 "selected_undertaking_id": selected_undertaking_id,
+                "include_all_people": include_all_people,
             }
         )
         return ctx

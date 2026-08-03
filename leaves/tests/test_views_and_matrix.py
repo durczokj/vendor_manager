@@ -127,9 +127,19 @@ def test_matrix_view_renders_table(admin_client: Client, two_people_two_undertak
 
 
 @pytest.mark.django_db
-def test_calendar_is_default_view(admin_client: Client, two_people_two_undertakings: dict) -> None:
-    """No ?view param → calendar view (regression guard)."""
+def test_matrix_is_default_view(admin_client: Client, two_people_two_undertakings: dict) -> None:
+    """No ?view param → matrix view."""
     response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3})
+
+    assert response.status_code == 200
+    body = response.content.decode("utf-8")
+    assert 'class="leave-matrix"' in body
+
+
+@pytest.mark.django_db
+def test_calendar_view_is_reachable(admin_client: Client, two_people_two_undertakings: dict) -> None:
+    """?view=calendar still renders the calendar without the matrix."""
+    response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3, "view": "calendar"})
 
     assert response.status_code == 200
     body = response.content.decode("utf-8")
@@ -138,11 +148,42 @@ def test_calendar_is_default_view(admin_client: Client, two_people_two_undertaki
 
 
 @pytest.mark.django_db
-def test_invalid_view_falls_back_to_calendar(admin_client: Client) -> None:
-    """Unknown ?view= values fall back to calendar without erroring."""
+def test_invalid_view_falls_back_to_default(admin_client: Client) -> None:
+    """Unknown ?view= values fall back to the default (matrix)."""
     response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3, "view": "bogus"})
     assert response.status_code == 200
-    assert 'class="calendar"' in response.content.decode("utf-8")
+    assert 'class="leave-matrix"' in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
+def test_include_all_people_adds_empty_rows(admin_client: Client, two_people_two_undertakings: dict) -> None:
+    """?include_all_people=on adds rows for accessible people who have no leaves."""
+    # Create a person with no leaves at all this month.
+    Person.objects.create(id="C00001", first_name="Carol", last_name="C")
+
+    response = admin_client.get(
+        reverse("leave-list"),
+        {"year": 2025, "month": 3, "view": "matrix", "include_all_people": "on"},
+    )
+
+    assert response.status_code == 200
+    body = response.content.decode("utf-8")
+    assert "Carol" in body
+
+
+@pytest.mark.django_db
+def test_include_all_people_off_hides_leaveless_people(admin_client: Client, two_people_two_undertakings: dict) -> None:
+    """Without the toggle, people with no leaves this month don't appear in the matrix."""
+    Person.objects.create(id="C00002", first_name="Carol", last_name="C")
+
+    response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3, "view": "matrix"})
+
+    assert response.status_code == 200
+    body = response.content.decode("utf-8")
+    # Carol only appears in the Person dropdown on the add-leave form, not as a matrix row.
+    assert '<th scope="row"' in body  # sanity: matrix has at least one row header
+    # A matrix row header for Carol would start with '<th scope="row" title="C00002 ...'.
+    assert '<th scope="row" title="C00002' not in body
 
 
 class _StubPerson:
@@ -171,5 +212,15 @@ def test_matrix_marks_days_covered_by_a_leave() -> None:
     """A leave from day 3–5 should produce three shaded cells for that person."""
     leaves = [_StubLeave("Alice", date(2025, 3, 3), date(2025, 3, 5), "1.00")]
     html = LeaveMatrix(year=2025, month=3, leaves=leaves).render()
-    # Three cells with the percentage.
+    # Three cells labelled with the percentage.
     assert html.count(">1.00<") == 3
+
+
+def test_matrix_shows_row_for_person_without_leaves_when_people_given() -> None:
+    """If ``people`` includes someone without leaves, they still get an empty row."""
+    alice = _StubPerson("Alice")
+    bob = _StubPerson("Bob")
+    leaves = [_StubLeave("Alice", date(2025, 3, 3), date(2025, 3, 5), "1.00")]
+    html = LeaveMatrix(year=2025, month=3, leaves=leaves, people=[alice, bob]).render()
+    assert '<th scope="row" title="Bob">Bob</th>' in html
+    assert '<th scope="row" title="Alice">Alice</th>' in html
