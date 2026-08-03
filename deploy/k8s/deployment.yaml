@@ -16,7 +16,10 @@ spec:
       initContainers:
         - name: migrate
           image: durczokj/vendor-manager:__IMAGE_TAG__
-          command: ["python", "manage.py", "migrate", "--noinput"]
+          command:
+            - sh
+            - -c
+            - "python manage.py migrate --noinput && python manage.py sync_roles"
           envFrom:
             - configMapRef: { name: vendor-manager-config }
             - secretRef:    { name: vendor-manager-secrets }
