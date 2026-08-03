@@ -3,9 +3,10 @@
 from rest_framework import serializers
 
 from orders.models import Order, OrderVersion
+from vendor_manager.api_serializers import ImmutablePkSerializerMixin
 
 
-class OrderSerializer(serializers.ModelSerializer[Order]):
+class OrderSerializer(ImmutablePkSerializerMixin, serializers.ModelSerializer[Order]):
     """Serialize Order rows for API operations."""
 
     class Meta:

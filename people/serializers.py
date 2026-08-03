@@ -3,9 +3,10 @@
 from rest_framework import serializers
 
 from people.models import Person
+from vendor_manager.api_serializers import ImmutablePkSerializerMixin
 
 
-class PersonSerializer(serializers.ModelSerializer[Person]):
+class PersonSerializer(ImmutablePkSerializerMixin, serializers.ModelSerializer[Person]):
     """Serialize Person rows for API operations."""
 
     class Meta:
