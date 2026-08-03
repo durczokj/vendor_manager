@@ -8,7 +8,7 @@
   <button type="submit">Add Leave</button>
 </form>
 
-<h2>Calendar — {{ month }}/{{ year }}</h2>
+<h2>{% if view_mode == "matrix" %}Absence matrix{% else %}Calendar{% endif %} — {{ month }}/{{ year }}</h2>
 <form method="get" action="{% url 'leave-list' %}" class="filter-row">
   <div class="filter-col">
     <label for="id_month">Month:</label>
@@ -19,13 +19,33 @@
     <input type="number" id="id_year" name="year" value="{{ year }}" min="1970" max="9999">
   </div>
   <div class="filter-col">
+    <label for="id_undertaking">Undertaking:</label>
+    <select id="id_undertaking" name="undertaking">
+      <option value="">All</option>
+      {% for u in undertakings %}
+        <option value="{{ u.pk }}" {% if selected_undertaking_id == u.pk %}selected{% endif %}>{{ u }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="filter-col">
+    <label for="id_view">View:</label>
+    <select id="id_view" name="view">
+      <option value="calendar" {% if view_mode == "calendar" %}selected{% endif %}>Calendar</option>
+      <option value="matrix" {% if view_mode == "matrix" %}selected{% endif %}>Matrix (people × days)</option>
+    </select>
+  </div>
+  <div class="filter-col">
     <label>&nbsp;</label>
     <button type="submit">Go</button>
   </div>
 </form>
 
-<div class="calendar">
-  {{ calendar }}
+<div class="{% if view_mode == 'matrix' %}leave-matrix-wrapper{% else %}calendar{% endif %}">
+  {% if view_mode == "matrix" %}
+    {{ matrix }}
+  {% else %}
+    {{ calendar }}
+  {% endif %}
 </div>
 
 <p>Back to <a href="{% url 'main' %}">Home</a></p>
