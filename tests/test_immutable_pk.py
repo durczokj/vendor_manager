@@ -21,7 +21,9 @@ from rest_framework.test import APIClient
 from rolepermissions.roles import assign_role
 
 from companies.models import Company
+from companies.tests.factories import CompanyFactory
 from people.models import Person
+from people.tests.factories import PersonFactory
 
 
 @pytest.fixture
@@ -47,7 +49,7 @@ def admin_api_client(db) -> APIClient:
 @pytest.mark.django_db
 def test_person_update_view_ignores_posted_id(admin_client: Client) -> None:
     """POSTing a different id to person-update must not create a new row."""
-    Person.objects.create(id="EO1287", first_name="Alice", last_name="Smith")
+    PersonFactory(id="EO1287", first_name="Alice", last_name="Smith")
     before = Person.objects.count()
 
     response = admin_client.post(
@@ -62,9 +64,10 @@ def test_person_update_view_ignores_posted_id(admin_client: Client) -> None:
         },
     )
 
-    assert response.status_code in (302, 303), (
-        f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
-    )
+    assert response.status_code in (
+        302,
+        303,
+    ), f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
     assert Person.objects.count() == before, "update must not create a new row"
     assert Person.objects.filter(pk="EO1287").exists(), "original row must still exist"
     assert not Person.objects.filter(pk="EO9999").exists(), "no ghost duplicate row"
@@ -75,7 +78,7 @@ def test_person_update_view_ignores_posted_id(admin_client: Client) -> None:
 @pytest.mark.django_db
 def test_company_update_view_ignores_posted_id(admin_client: Client) -> None:
     """Same guarantee for integer-keyed models: Company.id is immutable."""
-    Company.objects.create(id=42, name="Original", email="a@example.com")
+    CompanyFactory(id=42, name="Original", email="a@example.com")
     before = Company.objects.count()
 
     response = admin_client.post(
@@ -97,7 +100,7 @@ def test_company_update_view_ignores_posted_id(admin_client: Client) -> None:
 @pytest.mark.django_db
 def test_person_api_patch_ignores_id(admin_api_client: APIClient) -> None:
     """PATCH with a different id must not create a new Person row."""
-    Person.objects.create(id="EO1287", first_name="Alice", last_name="Smith")
+    PersonFactory(id="EO1287", first_name="Alice", last_name="Smith")
     before = Person.objects.count()
 
     response = admin_api_client.patch(
@@ -116,7 +119,7 @@ def test_person_api_patch_ignores_id(admin_api_client: APIClient) -> None:
 @pytest.mark.django_db
 def test_person_api_put_ignores_id(admin_api_client: APIClient) -> None:
     """Full PUT with a different id must also preserve the original pk."""
-    Person.objects.create(id="EO1287", first_name="Alice", last_name="Smith")
+    PersonFactory(id="EO1287", first_name="Alice", last_name="Smith")
     before = Person.objects.count()
 
     response = admin_api_client.put(

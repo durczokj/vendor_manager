@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
 
-def _ensure_role_groups(sender, **kwargs) -> None:  # type: ignore[no-untyped-def]
+def _ensure_role_groups(sender: Any, **kwargs: Any) -> None:
     """Create a Django ``Group`` for every role defined in :mod:`vendor_manager.roles`."""
     from django.contrib.auth.models import Group
 

@@ -3,17 +3,12 @@
 from django.utils.decorators import method_decorator
 from rolepermissions.decorators import has_permission_decorator
 
-from engagements.tables import EngagementUndertakingAssignmentTable
+from engagements.tables import EngagementTable, EngagementUndertakingAssignmentTable
 from vendor_manager.cbv import EntityCreateView, EntityDeleteView, EntityDetailView, EntityListView, EntityUpdateView
 
 from .forms import PersonForm
 from .models import Person
 from .tables import PersonTable
-
-try:
-    from engagements.tables import EngagementTable as _EngagementTable
-except ImportError:  # pragma: no cover
-    _EngagementTable = None
 
 
 @method_decorator([has_permission_decorator("view_person")], name="dispatch")
@@ -47,7 +42,7 @@ class PersonDetailView(EntityDetailView):
         (
             "Engagements",
             lambda p: p.engagements.all(),
-            _EngagementTable,
+            EngagementTable,
             "engagement-create",
             "add_engagement",
         ),

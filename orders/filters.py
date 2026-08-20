@@ -5,7 +5,7 @@ from django_filters import rest_framework as filters
 from orders.models import Order, OrderVersion
 
 
-class OrderFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class OrderFilterSet(filters.FilterSet):
     """FilterSet for the Order model."""
 
     class Meta:
@@ -15,7 +15,7 @@ class OrderFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add 
         fields = ["name", "company"]
 
 
-class OrderVersionFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class OrderVersionFilterSet(filters.FilterSet):
     """FilterSet for the OrderVersion model."""
 
     class Meta:

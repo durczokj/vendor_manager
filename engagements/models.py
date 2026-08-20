@@ -1,6 +1,7 @@
 """Models for engagements."""
 
 from datetime import date
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -27,14 +28,14 @@ class Engagement(models.Model):
     daily_rate = models.DecimalField(max_digits=10, decimal_places=2)
     fte = models.DecimalField(max_digits=3, decimal_places=2)
 
-    def active(self, date=date.today()):
+    def active(self, date: date = date.today()) -> bool:  # noqa: B008
         """Check if the engagement is active."""
         return (self.start_date <= date <= self.end_date) and any(
             [a.order_version.active(date) for a in self.order_version_assignments.all()]
         )
 
     @property
-    def order(self):
+    def order(self) -> Order | None:
         """Get the order for the engagement."""
         orders = Order.objects.filter(
             id__in=self.order_version_assignments.values_list("order_version__order__id", flat=True)
@@ -52,7 +53,7 @@ class Engagement(models.Model):
 
         unique_together = (("person", "start_date"),)
 
-    def clean(self):
+    def clean(self) -> None:
         """Clean the class."""
         super().clean()
         if not self.id:
@@ -65,7 +66,7 @@ class Engagement(models.Model):
         if not (0 < self.fte <= 1):
             raise ValidationError("FTE must be between 0 and 1.")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Clean before saving."""
         self.clean()
         super().save(*args, **kwargs)
@@ -88,13 +89,13 @@ class EngagementOrderVersionAssignment(models.Model):
 
         unique_together = (("engagement", "order_version"),)
 
-    def clean(self):
+    def clean(self) -> None:
         """Clean the class."""
         engagement_order = self.engagement.order
         if engagement_order and engagement_order != self.order_version.order:
             raise ValidationError("The engagement must belong to only one order.")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Clean before saving."""
         self.clean()
         super().save(*args, **kwargs)
@@ -121,11 +122,11 @@ class EngagementUndertakingAssignment(models.Model):
         unique_together = (("engagement", "undertaking", "start_date"),)
 
     @property
-    def active(self):
+    def active(self) -> bool:
         """Check if the assignment is active."""
-        return self.engagement.active
+        return self.engagement.active(date.today())
 
-    def clean(self):
+    def clean(self) -> None:
         """Clean the class."""
         super().clean()
         if self.start_date and self.end_date and self.end_date < self.start_date:
@@ -142,7 +143,7 @@ class EngagementUndertakingAssignment(models.Model):
         if overlapping_assignments.exists():
             raise ValidationError("Assignments for the same engagement and undertaking cannot overlap.")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Clean before saving."""
         self.clean()
         super().save(*args, **kwargs)

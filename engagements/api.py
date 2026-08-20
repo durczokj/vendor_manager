@@ -1,6 +1,6 @@
 """ViewSets for the engagements app."""
 
-from typing import Any
+from typing import Any, cast
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -15,6 +15,11 @@ from engagements.filters import (
     EngagementOrderVersionAssignmentFilterSet,
     EngagementUndertakingAssignmentFilterSet,
 )
+from engagements.managers import (
+    EngagementOrderVersionAssignmentQuerySet,
+    EngagementQuerySet,
+    EngagementUndertakingAssignmentQuerySet,
+)
 from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
 from engagements.selectors import engagement_cost_coverage, engagement_costs
 from engagements.serializers import (
@@ -25,7 +30,7 @@ from engagements.serializers import (
 from engagements.services import update_engagement
 
 
-class EngagementViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class EngagementViewSet(viewsets.ModelViewSet[Engagement]):
     """Engagement list/create/retrieve/update/destroy endpoints."""
 
     queryset = Engagement.objects.all().order_by("id")
@@ -34,9 +39,10 @@ class EngagementViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TOD
     search_fields: list[str] = []
     ordering_fields = ["id", "start_date", "end_date", "daily_rate", "fte"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> EngagementQuerySet:
         """Return engagements accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return Engagement.objects.accessible_to(self.request.user).order_by("id")
 
     def perform_update(self, serializer: drf_serializers.BaseSerializer[Any]) -> None:
         """Persist an engagement and adjust child assignment date bounds (FR-15).
@@ -44,7 +50,7 @@ class EngagementViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TOD
         Delegates to the service layer so that undertaking assignment dates are
         clamped to the engagement's new date range on every update.
         """
-        engagement: Engagement = serializer.instance  # type: ignore[assignment]
+        engagement = cast(Engagement, serializer.instance)
         for attr, value in serializer.validated_data.items():
             setattr(engagement, attr, value)
         update_engagement(engagement=engagement)
@@ -109,7 +115,7 @@ class EngagementViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TOD
         )
 
 
-class EngagementOrderVersionAssignmentViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class EngagementOrderVersionAssignmentViewSet(viewsets.ModelViewSet[EngagementOrderVersionAssignment]):
     """EngagementOrderVersionAssignment list/create/retrieve/update/destroy endpoints."""
 
     queryset = EngagementOrderVersionAssignment.objects.all().order_by("id")
@@ -118,20 +124,21 @@ class EngagementOrderVersionAssignmentViewSet(viewsets.ModelViewSet):  # type: i
     search_fields: list[str] = []
     ordering_fields = ["id"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> EngagementOrderVersionAssignmentQuerySet:
         """Return engagement–order-version assignments accessible to the requesting user.
 
         When called from the nested route the queryset is additionally scoped to
         the parent engagement identified by ``engagement_pk``.
         """
-        qs = super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        qs = EngagementOrderVersionAssignment.objects.accessible_to(self.request.user).order_by("id")
         engagement_pk = self.kwargs.get("engagement_pk")
         if engagement_pk is not None:
             qs = qs.filter(engagement_id=engagement_pk)
         return qs
 
 
-class EngagementUndertakingAssignmentViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class EngagementUndertakingAssignmentViewSet(viewsets.ModelViewSet[EngagementUndertakingAssignment]):
     """EngagementUndertakingAssignment list/create/retrieve/update/destroy endpoints."""
 
     queryset = EngagementUndertakingAssignment.objects.all().order_by("id")
@@ -140,13 +147,14 @@ class EngagementUndertakingAssignmentViewSet(viewsets.ModelViewSet):  # type: ig
     search_fields: list[str] = []
     ordering_fields = ["id", "start_date", "end_date", "percentage"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> EngagementUndertakingAssignmentQuerySet:
         """Return engagement–undertaking assignments accessible to the requesting user.
 
         When called from the nested route the queryset is additionally scoped to
         the parent engagement identified by ``engagement_pk``.
         """
-        qs = super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        qs = EngagementUndertakingAssignment.objects.accessible_to(self.request.user).order_by("id")
         engagement_pk = self.kwargs.get("engagement_pk")
         if engagement_pk is not None:
             qs = qs.filter(engagement_id=engagement_pk)

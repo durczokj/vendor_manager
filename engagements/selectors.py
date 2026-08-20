@@ -1,6 +1,7 @@
 """Selectors for engagement cost calculations."""
 
 import logging
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ def _with_cost_related_data(engagement: Engagement) -> Engagement:
     )
 
 
-def engagement_costs(engagement: Engagement) -> list[dict]:
+def engagement_costs(engagement: Engagement) -> list[dict[str, Any]]:
     """Return day-level cost rows for an engagement."""
     engagement = _with_cost_related_data(engagement)
     date_index = pd.date_range(engagement.start_date, engagement.end_date, freq="D")
@@ -40,7 +41,7 @@ def engagement_costs(engagement: Engagement) -> list[dict]:
     ]
     if not ov_ranges:
         df["cost"] = 0.0
-        return df[["date", "cost"]].to_dict(orient="records")
+        return cast(list[dict[str, Any]], df[["date", "cost"]].to_dict(orient="records"))
 
     ov_df = pd.DataFrame(ov_ranges, columns=["ov_start", "ov_end"])
     ov_df["ov_start"] = pd.to_datetime(ov_df["ov_start"])
@@ -72,10 +73,10 @@ def engagement_costs(engagement: Engagement) -> list[dict]:
         float(engagement.daily_rate) * float(engagement.fte) * df["availability"],
         0.0,
     )
-    return df[["date", "cost"]].to_dict(orient="records")
+    return cast(list[dict[str, Any]], df[["date", "cost"]].to_dict(orient="records"))
 
 
-def engagement_cost_coverage(engagement: Engagement) -> list[dict]:
+def engagement_cost_coverage(engagement: Engagement) -> list[dict[str, Any]]:
     """Return day-level undertaking coverage rows for an engagement."""
     engagement = _with_cost_related_data(engagement)
     date_index = pd.date_range(engagement.start_date, engagement.end_date, freq="D")
@@ -141,4 +142,4 @@ def engagement_cost_coverage(engagement: Engagement) -> list[dict]:
         )
         result = pd.concat([result, unassigned], ignore_index=True)
 
-    return result[["date", "undertaking", "percentage"]].to_dict(orient="records")
+    return cast(list[dict[str, Any]], result[["date", "undertaking", "percentage"]].to_dict(orient="records"))

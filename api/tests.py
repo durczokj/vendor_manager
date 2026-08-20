@@ -13,12 +13,20 @@ from django.urls import reverse
 from rolepermissions.roles import assign_role
 
 from companies.models import Company
+from companies.tests.factories import CompanyFactory
 from contracts.models import Contract
-from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
-from leaves.models import Leave
-from orders.models import Order, OrderVersion
+from contracts.tests.factories import ContractFactory
+from engagements.models import Engagement
+from engagements.tests.factories import (
+    EngagementFactory,
+    EngagementOrderVersionAssignmentFactory,
+    EngagementUndertakingAssignmentFactory,
+)
+from leaves.tests.factories import LeaveFactory
+from orders.tests.factories import OrderFactory, OrderVersionFactory
 from people.models import Person
-from undertakings.models import CostCenter, Undertaking
+from people.tests.factories import PersonFactory
+from undertakings.tests.factories import CostCenterFactory, UndertakingFactory
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -40,22 +48,22 @@ def admin_user(db):
     """Create an admin user with linked Person."""
     user = User.objects.create_user("admin-api", None, "adminpass")
     assign_role(user, "admin")
-    Person.objects.create(id="A00001", first_name="Admin", last_name="User", user=user)
+    PersonFactory(id="A00001", first_name="Admin", last_name="User", user=user)
     return user
 
 
 @pytest.fixture
 def basic_dataset(db, admin_user):
     """Minimal dataset used across tests."""
-    company = Company.objects.create(id=9001, name="Test Co", email="test@example.com")
-    contract = Contract.objects.create(id=9001, name="Test Contract", status="active", size=5)
-    cost_center = CostCenter.objects.create(id=9001, name="CC Alpha")
+    company = CompanyFactory(id=9001, name="Test Co", email="test@example.com")
+    contract = ContractFactory(id=9001, name="Test Contract", status="active", size=5)
+    cost_center = CostCenterFactory(id=9001, name="CC Alpha")
     manager_user = User.objects.create_user("manager-api", None, "managerpass")
     assign_role(manager_user, "admin")
-    manager = Person.objects.create(id="M00001", first_name="Mgr", last_name="One", user=manager_user)
-    undertaking = Undertaking.objects.create(id=9001, name="Undertaking A", cost_center=cost_center, manager=manager)
-    order = Order.objects.create(id=9001, name="Order Alpha", company=company)
-    order_version = OrderVersion.objects.create(
+    manager = PersonFactory(id="M00001", first_name="Mgr", last_name="One", user=manager_user)
+    undertaking = UndertakingFactory(id=9001, name="Undertaking A", cost_center=cost_center, manager=manager)
+    order = OrderFactory(id=9001, name="Order Alpha", company=company)
+    order_version = OrderVersionFactory(
         order=order,
         contract=contract,
         version_number=1,
@@ -64,24 +72,23 @@ def basic_dataset(db, admin_user):
     )
     person_user = User.objects.create_user("person-api", None, "personpass")
     assign_role(person_user, "admin")
-    person = Person.objects.create(id="P00001", first_name="Person", last_name="One", user=person_user)
-    engagement = Engagement.objects.create(
+    person = PersonFactory(id="P00001", first_name="Person", last_name="One", user=person_user)
+    engagement = EngagementFactory(
         person=person,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
         daily_rate=Decimal("500.00"),
         fte=Decimal("1.00"),
     )
-    ova = EngagementOrderVersionAssignment(engagement=engagement, order_version=order_version)
-    ova.save()
-    eua = EngagementUndertakingAssignment.objects.create(
+    ova = EngagementOrderVersionAssignmentFactory(engagement=engagement, order_version=order_version)
+    eua = EngagementUndertakingAssignmentFactory(
         engagement=engagement,
         undertaking=undertaking,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 6, 30),
         percentage=Decimal("1.00"),
     )
-    leave = Leave.objects.create(
+    leave = LeaveFactory(
         person=person,
         start_date=date(2025, 3, 1),
         end_date=date(2025, 3, 5),
@@ -514,8 +521,6 @@ def test_nested_order_version_assignments_list(basic_dataset, admin_user):
 def test_nested_undertaking_assignments_scoped_to_engagement(basic_dataset, admin_user):
     """Nested list for engagement without assignments returns empty result."""
     from datetime import date
-
-    from engagements.models import Engagement
 
     engagement2 = Engagement.objects.create(
         person=basic_dataset["person"],

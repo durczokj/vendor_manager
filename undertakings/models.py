@@ -28,6 +28,6 @@ class Undertaking(models.Model):
     cost_center = models.ForeignKey(CostCenter, related_name="undertakings", on_delete=models.CASCADE)
     manager = models.ForeignKey("people.Person", related_name="managed_undertakings", on_delete=models.CASCADE)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the name of the undertaking."""
         return self.name

@@ -1,5 +1,7 @@
 """Models for leaves app."""
 
+from typing import Any
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -26,11 +28,11 @@ class Leave(models.Model):
         if self.start_date and self.end_date and self.end_date < self.start_date:
             raise ValidationError({"end_date": "End date cannot be before start date."})
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Run clean before saving."""
         self.clean()
         super().save(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a string representation of the leave."""
         return f"{self.person} - from {self.start_date} to {self.end_date} – {self.percentage}%"

@@ -8,6 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.db import connection
 from django.http import HttpRequest, HttpResponse
+from django.http.response import HttpResponseBase
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -74,7 +75,7 @@ class MainView(View):
 
 
 @login_required
-def serve_docs(request: HttpRequest, path: str = "") -> HttpResponse:
+def serve_docs(request: HttpRequest, path: str = "") -> HttpResponseBase:
     """Serve files from the built MkDocs ``site/`` directory (FR-51, FR-54).
 
     Login-guarded so only authenticated users can access the documentation.

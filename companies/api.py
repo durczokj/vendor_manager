@@ -1,15 +1,14 @@
 """ViewSet for the companies app."""
 
-from typing import Any
-
 from rest_framework import viewsets
 
 from companies.filters import CompanyFilterSet
+from companies.managers import CompanyQuerySet
 from companies.models import Company
 from companies.serializers import CompanySerializer
 
 
-class CompanyViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class CompanyViewSet(viewsets.ModelViewSet[Company]):
     """Company list/create/retrieve/update/destroy endpoints."""
 
     queryset = Company.objects.all().order_by("id")
@@ -18,6 +17,7 @@ class CompanyViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P
     search_fields = ["name", "email"]
     ordering_fields = ["id", "name"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> CompanyQuerySet:
         """Return companies accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return Company.objects.accessible_to(self.request.user).order_by("id")

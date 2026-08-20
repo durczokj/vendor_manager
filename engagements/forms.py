@@ -16,9 +16,9 @@ class EngagementForm(forms.ModelForm):
         model = Engagement
         fields = "__all__"
 
-    def save(self, commit=True):
+    def save(self, commit: bool = True) -> Engagement:
         """Save an engagement and apply service-level update behavior for edits."""
-        engagement = super().save(commit=False)
+        engagement: Engagement = super().save(commit=False)
 
         if commit:
             if engagement.pk is None:

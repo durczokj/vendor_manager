@@ -1,10 +1,10 @@
 """Define Order and OrderVersion models."""
 
-from datetime import date
+from datetime import date, timedelta
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
 
 from companies.models import Company
 from contracts.models import Contract
@@ -24,7 +24,13 @@ class Order(models.Model):
         """Return the name of the order."""
         return self.name
 
-    def create_new_version(self, contract, start_date, end_date, copy_engagement_assignments=True):
+    def create_new_version(
+        self,
+        contract: Contract,
+        start_date: date,
+        end_date: date,
+        copy_engagement_assignments: bool = True,
+    ) -> "OrderVersion":
         """Create a new version of the order.
 
         Deprecated: use orders.services.create_new_order_version directly.
@@ -56,19 +62,19 @@ class OrderVersion(models.Model):
 
         unique_together = (("order", "version_number"),)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Override init method to ensure start_date and end_date are instances of datetime.date."""
         super().__init__(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation of OrderVersion."""
         return f"Order: {self.order.id}, Version: {self.version_number}"
 
-    def active(self, date=date.today()):
+    def active(self, date: date = date.today()) -> bool:  # noqa: B008
         """Return whether the order version is active."""
         return self.start_date <= date <= self.end_date
 
-    def clean(self):
+    def clean(self) -> None:
         """Clean OrderVersion."""
         super().clean()
         if not isinstance(self.start_date, date):
@@ -86,8 +92,8 @@ class OrderVersion(models.Model):
         # Ensure there are no breaks between versions
         if previous_versions.exists():
             latest_version = previous_versions.first()
-
-            if latest_version.end_date != self.start_date - timezone.timedelta(days=1):
+            assert latest_version is not None
+            if latest_version.end_date != self.start_date - timedelta(days=1):
                 raise ValidationError("There cannot be breaks between versions.")
 
         overlapping_versions = OrderVersion.objects.filter(
@@ -96,7 +102,7 @@ class OrderVersion(models.Model):
         if overlapping_versions.exists():
             raise ValidationError("There cannot be more than one active version at the same time.")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Override save method to call clean method before saving."""
         self.clean()
         super().save(*args, **kwargs)

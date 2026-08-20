@@ -18,7 +18,8 @@ from django.urls import reverse
 from rolepermissions.roles import assign_role
 
 from companies.models import Company
-from people.models import Person
+from companies.tests.factories import CompanyFactory
+from people.tests.factories import PersonFactory
 from vendor_manager.navigation import NAV_ENTRIES, NavEntry, nav_context_processor
 from vendor_manager.roles import Admin, UndertakingManager
 from vendor_manager.roles import Person as PersonRole
@@ -219,7 +220,7 @@ def test_api_user_without_linked_person_gets_403() -> None:
 def test_api_user_with_linked_person_gets_200() -> None:
     """Authenticated users with a linked Person can access API endpoints."""
     user = User.objects.create_user("has-person-user", None, "strong-password")
-    Person.objects.create(id="P00001", first_name="Has", last_name="Person", user=user)
+    PersonFactory(id="P00001", first_name="Has", last_name="Person", user=user)
     auth = base64.b64encode(f"{user.username}:strong-password".encode()).decode()
     client = Client()
 
@@ -328,7 +329,7 @@ def test_company_delete_confirmation_page_renders_before_delete() -> None:
     """GET on delete URL renders shared confirmation page; POST performs delete."""
     user = User.objects.create_user("delete-admin", None, "strong-password")
     assign_role(user, "admin")
-    company = Company.objects.create(id=2101, name="Delete Me", email="delete-me@example.com")
+    company = CompanyFactory(id=2101, name="Delete Me", email="delete-me@example.com")
     client = Client()
     client.force_login(user)
 
@@ -349,7 +350,7 @@ def test_company_delete_requires_delete_permission() -> None:
     """Users without delete permission are denied access to delete endpoint."""
     user = User.objects.create_user("delete-person", None, "strong-password")
     assign_role(user, "person")
-    company = Company.objects.create(id=2102, name="Do Not Delete", email="do-not-delete@example.com")
+    company = CompanyFactory(id=2102, name="Do Not Delete", email="do-not-delete@example.com")
     client = Client()
     client.force_login(user)
 
@@ -377,7 +378,7 @@ def test_main_view_signed_in_returns_200() -> None:
     """Authenticated GET on / returns 200 and renders the Plotly dashboard (FR-43, FR-46)."""
     user = User.objects.create_user("dashboard-user", None, "strong-password")
     assign_role(user, "admin")
-    Person.objects.create(id="D00001", first_name="Dash", last_name="User", user=user)
+    PersonFactory(id="D00001", first_name="Dash", last_name="User", user=user)
     c = Client()
     c.force_login(user)
 
@@ -429,7 +430,7 @@ def test_docs_index_signed_in_serves_file(tmp_path, settings) -> None:
     response = c.get(reverse("docs-index"))
     assert response.status_code == 200
     # FileResponse uses streaming_content; consume it to get the bytes.
-    content = b"".join(response.streaming_content)  # type: ignore[attr-defined]
+    content = b"".join(response.streaming_content)
     response.close()
     assert b"Docs home" in content
 
@@ -449,7 +450,7 @@ def test_docs_path_signed_in_serves_file(tmp_path, settings) -> None:
 
     response = c.get(reverse("docs", kwargs={"path": "architecture.html"}))
     assert response.status_code == 200
-    content = b"".join(response.streaming_content)  # type: ignore[attr-defined]
+    content = b"".join(response.streaming_content)
     response.close()
     assert b"Architecture" in content
 

@@ -1,13 +1,20 @@
 """Shared DRF serializer mixins."""
 
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.db.models import Model
+
+if TYPE_CHECKING:
+    from rest_framework.serializers import ModelSerializer
+
+    _MixinBase = ModelSerializer[Any]
+else:
+    _MixinBase = object
 
 _MT = TypeVar("_MT", bound=Model)
 
 
-class ImmutablePkSerializerMixin:
+class ImmutablePkSerializerMixin(_MixinBase):
     """Ignore the primary-key field in incoming data on update.
 
     Models with user-chosen primary keys (e.g. ``Person.id`` as a
@@ -24,4 +31,4 @@ class ImmutablePkSerializerMixin:
         """Strip the pk from ``validated_data``, then delegate to the parent."""
         pk_name = instance._meta.pk.name
         validated_data.pop(pk_name, None)
-        return super().update(instance, validated_data)  # type: ignore[misc]
+        return cast(_MT, super().update(instance, validated_data))

@@ -5,7 +5,7 @@ from django_filters import rest_framework as filters
 from companies.models import Company
 
 
-class CompanyFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class CompanyFilterSet(filters.FilterSet):
     """FilterSet for the Company model."""
 
     class Meta:

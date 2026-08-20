@@ -11,22 +11,33 @@ from rolepermissions.roles import assign_role
 
 from companies.models import Company
 from companies.permissions import access_company
+from companies.tests.factories import CompanyFactory
 from contracts.models import Contract
 from contracts.permissions import access_contract
+from contracts.tests.factories import ContractFactory
 from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
 from engagements.permissions import (
     access_engagement,
     access_engagement_order_version_assignment,
     access_engagement_undertaking_assignment,
 )
+from engagements.tests.factories import (
+    EngagementFactory,
+    EngagementOrderVersionAssignmentFactory,
+    EngagementUndertakingAssignmentFactory,
+)
 from leaves.models import Leave
 from leaves.permissions import access_leave
+from leaves.tests.factories import LeaveFactory
 from orders.models import Order, OrderVersion
 from orders.permissions import access_order, access_order_version
+from orders.tests.factories import OrderFactory, OrderVersionFactory
 from people.models import Person
 from people.permissions import access_person
+from people.tests.factories import PersonFactory
 from undertakings.models import CostCenter, Undertaking
 from undertakings.permissions import access_cost_center, access_undertaking
+from undertakings.tests.factories import CostCenterFactory, UndertakingFactory
 from vendor_manager.roles import Admin, UndertakingManager
 from vendor_manager.roles import Person as PersonRole
 
@@ -41,37 +52,37 @@ def seeded_access_data(db):
     assign_role(manager_user, "undertaking_manager")
     assign_role(person_user, "person")
 
-    manager_person = Person.objects.create(id="100001", first_name="Manager", last_name="User", user=manager_user)
-    allowed_person = Person.objects.create(id="100002", first_name="Allowed", last_name="User", user=person_user)
-    blocked_person = Person.objects.create(id="100003", first_name="Blocked", last_name="User")
+    manager_person = PersonFactory(id="100001", first_name="Manager", last_name="User", user=manager_user)
+    allowed_person = PersonFactory(id="100002", first_name="Allowed", last_name="User", user=person_user)
+    blocked_person = PersonFactory(id="100003", first_name="Blocked", last_name="User")
 
-    allowed_cost_center = CostCenter.objects.create(id=1001, name="Allowed Cost Center")
-    blocked_cost_center = CostCenter.objects.create(id=1002, name="Blocked Cost Center")
+    allowed_cost_center = CostCenterFactory(id=1001, name="Allowed Cost Center")
+    blocked_cost_center = CostCenterFactory(id=1002, name="Blocked Cost Center")
 
-    allowed_undertaking = Undertaking.objects.create(
+    allowed_undertaking = UndertakingFactory(
         id=2001, name="Allowed Undertaking", cost_center=allowed_cost_center, manager=manager_person
     )
-    blocked_undertaking = Undertaking.objects.create(
+    blocked_undertaking = UndertakingFactory(
         id=2002, name="Blocked Undertaking", cost_center=blocked_cost_center, manager=blocked_person
     )
 
-    allowed_company = Company.objects.create(id=3001, name="Allowed Company", email="allowed@example.com")
-    blocked_company = Company.objects.create(id=3002, name="Blocked Company", email="blocked@example.com")
+    allowed_company = CompanyFactory(id=3001, name="Allowed Company", email="allowed@example.com")
+    blocked_company = CompanyFactory(id=3002, name="Blocked Company", email="blocked@example.com")
 
-    allowed_order = Order.objects.create(id=4001, name="Allowed Order", company=allowed_company)
-    blocked_order = Order.objects.create(id=4002, name="Blocked Order", company=blocked_company)
+    allowed_order = OrderFactory(id=4001, name="Allowed Order", company=allowed_company)
+    blocked_order = OrderFactory(id=4002, name="Blocked Order", company=blocked_company)
 
-    allowed_contract = Contract.objects.create(id=5001, name="Allowed Contract", status="active", size=1)
-    blocked_contract = Contract.objects.create(id=5002, name="Blocked Contract", status="active", size=1)
+    allowed_contract = ContractFactory(id=5001, name="Allowed Contract", status="active", size=1)
+    blocked_contract = ContractFactory(id=5002, name="Blocked Contract", status="active", size=1)
 
-    allowed_order_version = OrderVersion.objects.create(
+    allowed_order_version = OrderVersionFactory(
         order=allowed_order,
         contract=allowed_contract,
         version_number=1,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
     )
-    blocked_order_version = OrderVersion.objects.create(
+    blocked_order_version = OrderVersionFactory(
         order=blocked_order,
         contract=blocked_contract,
         version_number=1,
@@ -79,14 +90,14 @@ def seeded_access_data(db):
         end_date=date(2025, 12, 31),
     )
 
-    allowed_engagement = Engagement.objects.create(
+    allowed_engagement = EngagementFactory(
         person=allowed_person,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
         daily_rate=100,
         fte=1,
     )
-    blocked_engagement = Engagement.objects.create(
+    blocked_engagement = EngagementFactory(
         person=blocked_person,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
@@ -94,23 +105,21 @@ def seeded_access_data(db):
         fte=1,
     )
 
-    allowed_order_assignment = EngagementOrderVersionAssignment(
+    allowed_order_assignment = EngagementOrderVersionAssignmentFactory(
         engagement=allowed_engagement, order_version=allowed_order_version
     )
-    allowed_order_assignment.save()
-    blocked_order_assignment = EngagementOrderVersionAssignment(
+    blocked_order_assignment = EngagementOrderVersionAssignmentFactory(
         engagement=blocked_engagement, order_version=blocked_order_version
     )
-    blocked_order_assignment.save()
 
-    allowed_undertaking_assignment = EngagementUndertakingAssignment.objects.create(
+    allowed_undertaking_assignment = EngagementUndertakingAssignmentFactory(
         engagement=allowed_engagement,
         undertaking=allowed_undertaking,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
         percentage=Decimal("1.00"),
     )
-    blocked_undertaking_assignment = EngagementUndertakingAssignment.objects.create(
+    blocked_undertaking_assignment = EngagementUndertakingAssignmentFactory(
         engagement=blocked_engagement,
         undertaking=blocked_undertaking,
         start_date=date(2025, 1, 1),
@@ -118,13 +127,13 @@ def seeded_access_data(db):
         percentage=Decimal("1.00"),
     )
 
-    allowed_leave = Leave.objects.create(
+    allowed_leave = LeaveFactory(
         person=allowed_person,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 1, 2),
         percentage=Decimal("0.50"),
     )
-    blocked_leave = Leave.objects.create(
+    blocked_leave = LeaveFactory(
         person=blocked_person,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 1, 2),
@@ -238,56 +247,53 @@ def test_role_specific_accessible_to_results_are_expected(seeded_access_data, mo
 def _seed_noise_data(seed_ids):
     for offset in range(1, 8):
         person_id = f"{seed_ids['person'] + offset:06d}"
-        noise_person = Person.objects.create(id=person_id, first_name="Noise", last_name=f"Person {offset}")
-        noise_cost_center = CostCenter.objects.create(id=seed_ids["cost_center"] + offset, name=f"Noise CC {offset}")
-        noise_undertaking = Undertaking.objects.create(
+        noise_person = PersonFactory(id=person_id, first_name="Noise", last_name=f"Person {offset}")
+        noise_cost_center = CostCenterFactory(id=seed_ids["cost_center"] + offset, name=f"Noise CC {offset}")
+        noise_undertaking = UndertakingFactory(
             id=seed_ids["undertaking"] + offset,
             name=f"Noise Undertaking {offset}",
             cost_center=noise_cost_center,
             manager=noise_person,
         )
-        noise_company = Company.objects.create(
+        noise_company = CompanyFactory(
             id=seed_ids["company"] + offset,
             name=f"Noise Company {offset}",
             email=f"noise{offset}@example.com",
         )
-        noise_order = Order.objects.create(
+        noise_order = OrderFactory(
             id=seed_ids["order"] + offset,
             name=f"Noise Order {offset}",
             company=noise_company,
         )
-        noise_contract = Contract.objects.create(
+        noise_contract = ContractFactory(
             id=seed_ids["contract"] + offset,
             name=f"Noise Contract {offset}",
             status="active",
             size=1,
         )
-        noise_order_version = OrderVersion.objects.create(
+        noise_order_version = OrderVersionFactory(
             order=noise_order,
             contract=noise_contract,
             version_number=1,
             start_date=date(2025, 1, 1),
             end_date=date(2025, 12, 31),
         )
-        noise_engagement = Engagement.objects.create(
+        noise_engagement = EngagementFactory(
             person=noise_person,
             start_date=date(2025, 1, 1) + timedelta(days=offset),
             end_date=date(2025, 12, 31),
             daily_rate=100,
             fte=1,
         )
-        noise_order_assignment = EngagementOrderVersionAssignment(
-            engagement=noise_engagement, order_version=noise_order_version
-        )
-        noise_order_assignment.save()
-        EngagementUndertakingAssignment.objects.create(
+        EngagementOrderVersionAssignmentFactory(engagement=noise_engagement, order_version=noise_order_version)
+        EngagementUndertakingAssignmentFactory(
             engagement=noise_engagement,
             undertaking=noise_undertaking,
             start_date=noise_engagement.start_date,
             end_date=noise_engagement.end_date,
             percentage=Decimal("1.00"),
         )
-        Leave.objects.create(
+        LeaveFactory(
             person=noise_person,
             start_date=noise_engagement.start_date,
             end_date=noise_engagement.start_date,

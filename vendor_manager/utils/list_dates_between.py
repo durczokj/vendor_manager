@@ -1,9 +1,9 @@
 """Utility function to generate a list of dates between two datetime instances."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 
-def list_dates_between(start_date, end_date):
+def list_dates_between(start_date: date, end_date: date) -> list[date]:
     """Generate a list of dates between two datetime instances.
 
     :param start_date: The start date as a datetime instance.

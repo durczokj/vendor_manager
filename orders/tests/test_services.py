@@ -4,12 +4,14 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from companies.models import Company
-from contracts.models import Contract
-from engagements.models import Engagement, EngagementOrderVersionAssignment
+from companies.tests.factories import CompanyFactory
+from contracts.tests.factories import ContractFactory
+from engagements.models import EngagementOrderVersionAssignment
+from engagements.tests.factories import EngagementFactory
 from orders.models import Order, OrderVersion
 from orders.services import create_new_order_version
-from people.models import Person
+from orders.tests.factories import OrderFactory, OrderVersionFactory
+from people.tests.factories import PersonFactory
 
 
 def create_order_with_version(
@@ -19,12 +21,10 @@ def create_order_with_version(
     contract_id: int,
     end_date: date,
 ) -> tuple[Order, OrderVersion]:
-    company = Company.objects.create(
-        id=company_id, name=f"Company {company_id}", email=f"company{company_id}@example.com"
-    )
-    order = Order.objects.create(id=order_id, name=f"Order {order_id}", company=company)
-    contract = Contract.objects.create(id=contract_id, name=f"Contract {contract_id}", status="active", size=1)
-    version = OrderVersion.objects.create(
+    company = CompanyFactory(id=company_id, name=f"Company {company_id}", email=f"company{company_id}@example.com")
+    order = OrderFactory(id=order_id, name=f"Order {order_id}", company=company)
+    contract = ContractFactory(id=contract_id, name=f"Contract {contract_id}", status="active", size=1)
+    version = OrderVersionFactory(
         order=order,
         contract=contract,
         version_number=1,
@@ -39,9 +39,9 @@ def test_create_new_order_version_happy_path():
     order, previous_version = create_order_with_version(
         company_id=1, order_id=1, contract_id=1, end_date=date(2026, 12, 31)
     )
-    contract = Contract.objects.create(id=2, name="Contract 2", status="active", size=1)
-    person = Person.objects.create(id="000001", first_name="Jane", last_name="Doe")
-    engagement = Engagement.objects.create(
+    contract = ContractFactory(id=2, name="Contract 2", status="active", size=1)
+    person = PersonFactory(id="000001", first_name="Jane", last_name="Doe")
+    engagement = EngagementFactory(
         person=person,
         start_date=date(2024, 1, 1),
         end_date=date(2025, 12, 31),
@@ -83,7 +83,7 @@ def test_create_new_order_version_with_used_contract_raises_integrity_error():
 @pytest.mark.django_db
 def test_create_new_order_version_with_start_date_not_after_previous_start_raises_validation_error():
     order, _ = create_order_with_version(company_id=1, order_id=1, contract_id=1, end_date=date(2026, 12, 31))
-    contract = Contract.objects.create(id=2, name="Contract 2", status="active", size=1)
+    contract = ContractFactory(id=2, name="Contract 2", status="active", size=1)
 
     with pytest.raises(ValidationError):
         create_new_order_version(
@@ -99,9 +99,9 @@ def test_create_new_order_version_rolls_back_when_assignment_copy_fails(monkeypa
     order, previous_version = create_order_with_version(
         company_id=1, order_id=1, contract_id=1, end_date=date(2026, 12, 31)
     )
-    contract = Contract.objects.create(id=2, name="Contract 2", status="active", size=1)
-    person = Person.objects.create(id="000001", first_name="Jane", last_name="Doe")
-    engagement = Engagement.objects.create(
+    contract = ContractFactory(id=2, name="Contract 2", status="active", size=1)
+    person = PersonFactory(id="000001", first_name="Jane", last_name="Doe")
+    engagement = EngagementFactory(
         person=person,
         start_date=date(2024, 1, 1),
         end_date=date(2025, 12, 31),
@@ -132,3 +132,32 @@ def test_create_new_order_version_rolls_back_when_assignment_copy_fails(monkeypa
     assert previous_version.end_date == date(2026, 12, 31)
     assert order.versions.count() == 1
     assert assignment.order_version_id == previous_version.id
+
+
+@pytest.mark.django_db
+def test_create_new_order_version_skips_assignment_copy_when_flag_false():
+    """When copy_engagement_assignments=False the new version has no assignments."""
+    order, previous_version = create_order_with_version(
+        company_id=1, order_id=1, contract_id=1, end_date=date(2026, 12, 31)
+    )
+    contract = ContractFactory(id=2, name="Contract 2", status="active", size=1)
+    person = PersonFactory(id="000001", first_name="Jane", last_name="Doe")
+    engagement = EngagementFactory(
+        person=person,
+        start_date=date(2024, 1, 1),
+        end_date=date(2025, 12, 31),
+        daily_rate=100,
+        fte=1,
+    )
+    EngagementOrderVersionAssignment(engagement=engagement, order_version=previous_version).save()
+
+    new_version = create_new_order_version(
+        order=order,
+        contract=contract,
+        start_date=date(2025, 1, 1),
+        end_date=date(2025, 12, 31),
+        copy_engagement_assignments=False,
+    )
+
+    assert new_version.engagement_assignments.count() == 0
+    assert previous_version.engagement_assignments.count() == 1

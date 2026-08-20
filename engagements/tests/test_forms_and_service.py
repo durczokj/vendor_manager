@@ -1,32 +1,34 @@
+"""Tests for engagement form and update-service date adjustment.
+
+Migrated from the old top-level ``engagements/tests.py`` module during P7.T1
+so the tests package can coexist with ``engagements/tests/factories.py``.
+"""
+
+from __future__ import annotations
+
 from datetime import date
+from decimal import Decimal
 
 import pytest
 
 from engagements.forms import EngagementForm
 from engagements.models import Engagement, EngagementUndertakingAssignment
 from engagements.services import update_engagement
-from people.models import Person
-from undertakings.models import CostCenter, Undertaking
+from engagements.tests.factories import EngagementFactory, EngagementUndertakingAssignmentFactory
 
 
 def _create_assignment_fixture() -> tuple[Engagement, EngagementUndertakingAssignment]:
-    manager = Person.objects.create(id="000001", first_name="Casey", last_name="Manager")
-    person = Person.objects.create(id="000002", first_name="Pat", last_name="Consultant")
-    cost_center = CostCenter.objects.create(id=1, name="CC1")
-    undertaking = Undertaking.objects.create(id=1, name="U1", cost_center=cost_center, manager=manager)
-    engagement = Engagement.objects.create(
-        person=person,
+    engagement = EngagementFactory(
         start_date=date(2024, 1, 1),
         end_date=date(2024, 12, 31),
-        daily_rate=100,
-        fte=1,
+        daily_rate=Decimal("100.00"),
+        fte=Decimal("1.00"),
     )
-    assignment = EngagementUndertakingAssignment.objects.create(
+    assignment = EngagementUndertakingAssignmentFactory(
         engagement=engagement,
-        undertaking=undertaking,
         start_date=date(2024, 2, 1),
         end_date=date(2024, 11, 30),
-        percentage=1,
+        percentage=Decimal("1.00"),
     )
     return engagement, assignment
 

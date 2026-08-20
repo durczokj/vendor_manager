@@ -2,21 +2,30 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from rolepermissions.checkers import has_role
 
+if TYPE_CHECKING:
+    from contracts.models import Contract
 
-def _get_user_person_pk(user: User) -> object | None:
+    _ContractQuerySetBase = models.QuerySet[Contract]
+else:
+    _ContractQuerySetBase = models.QuerySet
+
+
+def _get_user_person_pk(user: User) -> str | None:
     """Return the primary key of the person's profile linked to the user."""
     try:
-        return user.person.pk
+        return str(user.person.pk)
     except ObjectDoesNotExist:
         return None
 
 
-class ContractQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [Contract] once strict scope widens
+class ContractQuerySet(_ContractQuerySetBase):
     """QuerySet for the Contract model."""
 
     def accessible_to(self, user: User) -> ContractQuerySet:

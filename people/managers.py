@@ -2,22 +2,31 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from rolepermissions.checkers import has_role
 
+if TYPE_CHECKING:
+    from people.models import Person
 
-def _get_user_person_pk(user: User) -> object | None:
+    _PersonQuerySetBase = models.QuerySet[Person]
+else:
+    _PersonQuerySetBase = models.QuerySet
+
+
+def _get_user_person_pk(user: User) -> str | None:
     """Return the primary key of the person's profile linked to the user."""
     try:
-        return user.person.pk
+        return str(user.person.pk)
     except ObjectDoesNotExist:
         return None
 
 
-class PersonQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [Person] once strict scope widens
+class PersonQuerySet(_PersonQuerySetBase):
     """QuerySet for the Person model."""
 
     def accessible_to(self, user: User) -> PersonQuerySet:

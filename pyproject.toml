@@ -120,67 +120,59 @@ exclude = [
     "^manage\\.py$",
     # Going away in P5; annotating it is wasted work.
     "^dashboards/summary_dashboard\\.py$",
-    # Tests get their own, looser regime — see the override below and P7/P8.
-    "^.*/tests\\.py$",
-    "^.*/tests/.*",
 ]
 
-# P0 scope: only files substantially rewritten or created in P0 are strict-
-# checked in CI. Legacy modules (views.py, utils/*, apps' models/forms/views)
-# are annotated in P7/P8 as part of the strict-typing sweep. Any new code
-# landing must still pass mypy --strict.
+# P8.T1: mypy scope now covers the whole project. Excluded paths (migrations,
+# staticfiles, notebooks, generated code) are handled via ``exclude`` above.
+# ``follow_imports = "silent"`` remains until P8.T4 finishes so tests-only
+# errors don't gate application code.
 files = [
-    "vendor_manager/settings.py",
-    "vendor_manager/logging.py",
-    "vendor_manager/navigation.py",
-    "vendor_manager/wsgi.py",
-    "vendor_manager/asgi.py",
-    "vendor_manager/tests.py",
-    "companies/managers.py",
-    "contracts/managers.py",
-    "people/managers.py",
-    "orders/managers.py",
-    "undertakings/managers.py",
-    "engagements/managers.py",
-    "leaves/managers.py",
-    # P3.T2: per-app serializers, filters, and viewsets
-    "api/serializers.py",
-    "api/viewsets.py",
-    "companies/serializers.py",
-    "companies/filters.py",
-    "companies/api.py",
-    "contracts/serializers.py",
-    "contracts/filters.py",
-    "contracts/api.py",
-    "people/serializers.py",
-    "people/filters.py",
-    "people/api.py",
-    "orders/serializers.py",
-    "orders/filters.py",
-    "orders/api.py",
-    "undertakings/serializers.py",
-    "undertakings/filters.py",
-    "undertakings/api.py",
-    "engagements/serializers.py",
-    "engagements/filters.py",
-    "engagements/api.py",
-    "leaves/serializers.py",
-    "leaves/filters.py",
-    "leaves/api.py",
-    # P3.T5: auth glue and health
-    "vendor_manager/api_permissions.py",
-    # P5.T1: dashboard selectors and services
-    "dashboards/selectors.py",
-    "dashboards/services.py",
-    # P5.T2: dashboard summary API endpoint
-    "dashboards/api.py",
+    "api",
+    "companies",
+    "contracts",
+    "dashboards",
+    "engagements",
+    "leaves",
+    "orders",
+    "people",
+    "tests",
+    "undertakings",
+    "vendor_manager",
 ]
 
 [[tool.mypy.overrides]]
-# tests are covered under a less-strict regime; annotate as we go in P7/P8.
-module = ["*.tests", "*.tests.*"]
+# tests are covered under a less-strict regime; annotate as we go in P8.T4.
+# Factory-boy has no type stubs, so factory calls and their model-returning
+# semantics are opaque to mypy — relax the affected rules for test modules.
+# NB: mypy module override wildcards must be full components — patterns like
+# ``*.test_*`` are rejected. In-app test modules that don't live under a
+# ``tests/`` package must be listed explicitly.
+module = [
+    "*.tests",
+    "*.tests.*",
+    "tests.*",
+    "test_permission_matrix",
+    "test_immutable_pk",
+    "test_ui_smoke",
+    "conftest",
+    "*.conftest",
+    "api.test_role_matrix",
+    "*.factories",
+]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disable_error_code = [
+    "attr-defined",
+    "no-untyped-call",
+    "no-untyped-def",
+    "type-arg",
+    "no-any-return",
+    "misc",
+    "arg-type",
+    "return-value",
+    "call-overload",
+]
 
 [[tool.mypy.overrides]]
 # Third-party libraries without stubs. Add as needed; keep the list explicit.
@@ -202,6 +194,64 @@ module = [
     "numpy.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Forms subclass ``django.forms.ModelForm``, which django-stubs types as
+# ``Generic[_M]`` but which is NOT subscriptable at runtime. Writing
+# ``class Foo(ModelForm[Bar])`` in a base class raises ``TypeError`` at import
+# time, so we keep the plain ``ModelForm`` base and silence the missing
+# type-arg error here rather than sprinkling per-class ignores.
+module = [
+    "companies.forms",
+    "contracts.forms",
+    "engagements.forms",
+    "leaves.forms",
+    "orders.forms",
+    "people.forms",
+    "undertakings.forms",
+]
+disable_error_code = ["type-arg"]
+
+[[tool.mypy.overrides]]
+# ``rolepermissions.decorators.register_object_checker`` is untyped
+# (rolepermissions ships no stubs) so mypy sees it as ``Any`` and reports
+# ``untyped-decorator`` on every application of it. The functions still get
+# typed bodies; the decorator itself is the only untyped piece.
+module = [
+    "companies.permissions",
+    "contracts.permissions",
+    "engagements.permissions",
+    "leaves.permissions",
+    "orders.permissions",
+    "people.permissions",
+    "undertakings.permissions",
+]
+disable_error_code = ["untyped-decorator"]
+
+[[tool.mypy.overrides]]
+# ``AbstractUserRole`` (rolepermissions) and ``tables.Table`` (django_tables2)
+# resolve to ``Any`` because their packages have no stubs. Subclassing ``Any``
+# triggers ``misc``; the subclass bodies are otherwise fully typed.
+module = [
+    "vendor_manager.roles",
+    "vendor_manager.tables",
+]
+disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+# ``django_filters.FilterSet`` (django_filters ships no stubs) resolves to
+# ``Any``; subclassing triggers ``misc``. Filter classes are declarative
+# and otherwise fully typed.
+module = [
+    "companies.filters",
+    "contracts.filters",
+    "engagements.filters",
+    "leaves.filters",
+    "orders.filters",
+    "people.filters",
+    "undertakings.filters",
+]
+disable_error_code = ["misc"]
 
 [tool.django-stubs]
 django_settings_module = "vendor_manager.settings"

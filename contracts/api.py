@@ -1,15 +1,14 @@
 """ViewSet for the contracts app."""
 
-from typing import Any
-
 from rest_framework import viewsets
 
 from contracts.filters import ContractFilterSet
+from contracts.managers import ContractQuerySet
 from contracts.models import Contract
 from contracts.serializers import ContractSerializer
 
 
-class ContractViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class ContractViewSet(viewsets.ModelViewSet[Contract]):
     """Contract list/create/retrieve/update/destroy endpoints."""
 
     queryset = Contract.objects.all().order_by("id")
@@ -18,6 +17,7 @@ class ContractViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(
     search_fields = ["name", "status"]
     ordering_fields = ["id", "name", "status", "size"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> ContractQuerySet:
         """Return contracts accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return Contract.objects.accessible_to(self.request.user).order_by("id")

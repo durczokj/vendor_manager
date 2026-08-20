@@ -29,7 +29,7 @@ from people.models import Person
 from undertakings.models import Undertaking
 
 
-class _SummaryRequestSerializer(serializers.Serializer):  # type: ignore[type-arg]
+class _SummaryRequestSerializer(serializers.Serializer[Any]):
     """Deserialises and validates the dashboard summary filter parameters.
 
     All fields are optional; the service applies sensible defaults (no
@@ -91,7 +91,7 @@ class _SummaryRequestSerializer(serializers.Serializer):  # type: ignore[type-ar
     )
 
 
-class _SummaryRowSerializer(serializers.Serializer):  # type: ignore[type-arg]
+class _SummaryRowSerializer(serializers.Serializer[Any]):
     """Represents a single aggregated row in the summary response."""
 
     id = serializers.JSONField(
@@ -110,7 +110,7 @@ class _SummaryRowSerializer(serializers.Serializer):  # type: ignore[type-arg]
     )
 
 
-class _SummaryResponseSerializer(serializers.Serializer):  # type: ignore[type-arg]
+class _SummaryResponseSerializer(serializers.Serializer[Any]):
     """Represents the full dashboard summary response payload."""
 
     class_ = serializers.CharField(help_text="The entity class that was used for grouping.")
@@ -241,14 +241,14 @@ class DashboardSummaryView(APIView):
         return self._run(dict(request.data))
 
 
-class _EntityOptionSerializer(serializers.Serializer):  # type: ignore[type-arg]
+class _EntityOptionSerializer(serializers.Serializer[Any]):
     """Represents a single selectable entity option."""
 
     id = serializers.JSONField(help_text="Primary key of the entity.")
     name = serializers.CharField(help_text="Human-readable display name.")
 
 
-class _EntityOptionsResponseSerializer(serializers.Serializer):  # type: ignore[type-arg]
+class _EntityOptionsResponseSerializer(serializers.Serializer[Any]):
     """Represents the entity options response payload."""
 
     persons = _EntityOptionSerializer(many=True, help_text="Persons accessible to the requesting user.")

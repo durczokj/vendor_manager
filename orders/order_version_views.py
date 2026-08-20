@@ -3,7 +3,7 @@
 import logging
 
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -90,8 +90,9 @@ class OrderVersionDeleteView(EntityDeleteView):
 class OrderVersionCloneView(View):
     """Clone the latest order version via the create_new_order_version service."""
 
-    def get(self, request, pk):
+    def get(self, request: HttpRequest, pk: int) -> HttpResponse:
         """Show the clone form."""
+        assert request.user.is_authenticated
         order = Order.objects.accessible_to(request.user).get(pk=pk)
         form = CloneLatestVersionForm()
         return render(
@@ -106,8 +107,9 @@ class OrderVersionCloneView(View):
             },
         )
 
-    def post(self, request, pk):
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
         """Process the clone form and call the create_new_order_version service."""
+        assert request.user.is_authenticated
         order = Order.objects.accessible_to(request.user).get(pk=pk)
         form = CloneLatestVersionForm(request.POST)
         if form.is_valid():
@@ -119,5 +121,5 @@ class OrderVersionCloneView(View):
                 copy_engagement_assignments=form.cleaned_data["copy_engagement_assignments"],
             )
             return redirect("order-detail", pk=pk)
-        messages.error(request, form.errors)
+        messages.error(request, str(form.errors))
         return HttpResponseRedirect(reverse("order-version-clone", kwargs={"pk": pk}))

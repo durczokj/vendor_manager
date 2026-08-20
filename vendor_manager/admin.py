@@ -8,6 +8,8 @@ permissions permissions.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.models import Permission, User
@@ -16,6 +18,11 @@ from rolepermissions.checkers import has_role
 from rolepermissions.roles import AbstractUserRole
 
 from vendor_manager.roles import Admin, Person, UndertakingManager
+
+if TYPE_CHECKING:
+    _UserAdminBase = DjangoUserAdmin[User]
+else:
+    _UserAdminBase = DjangoUserAdmin
 
 ROLE_CLASSES: list[type[AbstractUserRole]] = [Person, UndertakingManager, Admin]
 ROLE_LABELS = {
@@ -39,10 +46,10 @@ def _sync_role_permissions(user: User) -> None:
             user.user_permissions.add(*role_cls.get_default_true_permissions())
 
 
-class UserAdminWithRole(DjangoUserAdmin):  # type: ignore[type-arg]
+class UserAdminWithRole(_UserAdminBase):
     """User admin that syncs role permissions from group membership on save."""
 
-    def get_list_display(self, request: HttpRequest) -> list:  # type: ignore[type-arg]
+    def get_list_display(self, request: HttpRequest) -> list[Any]:
         """Add a Role column to the changelist."""
         return list(super().get_list_display(request)) + ["role_display"]
 
@@ -54,7 +61,7 @@ class UserAdminWithRole(DjangoUserAdmin):  # type: ignore[type-arg]
                 return label
         return "—"
 
-    def save_related(self, request, form, formsets, change) -> None:  # type: ignore[no-untyped-def]
+    def save_related(self, request: HttpRequest, form: Any, formsets: Any, change: bool) -> None:
         """After groups m2m is saved, resync user_permissions from role groups."""
         super().save_related(request, form, formsets, change)
         _sync_role_permissions(form.instance)

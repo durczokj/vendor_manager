@@ -6,8 +6,18 @@ import calendar
 import html
 from collections.abc import Iterable
 from datetime import date
+from typing import Any, Protocol
 
 from django.utils.safestring import SafeString, mark_safe
+
+
+class _LeaveLike(Protocol):
+    """Minimal duck-typed interface used by the matrix renderer."""
+
+    person: Any
+    start_date: date
+    end_date: date
+    percentage: Any
 
 
 def _shade_for(percentage: float) -> str:
@@ -35,8 +45,8 @@ class LeaveMatrix:
         self,
         year: int,
         month: int,
-        leaves: Iterable[object],
-        people: Iterable[object] | None = None,
+        leaves: Iterable[_LeaveLike],
+        people: Iterable[Any] | None = None,
     ) -> None:
         """Initialize with the target month, overlapping leaves, and (optionally) all people to show."""
         self.year = year
@@ -45,19 +55,19 @@ class LeaveMatrix:
         self.people = list(people) if people is not None else None
         self.days_in_month = calendar.monthrange(year, month)[1]
 
-    def _rows(self) -> dict[str, list[object | None]]:
+    def _rows(self) -> dict[str, list[_LeaveLike | None]]:
         """Group leaves per person, one slot per day of month."""
-        rows: dict[str, list[object | None]] = {}
+        rows: dict[str, list[_LeaveLike | None]] = {}
         if self.people is not None:
             for person in self.people:
                 rows[str(person)] = [None] * self.days_in_month
         for leave in self.leaves:
-            key = str(leave.person)  # type: ignore[attr-defined]
+            key = str(leave.person)
             if key not in rows:
                 rows[key] = [None] * self.days_in_month
             for day_number in range(1, self.days_in_month + 1):
                 current = date(self.year, self.month, day_number)
-                if leave.start_date <= current <= leave.end_date:  # type: ignore[attr-defined]
+                if leave.start_date <= current <= leave.end_date:
                     rows[key][day_number - 1] = leave
         return dict(sorted(rows.items()))
 
@@ -77,7 +87,7 @@ class LeaveMatrix:
                 if leave is None:
                     cell_html_parts.append('<td class="leave-cell"></td>')
                 else:
-                    pct = float(leave.percentage)  # type: ignore[attr-defined]
+                    pct = float(leave.percentage)
                     fill = _shade_for(pct)
                     cell_html_parts.append(f'<td class="leave-cell" style="background-color: {fill};">{pct:.2f}</td>')
             person_escaped = html.escape(person, quote=True)
