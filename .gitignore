@@ -339,7 +339,6 @@ db.sqlite3
 
 # Local env files
 *.env
-!vm-docker.env
 
 # Coverage artifacts
 .coverage

@@ -165,7 +165,7 @@ Entities in scope:
     - Architecture (apps, services/selectors/managers split, UI vs. API split).
     - Data model (embedding or linking [docs/ERD.md](ERD.md)).
     - Role & permission model (linking `vendor_manager/roles.py` and the permission‑matrix test).
-    - Local dev setup (the two dev modes from `NFR‑24`: Docker Compose + pure SQLite).
+    - Local dev setup (the SQLite-only flow from `NFR‑24`).
     - Coding conventions (services vs. selectors vs. managers, thin views, no `print()`, docstring style, `mypy --strict`).
     - Testing guide (`factory_boy` factories, permission‑matrix tests, coverage gates from `NFR‑17`).
     - Deployment (see §4.6, the k3s pipeline per `NFR‑24a`).
@@ -227,12 +227,8 @@ Requirements are prefixed `NFR‑`.
 
 ### 4.6 Deployment and operations
 
-- **NFR‑23** The application MUST support exactly two database backends: PostgreSQL (production and the default in Docker Compose dev) and SQLite (lightweight local dev and CI). MSSQL support MUST be removed from `settings.py`, `requirements.txt`, and any Docker configuration. No other database backends are in scope.
-- **NFR‑24** Local development MUST support two modes:
-  1. **Compose‑DB + host‑app** (default): `docker compose up` in [compose.yml](https://github.com/durczokj/vendor_manager/blob/main/compose.yml) brings up PostgreSQL only; the Django app runs on the host via `python manage.py runserver`.
-  2. **Pure SQLite** (no containers at all): `python manage.py runserver` with the SQLite settings profile selected via env var.
-
-  The current unused `docker-compose.prod.yml` MUST be deleted from the repository as part of the refactor — production runs on k3s (NFR‑24a), not on Docker Compose, and keeping the file invites confusion.
+- **NFR‑23** The application MUST support exactly two database backends: PostgreSQL (production) and SQLite (local dev and CI). MSSQL support MUST be removed from `settings.py`, `requirements.txt`, and any Docker configuration. No other database backends are in scope.
+- **NFR‑24** Local development MUST run against **SQLite** on the host: `python manage.py runserver` with `DATABASE_ENGINE=sqlite`. No containers are required for local dev. The previous Compose-based PostgreSQL dev mode and the associated `compose.yml` / `vm-docker.env` have been removed; production still runs on PostgreSQL under k3s (NFR‑24a).
 - **NFR‑24a** Production runs on **k3s** (lightweight Kubernetes). Continuous deployment MUST run on GitHub release (event `release: published`) and MAY additionally be dispatched manually via `workflow_dispatch` with an explicit tag input. The current [.github/workflows/deploy.yaml](https://github.com/durczokj/vendor_manager/blob/main/.github/workflows/deploy.yaml) already implements this shape and MUST be maintained, not replaced. Concretely, the CD workflow MUST:
   - Build the production Docker image from the repo `Dockerfile` and push it to **Docker Hub** (`durczokj/vendor-manager:<tag>`) using the resolved tag (release tag name, or the `workflow_dispatch` `tag` input). The image MUST be tagged with an immutable version tag; `:latest` MUST NOT be relied on by any deployment manifest.
   - Deploy to the k3s cluster via the reusable composite action `durczokj/vm/.github/actions/deploy-to-k3s@main`, passing `app_name`, `deployment_name`, `image_tag`, and the SSH credentials. Cluster‑side manifests (`Service`, `Ingress`, `ConfigMap`, `Secret`, `Namespace`) are the responsibility of that action and its supporting repo; they MUST NOT be duplicated in this repo.

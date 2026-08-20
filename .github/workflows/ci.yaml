@@ -25,7 +25,7 @@ jobs:
 
     env:
       # Match the DEBUG=False path so `manage.py check --deploy` is meaningful.
-      # SQLite avoids the need to stand up Postgres for CI (matches dev mode B).
+      # SQLite avoids the need to stand up Postgres for CI (matches local dev).
       DJANGO_DEBUG: "false"
       DJANGO_SECRET_KEY: "ci-only-secret-key-32bytes-of-padding-not-a-real-secret-value-xyz"
       DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"

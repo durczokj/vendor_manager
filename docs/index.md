@@ -33,6 +33,6 @@ Use the navigation on the left to explore:
 - **[Data model](ERD.md)** — entity-relationship diagram for all tracked entities.
 - **[Roles & permissions](developer-guide/roles-and-permissions.md)** — the three roles and their permission
   matrices.
-- **[Local dev](developer-guide/local-dev.md)** — full local development guide (both dev modes).
+- **[Local dev](developer-guide/local-dev.md)** — full local development guide.
 - **[Deployment](developer-guide/deployment.md)** — the k3s continuous-deployment pipeline.
 - **[Requirements](REQUIREMENTS.md)** — full functional and non-functional requirements.
