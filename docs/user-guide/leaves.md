@@ -1,8 +1,8 @@
 # Leaves
 
-A `Leave` (per FR‑11) is a **time-bounded absence** for a person — vacation, sickness,
+A `Leave` is a **time-bounded absence** for a person — vacation, sickness,
 parental leave, sabbatical. Leaves reduce the person's daily availability, so cost
-calculations on the dashboard (per FR‑19) treat those days differently.
+calculations on the dashboard treat those days differently.
 
 ## Purpose
 
@@ -18,7 +18,7 @@ under their undertakings. Person can read their own leaves.
 
 - **Leaves list.** `/leaves/` — includes the calendar / matrix view for planning.
 - **Create leave.** `/leaves/create/`
-- **Delete leave.** `/leaves/<id>/delete/` (intermediate confirmation, per FR‑40)
+- **Delete leave.** `/leaves/<id>/delete/` (intermediate confirmation)
 
 !!! note "Screenshot pending"
     A screenshot of the leaves list with the calendar / matrix view will be added here.
@@ -30,7 +30,7 @@ under their undertakings. Person can read their own leaves.
 2. Pick the **person** the leave applies to.
 3. Set the **start date** and **end date** — the system enforces
    `start_date ≤ end_date`.
-4. Set the **percentage** — a decimal between `0` and `1` (per FR‑17). Use `1.0` for a
+4. Set the **percentage** — a decimal between `0` and `1`. Use `1.0` for a
    full day off, `0.5` for a half day, and so on.
 5. Optional: add a reason / note field if your deployment shows one.
 6. Save. The leave is added to the calendar and immediately subtracted from the
@@ -46,7 +46,7 @@ cumulative leave percentage so you can spot conflicts at a glance.
 
 1. Open `/leaves/` and find the leave in the list or calendar.
 2. Click **Delete** on the row.
-3. Confirm on the intermediate page (per FR‑40).
+3. Confirm on the intermediate page.
 
 Leaves have no dependents, so deletion always succeeds once you confirm.
 
@@ -54,7 +54,7 @@ Leaves have no dependents, so deletion always succeeds once you confirm.
 
 | Message | What it means | How to fix |
 |---|---|---|
-| "Percentage must be between 0 and 1." | The percentage is outside the allowed range (per FR‑17). | Enter a decimal between 0 and 1. |
+| "Percentage must be between 0 and 1." | The percentage is outside the allowed range. | Enter a decimal between 0 and 1. |
 | "End date must be on or after start date." | Trivial ordering rule. | Fix the end date. |
 | "Person is required." | Every leave must belong to a person. | Pick a person from the dropdown. |
 
@@ -63,4 +63,4 @@ Leaves have no dependents, so deletion always succeeds once you confirm.
 - Before: [People & engagements](people-and-engagements.md) — the person and their
   engagement must exist for the leave to have an effect on cost.
 - Downstream: [Dashboard](dashboard.md) — leaves lower daily availability, which lowers
-  the person's daily cost on the leave days (per FR‑19).
+  the person's daily cost on the leave days.

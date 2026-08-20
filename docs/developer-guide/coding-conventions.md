@@ -6,16 +6,16 @@ The rules below are how the codebase stays reviewable. They mirror the guardrail
 ## Layering
 
 - **Models** hold structure, DB-level constraints, and single-model invariants in
-  `clean()` (per NFR‑1, NFR‑8). They MUST NOT know about HTTP, HTML, or DRF.
+  `clean()`. They MUST NOT know about HTTP, HTML, or DRF.
 - **Managers** (`<app>/managers.py`) hold `QuerySet` subclasses. Every entity ships an
-  `<Entity>QuerySet.accessible_to(user)` method (per FR‑28, NFR‑7). All object-level
+  `<Entity>QuerySet.accessible_to(user)` method. All object-level
   access flows through it — no per-view filtering.
 - **Selectors** (`<app>/selectors.py`) hold read-only computations. Every function takes
   its inputs explicitly (no `self`), returns plain Python data or a `QuerySet`, and is
-  wrapped in `select_related` / `prefetch_related` at the boundary (per NFR‑8).
+  wrapped in `select_related` / `prefetch_related` at the boundary.
 - **Services** (`<app>/services.py`) hold write operations. Multi-step writes MUST be
-  wrapped in `transaction.atomic()` (per NFR‑1). Both UI views and API viewsets call the
-  same service — never bypass it (per NFR‑2, NFR‑3).
+  wrapped in `transaction.atomic()`. Both UI views and API viewsets call the
+  same service — never bypass it.
 - **Views** (`<app>/views.py`) are thin Django CBVs. They validate a form, call a
   service, redirect. No business logic here.
 - **Viewsets** (`<app>/api.py`) are thin DRF viewsets. They deserialize, call a service,
@@ -23,16 +23,16 @@ The rules below are how the codebase stays reviewable. They mirror the guardrail
 
 ## Logging
 
-- **No `print()` in application code** (per NFR‑27). Use
+- **No `print()` in application code**. Use
   `logging.getLogger(__name__)` and log at the appropriate level.
-- Log lines are emitted to stdout as JSON (per NFR‑36, NFR‑37). The request middleware
+- Log lines are emitted to stdout as JSON. The request middleware
   injects `user_id` / `request_id` on every record.
 - Django's `django.request` and `django.security` loggers propagate to the shared
   handler.
 
 ## Type hints
 
-- Every new module lands with `mypy --strict`-clean annotations (per NFR‑30).
+- Every new module lands with `mypy --strict`-clean annotations.
 - The strict scope is controlled by `[tool.mypy] files = [...]` in
   [`pyproject.toml`](https://github.com/durczokj/vendor_manager/blob/main/pyproject.toml). Add new modules to that list as they land.
 - The whole-project sweep is P8; don't remove existing `# type: ignore` outside the
@@ -49,41 +49,40 @@ The rules below are how the codebase stays reviewable. They mirror the guardrail
 
 ## Migrations
 
-- Additive. Never edit an applied migration (per NFR‑20).
+- Additive. Never edit an applied migration.
 - The squashed initial per app (from P1.T2) is the historical base. Add new migrations
   on top of it.
-- Every `RunPython` MUST include a `reverse_code` (per NFR‑22).
-- Migrations MUST pass on both SQLite and PostgreSQL (per NFR‑21). No MSSQL, no
-  `mssql-django` (per NFR‑23).
+- Every `RunPython` MUST include a `reverse_code`.
+- Migrations MUST pass on both SQLite and PostgreSQL. No MSSQL, no
+  `mssql-django`.
 
 ## URL naming
 
-- Per FR‑49: hyphenated, plural, kebab-case where relevant.
+- hyphenated, plural, kebab-case where relevant.
 - Django URL names follow the DRF convention `<basename>-list` / `<basename>-detail` /
-  `<basename>-<action>` (per FR‑50). Set `basename=` explicitly on the router if the
+  `<basename>-<action>`. Set `basename=` explicitly on the router if the
   default doesn't match.
 - Rename endpoints only as you touch them; do not preemptively rename to avoid churn.
 
 ## Deletion flows
 
-- Every UI delete uses an intermediate `_confirm_delete.html` page (per FR‑40). No
+- Every UI delete uses an intermediate `_confirm_delete.html` page. No
   inline `onclick="confirm(…)"` handlers.
 - API delete verbs are the standard DRF `DELETE`, guarded by `accessible_to(user)`.
 
 ## Database engines
 
-- Only **PostgreSQL** and **SQLite** are supported (per NFR‑21).
+- Only **PostgreSQL** and **SQLite** are supported.
 - `settings.DATABASE_ENGINE` accepts only `"sqlite"` or `"postgresql"`. No branching for
   other engines.
 - Any migration or query MUST work on both.
 
 ## Secrets and settings
 
-- Every secret comes from environment; no in-repo default for `DJANGO_SECRET_KEY` (per
-  NFR‑12).
-- `DEBUG` defaults to `False` when the env var is unset or empty (per NFR‑13). Boot
+- Every secret comes from environment; no in-repo default for `DJANGO_SECRET_KEY`.
+- `DEBUG` defaults to `False` when the env var is unset or empty. Boot
   fails loudly if a production secret is missing.
-- `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` are env-configured (per NFR‑14).
+- `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` are env-configured.
 
 ## Dependencies
 
@@ -95,7 +94,6 @@ The rules below are how the codebase stays reviewable. They mirror the guardrail
 ## Commits and PRs
 
 - Reference the task ID in commit titles: `P<phase>.T<n>: <one-line summary>`.
-- Reference every FR / NFR the change satisfies in the commit body.
 - Small, self-contained commits — each one should leave CI green on its own.
 - Never mix a mechanical refactor with a behavior change in one commit.
 
@@ -120,17 +118,17 @@ The end-to-end checklist:
 2. **Manager** — `<app>/managers.py`. Add `<Entity>QuerySet` with `accessible_to(user)`.
 3. **Service** — `<app>/services.py`. One function per write operation, transactional.
 4. **Selector** — `<app>/selectors.py`. One function per read-computation.
-5. **Serializer** — `<app>/serializers.py`. Explicit `fields = [...]` per FR‑29.
+5. **Serializer** — `<app>/serializers.py`. Explicit `fields = [...]`.
 6. **Viewset** — `<app>/api.py`. `get_queryset` calls `.accessible_to(...)`.
 7. **Filter** — `<app>/filters.py`. `<Entity>FilterSet`.
 8. **UI view** — `<app>/views.py`. CBV that delegates to the service.
 9. **UI form** — `<app>/forms.py`. Explicit `fields = [...]`.
 10. **UI table** — `<app>/tables.py`. django-tables2 `<Entity>Table`.
-11. **UI URLs** — `<app>/urls.py`. Named per FR‑50.
+11. **UI URLs** — `<app>/urls.py`. Named.
 12. **Nav entry** — `vendor_manager/navigation.py`.
 13. **Factories + tests** — `<app>/tests/factories.py`, plus tests for model, service,
-    API, permission (per NFR‑16).
-14. **Docs** — a User Guide page under `docs/user-guide/` (per FR‑52) if the entity is
+    API, permission.
+14. **Docs** — a User Guide page under `docs/user-guide/` if the entity is
     end-user visible.
 
 ## Related pages

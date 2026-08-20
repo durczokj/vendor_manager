@@ -11,12 +11,12 @@ workflow in the User Guide.
 
 ## Who can do this
 
-Anyone with an account: Admin, UndertakingManager, or Person (per FR‑25).
+Anyone with an account: Admin, UndertakingManager, or Person.
 
 ## Screens
 
-- `/accounts/login/` — the sign-in page (per FR‑21).
-- `/` — the dashboard, which is what you land on after signing in (per FR‑43).
+- `/accounts/login/` — the sign-in page.
+- `/` — the dashboard, which is what you land on after signing in.
 - `/accounts/logout/` — the sign-out endpoint.
 
 ## Happy path
@@ -26,7 +26,7 @@ Anyone with an account: Admin, UndertakingManager, or Person (per FR‑25).
 1. Open Vendor Manager in your browser. If you are not signed in, you will be redirected
    to `/accounts/login/`.
 2. Enter your username and password. If your account has not been linked to a person
-   record, sign-in is rejected with a readable error (per FR‑23) — contact your
+   record, sign-in is rejected with a readable error — contact your
    administrator to have your `Person` record linked.
 3. On success, you land on the dashboard at `/`.
 
@@ -36,7 +36,7 @@ Anyone with an account: Admin, UndertakingManager, or Person (per FR‑25).
 ### 2. Orient yourself in the sidebar
 
 The left sidebar is generated from the [navigation registry](../developer-guide/architecture.md)
-and only shows entries you have permission to open (per FR‑39). Common entries:
+and only shows entries you have permission to open. Common entries:
 
 - **Companies** — `/companies/`
 - **Contracts** — `/contracts/`
@@ -46,8 +46,7 @@ and only shows entries you have permission to open (per FR‑39). Common entries
 - **Engagements** — `/engagements/`
 - **Leaves** — `/leaves/`
 
-If an entry is missing, your role does not grant access to that entity (per FR‑26,
-FR‑27). Ask an Admin to widen your role if you need it.
+If an entry is missing, your role does not grant access to that entity. Ask an Admin to widen your role if you need it.
 
 !!! note "Screenshot pending"
     A screenshot of the sidebar navigation will be added here. Tracked as a P6.T5 follow-up.
@@ -67,7 +66,7 @@ Follow the "Sign out" link in the sidebar. Your session is invalidated immediate
 | Message | What it means | How to fix |
 |---|---|---|
 | "Please enter a correct username and password." | The credentials were not recognised. | Retry, or ask an administrator to reset your password. |
-| "Your account is not linked to a person record." | Your user has no linked `Person` (per FR‑23). | Ask an administrator to create or link a person record before you sign in again. |
+| "Your account is not linked to a person record." | Your user has no linked `Person`. | Ask an administrator to create or link a person record before you sign in again. |
 | Redirect loop to `/accounts/login/` after a successful sign-in. | Session cookies are being blocked by your browser. | Allow cookies for the app's domain and retry. |
 
 ## Related workflows

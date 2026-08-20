@@ -5,14 +5,14 @@ schema browser see [/docs/api/](/docs/api/).
 
 ## Authentication
 
-Two authentication mechanisms are supported (per FR‑22, NFR‑10):
+Two authentication mechanisms are supported:
 
 | Mechanism | When to use |
 |---|---|
 | **HTTP Basic Auth** | Scripts, integrations, CI. The default for `scripts/populate.py`. |
 | **Session Auth** | Browser-based use of the API (Swagger UI while logged in). |
 
-Every endpoint EXCEPT `/health/` requires authentication (per NFR‑11, NFR‑39). An
+Every endpoint EXCEPT `/health/` requires authentication. An
 unauthenticated request returns `401 Unauthorized`.
 
 ### Basic Auth
@@ -29,7 +29,7 @@ not need it.
 
 ## Pagination
 
-Every list endpoint is paginated by `PageNumberPagination` (per FR‑30):
+Every list endpoint is paginated by `PageNumberPagination`:
 
 - Default page size: **50**.
 - Max page size: **200**.
@@ -49,7 +49,7 @@ Response envelope:
 ## Filtering, search, and ordering
 
 Every list endpoint enables three backends: `DjangoFilterBackend`, `SearchFilter`,
-`OrderingFilter` (per FR‑30).
+`OrderingFilter`.
 
 - **Field filters** — declared per viewset in `<app>/filters.py`. Example:
   `GET /api/v1/companies/?is_active=true`.
@@ -58,14 +58,14 @@ Every list endpoint enables three backends: `DjangoFilterBackend`, `SearchFilter
 - **Ordering** — `?ordering=name` or `?ordering=-created_at`. Restricted to fields
   listed in the viewset's `ordering_fields`.
 
-## Custom actions (FR‑31)
+## Custom actions
 
 Custom `@action` endpoints extend the standard six verbs:
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `POST /api/v1/orders/{id}/versions/clone-latest/` | POST | Clone the latest `OrderVersion` for this order (per FR‑18). |
-| `GET /api/v1/engagements/{id}/costs/` | GET | Cost breakdown for the engagement (per FR‑19). |
+| `POST /api/v1/orders/{id}/versions/clone-latest/` | POST | Clone the latest `OrderVersion` for this order. |
+| `GET /api/v1/engagements/{id}/costs/` | GET | Cost breakdown for the engagement. |
 | `GET /api/v1/engagements/{id}/cost-coverage/` | GET | Order-version coverage of the engagement's dated cost span. |
 | `GET /api/v1/people/{id}/assignments/` | GET | All active `EngagementUndertakingAssignment` rows for the person. |
 
@@ -73,7 +73,7 @@ Every custom action honours the same `accessible_to(user)` gate as its parent vi
 
 ## Nested endpoints
 
-Nested routes surface many-to-many assignment tables under their parent (per FR‑31):
+Nested routes surface many-to-many assignment tables under their parent:
 
 | Endpoint | Purpose |
 |---|---|
@@ -81,7 +81,7 @@ Nested routes surface many-to-many assignment tables under their parent (per FR�
 | `/api/v1/engagements/{pk}/order-version-assignments/` | CRUD for `EngagementOrderVersionAssignment`. |
 
 The nested router is `drf-nested-routers` — nested URLs use the parent's `basename`
-prefix (per FR‑50).
+prefix.
 
 ## Error shape
 
@@ -103,11 +103,11 @@ Validation errors are keyed by field:
 ```
 
 Cross-model invariants raise `ValidationError` in the service layer and are surfaced
-as `400 Bad Request` with the same shape (per FR‑15).
+as `400 Bad Request` with the same shape.
 
 ## Rate limits and quotas
 
-None currently enforced (per NFR‑15). Fair-use expected. If you are running a bulk
+None currently enforced. Fair-use expected. If you are running a bulk
 import, throttle client-side and prefer batching where the API supports it (e.g.
 `/versions/clone-latest/` for order versions).
 

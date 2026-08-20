@@ -10,21 +10,21 @@ If you are a developer, jump to the [Developer Guide](../developer-guide/archite
 
 Vendor Manager keeps a single, auditable record of:
 
-- **Companies** you buy services from (per FR‑1) and the **Contracts** you have with them
-  (per FR‑2).
+- **Companies** you buy services from and the **Contracts** you have with them
+.
 - **Orders** placed under those contracts, and the sequence of **Order versions** that track
-  scope and price changes over time (per FR‑4, FR‑5).
+  scope and price changes over time.
 - **People** who work on your side of the fence — either your own staff or vendor
   consultants — and the **Engagements** that describe when and at what level of effort
-  each person is working (per FR‑7, FR‑8).
+  each person is working.
 - **Undertakings** (initiatives / projects / work packages) and the **Cost centers** that
-  own them (per FR‑6, FR‑9).
+  own them.
 - **Assignments** that connect an engagement to an undertaking or to a specific order
-  version (per FR‑10, FR‑13).
+  version.
 - **Leaves** that record time away and reduce a person's daily availability
-  (per FR‑11, FR‑17).
+.
 
-Everything lives in one place so that the **dashboard** (per FR‑43 through FR‑47) can tell
+Everything lives in one place so that the **dashboard** can tell
 you, for any period, how much a set of engagements costs and how much of that cost is
 covered by the order versions you have in place.
 
@@ -38,8 +38,7 @@ Every user has exactly one role. What you can see and do depends on it.
 | **UndertakingManager** | The undertakings they manage plus every engagement, person, order and leave that touches those undertakings. | The same set. |
 | **Person** | Their own person record, their engagements, their leaves, and the read-through supporting entities. | Very little — read-mostly. |
 
-Read [Roles at a glance](roles.md) for the full picture and the exact rules (FR‑25 through
-FR‑28).
+Read [Roles at a glance](roles.md) for the full picture and the exact rules.
 
 ## How to navigate this guide
 

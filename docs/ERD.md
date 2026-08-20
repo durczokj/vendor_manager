@@ -144,9 +144,9 @@ erDiagram
 ## Notes on the diagram
 
 - **`PERSON.id`** is a business‑assigned string (max 6), not an integer. FK columns that reference it (`ENGAGEMENT.person_id`, `LEAVE.person_id`, `UNDERTAKING.manager_id`) are therefore string‑typed.
-- **`PERSON.user_id`** is optional (nullable `OneToOneField`). A `Person` may exist without a login account; every logged‑in `User` must be linked to exactly one `Person` (see `FR‑23`).
+- **`PERSON.user_id`** is optional (nullable `OneToOneField`). A `Person` may exist without a login account; every logged‑in `User` must be linked to exactly one `Person`.
 - **`CONTRACT ↔ ORDER_VERSIONS`** is 1:1 by design. Each contract backs at most one order version; creating a new order version requires a new contract.
-- **`COST_CENTER`** is a first‑class entity with its own business‑assigned integer PK (`FR‑7`).
-- **Django auth tables** (`USER`, `GROUP`, `USER_GROUP`, `PERMISSION`, `GROUP_PERMISSION`) are shown for completeness. Which of them is used to model the three roles (`Person`, `UndertakingManager`, `Admin`) is an implementation choice per `FR‑25`.
-- **`ENGAGEMENT.daily_rate`** and **`ENGAGEMENT.fte`** are `decimal`. `fte ∈ [0, 1]` per `FR‑12`.
-- **`LEAVE.percentage`** and **`ENGAGEMENT_UNDERTAKING_ASSIGNMENT.percentage`** are `decimal(3, 2)` in `[0, 1]` per `FR‑17` / `OQ‑1`.
+- **`COST_CENTER`** is a first‑class entity with its own business‑assigned integer PK.
+- **Django auth tables** (`USER`, `GROUP`, `USER_GROUP`, `PERMISSION`, `GROUP_PERMISSION`) are shown for completeness. Which of them is used to model the three roles (`Person`, `UndertakingManager`, `Admin`) is an implementation choice.
+- **`ENGAGEMENT.daily_rate`** and **`ENGAGEMENT.fte`** are `decimal`. `fte ∈ [0, 1]`.
+- **`LEAVE.percentage`** and **`ENGAGEMENT_UNDERTAKING_ASSIGNMENT.percentage`** are `decimal(3, 2)` in `[0, 1]`.

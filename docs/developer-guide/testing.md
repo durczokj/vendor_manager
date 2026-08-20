@@ -1,15 +1,14 @@
 # Testing
 
-The test suite is the safety net for the phased refactor. Its rules are set by NFR‑16
-through NFR‑19. This page is the day-to-day reference for authoring, running, and
-gating tests.
+The test suite is the safety net for the phased refactor. This page is the day-to-day
+reference for authoring, running, and gating tests.
 
 ## Toolchain
 
 - **`pytest`** with `pytest-django` — test discovery, fixtures, parametrisation.
 - **`pytest-cov`** — coverage measurement.
 - **`diff-cover`** — diff-coverage gate on PRs.
-- **`factory_boy`** — data-building for every test (per NFR‑19).
+- **`factory_boy`** — data-building for every test.
 - **DRF `APIClient`** — HTTP-level tests for the REST API surface.
 - Configuration lives in `[tool.pytest.ini_options]` in
   [`pyproject.toml`](https://github.com/durczokj/vendor_manager/blob/main/pyproject.toml).
@@ -23,8 +22,8 @@ Each app owns its test tree. Factories are shared inside the app.
   tests/
     __init__.py
     conftest.py            ← per-app fixtures
-    factories.py           ← factory_boy factories (per NFR‑19)
-    test_models.py         ← model invariants (FR‑12–FR‑17)
+    factories.py           ← factory_boy factories
+    test_models.py         ← model invariants
     test_services.py       ← service tests
     test_selectors.py      ← selector tests
     test_api.py            ← DRF APIClient tests per role
@@ -36,17 +35,17 @@ matrix (P7.T5).
 
 ## Factories
 
-- Every test builds its data via `factory_boy` (per NFR‑19). Do not call
+- Every test builds its data via `factory_boy`. Do not call
   `Model.objects.create(...)` in a test unless the factory does not exist yet — if that
   is the case, add the factory first.
 - Factories produce coherent objects: `EngagementFactory` uses `PersonFactory` and
   `OrderFactory`; date fields default to sensible ranges; FTE defaults to a valid
   value.
-- SQL-dump / JSON fixtures MUST NOT be used (per NFR‑19).
+- SQL-dump / JSON fixtures MUST NOT be used.
 
 ## Model invariants (P7.T2)
 
-Every FR from FR‑12 through FR‑17 has at least one dedicated test method that either
+Every model invariant has at least one dedicated test method that either
 asserts a `ValidationError` on invalid input or an accepted create on valid input. This
 is what defends the model layer against regressions when logic moves between models,
 services, and the database.
@@ -55,10 +54,10 @@ services, and the database.
 
 Services own the multi-step business rules. Every service function is covered end to
 end, including its **rollback path**. The canonical case is
-`orders.services.create_new_order_version` (per FR‑18): a forced mid-transaction failure
+`orders.services.create_new_order_version`: a forced mid-transaction failure
 MUST leave zero rows behind.
 
-Cost calculations (per FR‑19) are covered by a JSON-snapshot test in
+Cost calculations are covered by a JSON-snapshot test in
 `engagements/tests/test_selectors.py`. The snapshot is checked into the repo; if the
 snapshot changes, the test fails so the author must consciously accept the new
 baseline.
@@ -66,13 +65,13 @@ baseline.
 ## API tests per role (P7.T4)
 
 For each viewset, one test class runs the six standard verbs (`list`, `retrieve`,
-`create`, `update`, `partial_update`, `delete`) plus every custom `@action` from FR‑31,
+`create`, `update`, `partial_update`, `delete`) plus every custom `@action`,
 with each of the three roles (`Admin`, `UndertakingManager`, `Person`). Both the allow
 path and the deny path MUST be exercised — a role that should get 403 MUST have a test
 that asserts 403.
 
 Both Basic and session auth are exercised at least once per role somewhere in the
-suite (per FR‑22).
+suite.
 
 ## Permission matrix (P7.T5)
 
@@ -96,7 +95,7 @@ future refactor accidentally bypasses `accessible_to(user)` in
 
 ## Coverage gates
 
-CI enforces two gates (per NFR‑17):
+CI enforces two gates:
 
 1. **Overall line coverage ≥ 80%** via `coverage report --fail-under=80`.
 2. **Diff coverage ≥ 80%** on PRs via
@@ -110,7 +109,7 @@ The diff-coverage gate lands as enforcing in P7.T7. Before then it is informatio
 ## Runtime target
 
 The full suite MUST run against SQLite in under 60 seconds at the current entity count
-(per NFR‑18). If a new suite blows the budget, split it into a faster unit-level tier
+. If a new suite blows the budget, split it into a faster unit-level tier
 and a slower integration tier — do not weaken the gate.
 
 ## Local verify loop

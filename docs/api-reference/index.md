@@ -16,13 +16,13 @@ smoke-test tooling, or an external system.
 ## Design principles
 
 - **UI and API share business logic.** Both surfaces call the same `services.py` and
-  `selectors.py` (per NFR‑2, NFR‑3). No behavior differs between them.
+  `selectors.py`. No behavior differs between them.
 - **Object-level access is enforced uniformly.** Every viewset's `get_queryset` returns
-  `Entity.objects.accessible_to(self.request.user)` (per FR‑28, NFR‑7).
+  `Entity.objects.accessible_to(self.request.user)`.
 - **Explicit serializer fields.** Every serializer declares `fields = [...]` — no
-  `__all__` (per FR‑29). Adding a field to a model does not silently expose it.
+  `__all__`. Adding a field to a model does not silently expose it.
 - **Standard URL naming.** DRF `basename-list` / `basename-detail` / `basename-<action>`
-  (per FR‑50). No custom URL conf.
+. No custom URL conf.
 
 ## Versioning
 

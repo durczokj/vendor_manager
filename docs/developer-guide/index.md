@@ -25,13 +25,11 @@ are looking for how to *use* the app, jump to the [User Guide](../user-guide/ind
   `<app>/managers.py`. Every view / viewset that returns queryset data calls it.
 - **HTTP surface** — UI views in `<app>/views.py`, REST viewsets in `<app>/api.py`, both
   call into the same service.
-- **URL naming** follows the DRF `<basename>-list` / `<basename>-detail` pattern per
-  FR‑49 and FR‑50.
+- **URL naming** follows the DRF `<basename>-list` / `<basename>-detail` pattern.
 
 ## Reference material
 
-- [Requirements](../REQUIREMENTS.md) — the source of truth for every behavior. Cite the
-  FR / NFR you satisfy in commit bodies.
+- [Requirements](../REQUIREMENTS.md) — the source of truth for every behavior.
 - [Implementation plan](../IMPLEMENTATION_PLAN.md) — the phased refactor plan and its
   persisted progress checklist.
 
@@ -44,13 +42,13 @@ Follow this checklist. Each step is described in [Coding conventions](coding-con
 3. Add write operations in `<app>/services.py`. Wrap multi-step writes in
    `transaction.atomic()`.
 4. Add read-only computations in `<app>/selectors.py` (if any).
-5. Add the serializer in `<app>/serializers.py` (explicit `fields = [...]`, per FR‑29).
+5. Add the serializer in `<app>/serializers.py` (explicit `fields = [...]`).
 6. Add the DRF `ModelViewSet` in `<app>/api.py`; register it on the router
    (`api/urls.py`).
 7. Add the filter set in `<app>/filters.py`.
 8. Add the Django form in `<app>/forms.py`, the CBVs in `<app>/views.py`, and the
    django-tables2 table in `<app>/tables.py`.
 9. Register the URL patterns in `<app>/urls.py`.
-10. Add a nav entry in `vendor_manager/navigation.py` (per FR‑39).
+10. Add a nav entry in `vendor_manager/navigation.py`.
 11. Add factories in `<app>/tests/factories.py` and tests for model / service /
-    selector / permission (per NFR‑16).
+    selector / permission.

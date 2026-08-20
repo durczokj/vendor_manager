@@ -1,8 +1,8 @@
 # Dashboard
 
-The dashboard at `/` is the **summary view** of the whole system (per FR‑43, FR‑46). It
+The dashboard at `/` is the **summary view** of the whole system. It
 combines engagements, order versions, and leaves into two headline numbers per period:
-**cost** and **cost coverage** (per FR‑19, FR‑44, FR‑45).
+**cost** and **cost coverage**.
 
 ## Purpose
 
@@ -12,7 +12,7 @@ Answer, at a glance, "how much are we spending, and how much of that is funded?"
 
 Everyone. What you see is filtered by your role — a `Person` sees only their own
 aggregates, an `UndertakingManager` sees the undertakings they manage, and an `Admin`
-sees the whole system (per FR‑45, FR‑47). The filter is applied server-side, so no user
+sees the whole system. The filter is applied server-side, so no user
 ever sees an aggregate that includes entities they cannot access.
 
 ## Screens
@@ -35,18 +35,18 @@ You can pivot the dashboard by:
    example, only two undertakings you own).
 
 The dropdowns are populated from an endpoint that itself enforces
-`accessible_to(user)` (per FR‑47) — so, for example, an UndertakingManager only sees
+`accessible_to(user)` — so, for example, an UndertakingManager only sees
 their own undertakings in the "entity" dropdown.
 
-## What "cost" means (FR‑19)
+## What "cost" means
 
 For each person, on each day inside the selected range:
 
 - **Base cost** = `daily_rate × fte × availability`.
-- **Availability** is reduced by any overlapping `Leave` percentage (per FR‑11).
+- **Availability** is reduced by any overlapping `Leave` percentage.
 - The result is summed across the group and bucketed by the chosen granularity.
 
-## What "cost coverage" means (FR‑19)
+## What "cost coverage" means
 
 For each day and each person, the system checks which order-version assignments are
 active. The **covered share** is the sum of those assignments' percentages, capped at
@@ -56,7 +56,7 @@ active. The **covered share** is the sum of those assignments' percentages, capp
 - If covered = 60% for a day, 60% of that day's cost is **covered** and 40% is
   **unassigned**.
 - If you see "unassigned" bars, that's usually a sign that an order version expired
-  before the next was created (per FR‑16, [Orders & versions](orders.md)) or that an
+  before the next was created) or that an
   engagement was created without an order-version assignment
   ([People & engagements](people-and-engagements.md)).
 
@@ -74,17 +74,17 @@ active. The **covered share** is the sum of those assignments' percentages, capp
 ## Common questions
 
 **Why don't I see person X in the dropdown?**
-Because your role does not grant you access to that person (per FR‑45, FR‑47). Ask an
+Because your role does not grant you access to that person. Ask an
 Admin to widen your role if you need it.
 
 **Why does the total look lower than I expect for a specific week?**
 Check whether:
 
-- People have leave in that week (per FR‑11) — leaves reduce availability, which
+- People have leave in that week — leaves reduce availability, which
   reduces cost.
-- The order version supporting an engagement expired mid-week (per FR‑16) — days after
+- The order version supporting an engagement expired mid-week — days after
   the expiration count as "unassigned" and the covered total drops.
-- Engagement date ranges have been trimmed by an edit (per FR‑15).
+- Engagement date ranges have been trimmed by an edit.
 
 **Why does my dashboard look empty?**
 Either your role has access to nothing, or the current filters exclude all data. Try

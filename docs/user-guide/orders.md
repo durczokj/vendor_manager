@@ -1,7 +1,7 @@
 # Orders & versions
 
-An `Order` (per FR‑4) is the commercial agreement that funds work at your organisation.
-An `OrderVersion` (per FR‑5) is a **time-bounded revision** of that order — the price,
+An `Order` is the commercial agreement that funds work at your organisation.
+An `OrderVersion` is a **time-bounded revision** of that order — the price,
 scope, or contract changes, so you close the old version and open a new one. The
 Vendor Manager keeps every version so you can always see who was working under which
 terms on any given day.
@@ -22,7 +22,7 @@ undertakings they manage. Person is read-only.
 - **Order detail.** `/orders/<id>/` — shows all versions of the order.
 - **Create order.** `/orders/create/`
 - **Edit order.** `/orders/<id>/update/`
-- **Delete order.** `/orders/<id>/delete/` (intermediate confirmation, per FR‑40)
+- **Delete order.** `/orders/<id>/delete/` (intermediate confirmation)
 - **Order version list.** `/order_versions/`
 - **Order version detail.** `/order_versions/<id>/`
 - **Create order version.** `/order_versions/create/`
@@ -44,9 +44,9 @@ undertakings they manage. Person is read-only.
 
 ## Happy path — clone the latest version (roll over)
 
-This is the FR‑18 workflow — when scope or price changes, you don't edit the old version,
+When scope or price changes, you don't edit the old version,
 you clone it and shorten the old one to match. The system runs the whole operation as a
-single transaction (per FR‑18, NFR‑1): either the new version is created cleanly, or
+single transaction: either the new version is created cleanly, or
 nothing changes.
 
 1. Open the order's detail page at `/orders/<id>/`.
@@ -54,13 +54,13 @@ nothing changes.
 3. In the dialog, pick:
    - the **new contract** (usually the same, sometimes a fresh contract),
    - the **new start date** — this MUST be later than the current latest version's start
-     date (per FR‑16),
-   - the **new end date** — MUST be on or after the start date (per FR‑16),
+     date,
+   - the **new end date** — MUST be on or after the start date,
    - whether to **copy engagement assignments** from the previous version (default
      **on**).
 4. Click **Clone**. Behind the scenes:
    - The previous version's end date is shortened to the day before the new start date
-     (so the two versions abut with no gap and no overlap — FR‑16).
+     (so the two versions abut with no gap and no overlap).
    - The new version is created.
    - Any existing engagement–order-version assignments are copied over (if you left the
      checkbox on).
@@ -70,7 +70,7 @@ nothing changes.
     A screenshot of the "clone latest version" dialog will be added here.
     Tracked as a P6.T5 follow-up.
 
-## How versions chain start and end dates (FR‑16)
+## How versions chain start and end dates
 
 - A version's `start_date` must be on or before its `end_date`.
 - Consecutive versions of the same order must **not overlap**.
@@ -84,8 +84,8 @@ Manager rejects the save with a readable error message.
 | Message | What it means | How to fix |
 |---|---|---|
 | "This contract is already used by another order version." | A contract can back only one order version at a time. | Pick a different contract, or shorten the other version. |
-| "Start date must be later than the previous version's start date." | Cloning tried to open a new version at or before the current one (per FR‑16). | Pick a new start date after the previous version's start. |
-| "End date must be on or after start date." | Trivial ordering rule (per FR‑16). | Fix the end date. |
+| "Start date must be later than the previous version's start date." | Cloning tried to open a new version at or before the current one. | Pick a new start date after the previous version's start. |
+| "End date must be on or after start date." | Trivial ordering rule. | Fix the end date. |
 | "Cannot delete: this order still has engagements assigned to a version." | Assignments on a version block deletion. | Remove assignments first, or delete versions in reverse order. |
 
 ## Related workflows

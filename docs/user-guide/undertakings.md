@@ -1,8 +1,8 @@
 # Undertakings & cost centers
 
-An `Undertaking` (per FR‑6) is a **unit of work you own** — a project, an initiative, a
+An `Undertaking` is a **unit of work you own** — a project, an initiative, a
 programme, a workstream. It has a manager, a set of engagements assigned to it, and it
-rolls up into a `CostCenter` (per FR‑9) for reporting.
+rolls up into a `CostCenter` for reporting.
 
 ## Purpose
 
@@ -20,7 +20,7 @@ read-only.
 - **Undertaking detail.** `/undertakings/<id>/`
 - **Create undertaking.** `/undertakings/create/`
 - **Edit undertaking.** `/undertakings/<id>/update/`
-- **Delete undertaking.** `/undertakings/<id>/delete/` (intermediate confirmation, per FR‑40)
+- **Delete undertaking.** `/undertakings/<id>/delete/` (intermediate confirmation)
 
 !!! note "Screenshot pending"
     A screenshot of the undertaking list will be added here. Tracked as a P6.T5 follow-up.
@@ -30,7 +30,7 @@ read-only.
 1. Open `/undertakings/` and click **Add undertaking**.
 2. Fill in the name and pick the **cost center** it rolls up into.
 3. Pick the **manager** — a `Person` who will be granted UndertakingManager access to
-   this undertaking (per FR‑27). The person must already exist; if not, add them first
+   this undertaking. The person must already exist; if not, add them first
    through [People & engagements](people-and-engagements.md).
 4. Save. The undertaking is now on the list, and the chosen manager can see and edit it.
 
@@ -42,7 +42,7 @@ Whether you're creating a new undertaking or re-assigning an existing one, the
 1. Open the undertaking's detail page at `/undertakings/<id>/`.
 2. Click **Edit**.
 3. Change the **Manager** field to the new person.
-4. Save. The former manager loses access; the new manager gains it (per FR‑27, FR‑28).
+4. Save. The former manager loses access; the new manager gains it.
 
 ## Happy path — cost centers
 
@@ -62,7 +62,7 @@ undertaking one.
 | Message | What it means | How to fix |
 |---|---|---|
 | "Manager is required." | Every undertaking must have exactly one manager. | Pick a person from the dropdown. |
-| "Cannot delete: this undertaking still has engagement assignments." | An engagement is still assigned to this undertaking (per FR‑10, FR‑14). | Open each assignment from the detail page and remove it, then retry the delete. |
+| "Cannot delete: this undertaking still has engagement assignments." | An engagement is still assigned to this undertaking. | Open each assignment from the detail page and remove it, then retry the delete. |
 | "Cost center is required." | Undertakings must roll up into a cost center. | Pick one from the dropdown; if none exist, ask Finance to seed one. |
 
 ## Related workflows
@@ -70,6 +70,6 @@ undertaking one.
 - Before: [People & engagements](people-and-engagements.md) — the manager must exist as a
   person first.
 - After: [People & engagements](people-and-engagements.md) — assign engagements to this
-  undertaking through the assignment sub-form (per FR‑10, FR‑14).
+  undertaking through the assignment sub-form.
 - Downstream: [Dashboard](dashboard.md) — filter aggregates by cost center or
   undertaking.

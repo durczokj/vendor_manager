@@ -12,44 +12,40 @@ domain glossary.
 
 ## Entity index
 
-Each row cites the FR that governs the entity's behavior. Follow the code links for the
-model definition.
+Follow the code links for the model definition.
 
-| Entity | FR | App | Model |
-|---|---|---|---|
-| Company | FR‑1 | `companies` | `companies.models.Company` |
-| Contract | FR‑2 | `contracts` | `contracts.models.Contract` |
-| Order | FR‑4 | `orders` | `orders.models.Order` |
-| OrderVersion | FR‑5 | `orders` | `orders.models.OrderVersion` |
-| Undertaking | FR‑6 | `undertakings` | `undertakings.models.Undertaking` |
-| CostCenter | FR‑9 | `undertakings` | `undertakings.models.CostCenter` |
-| Person | FR‑7 | `people` | `people.models.Person` |
-| Engagement | FR‑8 | `engagements` | `engagements.models.Engagement` |
-| EngagementUndertakingAssignment | FR‑10 | `engagements` | `engagements.models.EngagementUndertakingAssignment` |
-| EngagementOrderVersionAssignment | FR‑13 | `engagements` | `engagements.models.EngagementOrderVersionAssignment` |
-| Leave | FR‑11 | `leaves` | `leaves.models.Leave` |
+| Entity | App | Model |
+|---|---|---|
+| Company | `companies` | `companies.models.Company` |
+| Contract | `contracts` | `contracts.models.Contract` |
+| Order | `orders` | `orders.models.Order` |
+| OrderVersion | `orders` | `orders.models.OrderVersion` |
+| Undertaking | `undertakings` | `undertakings.models.Undertaking` |
+| CostCenter | `undertakings` | `undertakings.models.CostCenter` |
+| Person | `people` | `people.models.Person` |
+| Engagement | `engagements` | `engagements.models.Engagement` |
+| EngagementUndertakingAssignment | `engagements` | `engagements.models.EngagementUndertakingAssignment` |
+| EngagementOrderVersionAssignment | `engagements` | `engagements.models.EngagementOrderVersionAssignment` |
+| Leave | `leaves` | `leaves.models.Leave` |
 
 ## Invariants
 
-The temporal and range invariants are documented in `REQUIREMENTS.md` §3.2 (FR‑12 through
-FR‑17). They are enforced at three layers:
+The temporal and range invariants are enforced at three layers:
 
-- **Model layer** — `clean()` / `full_clean()` for single-model rules (FR‑13, FR‑14,
-  FR‑16, FR‑17).
-- **Service layer** — cross-model rules and multi-step writes (FR‑15, FR‑18).
-- **Database layer** — unique-together constraints, non-null defaults (per FR‑12,
-  Redundancy Inventory).
+- **Model layer** — `clean()` / `full_clean()` for single-model rules.
+- **Service layer** — cross-model rules and multi-step writes.
+- **Database layer** — unique-together constraints, non-null defaults.
 
 Any change to an invariant location MUST NOT weaken an existing rule; the aggregate
-invariant surface is verified by the P7 test suite (per NFR‑16).
+invariant surface is verified by the P7 test suite.
 
 ## Migration policy
 
 - Migrations are **additive**. Never rewrite an applied migration.
 - Squashed initials (`0001_initial_squashed_*.py`) landed in P1.T2 and MUST be treated as
   the historical base.
-- Both SQLite and PostgreSQL are supported (per NFR‑21); every migration MUST pass
-  `migrate` on both. Any use of `RunPython` MUST provide `reverse_code` (per NFR‑22).
+- Both SQLite and PostgreSQL are supported; every migration MUST pass
+  `migrate` on both. Any use of `RunPython` MUST provide `reverse_code`.
 
 ## Related pages
 

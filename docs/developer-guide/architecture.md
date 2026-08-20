@@ -104,14 +104,13 @@ flowchart LR
 
 Key properties enforced by this shape:
 
-- **Auth first, always.** `IsAuthenticated` and `HasLinkedPerson` (per FR‑21, FR‑22,
-  FR‑23) run before any view code — no path leaks unauthenticated bytes except
-  `/health/` (per NFR‑11, NFR‑39).
+- **Auth first, always.** `IsAuthenticated` and `HasLinkedPerson` run before any view code — no path leaks unauthenticated bytes except
+  `/health/`.
 - **`accessible_to(user)` is the choke point.** No view / viewset fetches a queryset
-  without funnelling it through the manager method (per FR‑27, FR‑28, NFR‑7).
+  without funnelling it through the manager method.
 - **Services run inside `transaction.atomic()`.** Multi-step writes either commit fully
   or roll back — the canonical case is `orders.services.create_new_order_version`
-  (per FR‑18, NFR‑1).
+.
 
 ---
 
