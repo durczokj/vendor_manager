@@ -408,9 +408,9 @@ def test_openapi_schema_includes_dashboards_summary(client, api_data):
     assert response.status_code == 200
     schema = response.json()
     paths = schema.get("paths", {})
-    assert any(
-        "dashboards/summary" in p for p in paths
-    ), f"Expected dashboards/summary in OpenAPI paths, got: {list(paths.keys())}"
+    assert any("dashboards/summary" in p for p in paths), (
+        f"Expected dashboards/summary in OpenAPI paths, got: {list(paths.keys())}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -473,6 +473,6 @@ def test_entity_options_openapi_schema_includes_endpoint(client, api_data):
     response = client.get("/api/v1/schema/", **_auth("adm"))
     assert response.status_code == 200
     paths = response.json().get("paths", {})
-    assert any(
-        "entity-options" in p for p in paths
-    ), f"Expected entity-options in OpenAPI paths, got: {list(paths.keys())}"
+    assert any("entity-options" in p for p in paths), (
+        f"Expected entity-options in OpenAPI paths, got: {list(paths.keys())}"
+    )
