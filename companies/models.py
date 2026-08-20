@@ -14,6 +14,6 @@ class Company(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(max_length=255)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the name of the company."""
         return self.name

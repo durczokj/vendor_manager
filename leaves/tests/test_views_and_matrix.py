@@ -10,14 +10,14 @@ from django.test import Client
 from django.urls import reverse
 from rolepermissions.roles import assign_role
 
-from companies.models import Company
-from contracts.models import Contract
-from engagements.models import Engagement, EngagementUndertakingAssignment
-from leaves.models import Leave
+from companies.tests.factories import CompanyFactory
+from contracts.tests.factories import ContractFactory
+from engagements.tests.factories import EngagementFactory, EngagementUndertakingAssignmentFactory
+from leaves.tests.factories import LeaveFactory
 from leaves.utils.leave_matrix import LeaveMatrix
-from orders.models import Order, OrderVersion
-from people.models import Person
-from undertakings.models import CostCenter, Undertaking
+from orders.tests.factories import OrderFactory, OrderVersionFactory
+from people.tests.factories import PersonFactory
+from undertakings.tests.factories import CostCenterFactory, UndertakingFactory
 
 
 @pytest.fixture
@@ -33,14 +33,14 @@ def admin_client(db) -> Client:
 @pytest.fixture
 def two_people_two_undertakings(db) -> dict:
     """Two people, each assigned to their own undertaking, each with a leave in March 2025."""
-    manager = Person.objects.create(id="M00001", first_name="M", last_name="Boss")
-    cc = CostCenter.objects.create(id=8001, name="CC")
-    u_alpha = Undertaking.objects.create(id=8101, name="Alpha", cost_center=cc, manager=manager)
-    u_beta = Undertaking.objects.create(id=8102, name="Beta", cost_center=cc, manager=manager)
-    company = Company.objects.create(id=8201, name="Co", email="c@example.com")
-    Contract.objects.create(id=8301, name="Con", status="active", size=1)
-    order = Order.objects.create(id=8401, name="Ord", company=company)
-    OrderVersion.objects.create(
+    manager = PersonFactory(id="M00001", first_name="M", last_name="Boss")
+    cc = CostCenterFactory(id=8001, name="CC")
+    u_alpha = UndertakingFactory(id=8101, name="Alpha", cost_center=cc, manager=manager)
+    u_beta = UndertakingFactory(id=8102, name="Beta", cost_center=cc, manager=manager)
+    company = CompanyFactory(id=8201, name="Co", email="c@example.com")
+    ContractFactory(id=8301, name="Con", status="active", size=1)
+    order = OrderFactory(id=8401, name="Ord", company=company)
+    OrderVersionFactory(
         order=order,
         contract_id=8301,
         version_number=1,
@@ -48,23 +48,23 @@ def two_people_two_undertakings(db) -> dict:
         end_date=date(2025, 12, 31),
     )
 
-    alice = Person.objects.create(id="A00001", first_name="Alice", last_name="A")
-    bob = Person.objects.create(id="B00001", first_name="Bob", last_name="B")
+    alice = PersonFactory(id="A00001", first_name="Alice", last_name="A")
+    bob = PersonFactory(id="B00001", first_name="Bob", last_name="B")
 
-    eng_alice = Engagement.objects.create(
+    eng_alice = EngagementFactory(
         person=alice, start_date=date(2025, 1, 1), end_date=date(2025, 12, 31), daily_rate=100, fte=1
     )
-    eng_bob = Engagement.objects.create(
+    eng_bob = EngagementFactory(
         person=bob, start_date=date(2025, 1, 1), end_date=date(2025, 12, 31), daily_rate=100, fte=1
     )
-    EngagementUndertakingAssignment.objects.create(
+    EngagementUndertakingAssignmentFactory(
         engagement=eng_alice,
         undertaking=u_alpha,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
         percentage="1.00",
     )
-    EngagementUndertakingAssignment.objects.create(
+    EngagementUndertakingAssignmentFactory(
         engagement=eng_bob,
         undertaking=u_beta,
         start_date=date(2025, 1, 1),
@@ -72,8 +72,8 @@ def two_people_two_undertakings(db) -> dict:
         percentage="1.00",
     )
 
-    Leave.objects.create(person=alice, start_date=date(2025, 3, 3), end_date=date(2025, 3, 5), percentage="1.00")
-    Leave.objects.create(person=bob, start_date=date(2025, 3, 10), end_date=date(2025, 3, 12), percentage="0.50")
+    LeaveFactory(person=alice, start_date=date(2025, 3, 3), end_date=date(2025, 3, 5), percentage="1.00")
+    LeaveFactory(person=bob, start_date=date(2025, 3, 10), end_date=date(2025, 3, 12), percentage="0.50")
 
     return {"alice": alice, "bob": bob, "u_alpha": u_alpha, "u_beta": u_beta}
 
@@ -159,7 +159,7 @@ def test_invalid_view_falls_back_to_default(admin_client: Client) -> None:
 def test_include_all_people_adds_empty_rows(admin_client: Client, two_people_two_undertakings: dict) -> None:
     """?include_all_people=on adds rows for accessible people who have no leaves."""
     # Create a person with no leaves at all this month.
-    Person.objects.create(id="C00001", first_name="Carol", last_name="C")
+    PersonFactory(id="C00001", first_name="Carol", last_name="C")
 
     response = admin_client.get(
         reverse("leave-list"),
@@ -174,7 +174,7 @@ def test_include_all_people_adds_empty_rows(admin_client: Client, two_people_two
 @pytest.mark.django_db
 def test_include_all_people_off_hides_leaveless_people(admin_client: Client, two_people_two_undertakings: dict) -> None:
     """Without the toggle, people with no leaves this month don't appear in the matrix."""
-    Person.objects.create(id="C00002", first_name="Carol", last_name="C")
+    PersonFactory(id="C00002", first_name="Carol", last_name="C")
 
     response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3, "view": "matrix"})
 

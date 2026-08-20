@@ -19,6 +19,7 @@ def create_new_order_version(
     """Create a new order version and optionally copy engagement assignments."""
     with transaction.atomic():
         last_version = order.versions.order_by("-version_number").first()
+        assert last_version is not None, "cannot create a new version without an existing one"
 
         last_version.end_date = start_date - timedelta(days=1)
         last_version.clean()

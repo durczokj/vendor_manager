@@ -11,13 +11,32 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ImproperlyConfigured
+from django.db.models import QuerySet
+from django.forms.models import BaseModelForm
 from django.urls import reverse
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from rolepermissions.checkers import has_permission
+
+if TYPE_CHECKING:
+    # Django's generic CBVs are parameterizable in django-stubs but not at
+    # runtime; alias them so ``class Foo(BaseListView):`` is safe at import
+    # time while mypy still sees the parameterized form.
+    BaseListView = ListView[Any]
+    BaseDetailView = DetailView[Any]
+    BaseCreateView = CreateView[Any, BaseModelForm[Any]]
+    BaseUpdateView = UpdateView[Any, BaseModelForm[Any]]
+    BaseDeleteView = DeleteView[Any, BaseModelForm[Any]]
+else:
+    BaseListView = ListView
+    BaseDetailView = DetailView
+    BaseCreateView = CreateView
+    BaseUpdateView = UpdateView
+    BaseDeleteView = DeleteView
 
 logger = logging.getLogger(__name__)
 
@@ -50,16 +69,20 @@ def _iso_format(value: Any) -> Any:
 class AccessibleQuerySetMixin:
     """Filter the queryset via Model.objects.accessible_to(request.user)."""
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> QuerySet[Any]:
         """Return only objects accessible to the current user.
 
         Returns:
             A QuerySet filtered by the per-model accessible_to() method.
         """
-        return self.model.objects.accessible_to(self.request.user)  # type: ignore[attr-defined]
+        model = cast(Any, self).model
+        request = cast(Any, self).request
+        manager = cast(Any, model._default_manager)
+        qs: QuerySet[Any] = manager.accessible_to(request.user)
+        return qs
 
 
-class EntityListView(LoginRequiredMixin, AccessibleQuerySetMixin, ListView):
+class EntityListView(LoginRequiredMixin, AccessibleQuerySetMixin, BaseListView):
     """Base list view: renders _list.html with a Table instance.
 
     Subclass must set: model, table_class, page_title, create_url_name.
@@ -67,7 +90,7 @@ class EntityListView(LoginRequiredMixin, AccessibleQuerySetMixin, ListView):
     """
 
     template_name = "_list.html"
-    table_class: type | None = None
+    table_class: ClassVar[type[Any] | None] = None
     page_title: str = ""
     permission_create: str = ""
     create_url_name: str = ""
@@ -84,7 +107,9 @@ class EntityListView(LoginRequiredMixin, AccessibleQuerySetMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         can_add = bool(self.permission_create) and has_permission(self.request.user, self.permission_create)
         qs = self.get_queryset()
-        table = self.table_class(qs, can_manage=can_add)  # type: ignore[call-arg]
+        if self.table_class is None:
+            raise ImproperlyConfigured(f"{type(self).__name__}.table_class must be set")
+        table = self.table_class(qs, can_manage=can_add)
         ctx.update(
             {
                 "table": table,
@@ -95,7 +120,7 @@ class EntityListView(LoginRequiredMixin, AccessibleQuerySetMixin, ListView):
         return ctx
 
 
-class EntityDetailView(LoginRequiredMixin, AccessibleQuerySetMixin, DetailView):
+class EntityDetailView(LoginRequiredMixin, AccessibleQuerySetMixin, BaseDetailView):
     """Base detail view: renders _detail.html with a field-spec and related tables.
 
     Subclass must set: model, update_url_name, delete_url_name, list_url_name.
@@ -103,8 +128,8 @@ class EntityDetailView(LoginRequiredMixin, AccessibleQuerySetMixin, DetailView):
     """
 
     template_name = "_detail.html"
-    detail_fields: list[tuple] = []
-    related_table_specs: list[tuple] = []
+    detail_fields: ClassVar[list[tuple[Any, ...]]] = []
+    related_table_specs: ClassVar[list[tuple[Any, ...]]] = []
     permission_change: str = ""
     update_url_name: str = ""
     delete_url_name: str = ""
@@ -135,7 +160,7 @@ class EntityDetailView(LoginRequiredMixin, AccessibleQuerySetMixin, DetailView):
             Context dict for _detail.html.
         """
         ctx = super().get_context_data(**kwargs)
-        item = self.object  # type: ignore[attr-defined]
+        item = self.object
         can_manage = bool(self.permission_change) and has_permission(self.request.user, self.permission_change)
         fields = []
         for spec in self.detail_fields:
@@ -184,7 +209,7 @@ class EntityDetailView(LoginRequiredMixin, AccessibleQuerySetMixin, DetailView):
         return ctx
 
 
-class EntityCreateView(LoginRequiredMixin, CreateView):
+class EntityCreateView(LoginRequiredMixin, BaseCreateView):
     """Base create view: renders _form.html and saves via form.save().
 
     Subclass must set: model, form_class, success_url_name, list_url_name.
@@ -196,9 +221,11 @@ class EntityCreateView(LoginRequiredMixin, CreateView):
     success_url_name: str = ""
     list_url_name: str = ""
 
-    def get_form(self, form_class: type[forms.BaseForm] | None = None) -> forms.BaseForm:
+    def get_form(self, form_class: type[BaseModelForm[Any]] | None = None) -> BaseModelForm[Any]:
         """Return the form with HTML5 ISO date pickers applied."""
-        return _apply_iso_date_widgets(super().get_form(form_class))
+        form = super().get_form(form_class)
+        _apply_iso_date_widgets(form)
+        return form
 
     def get_initial(self) -> dict[str, Any]:
         """Seed initial form values from matching GET query params.
@@ -213,7 +240,7 @@ class EntityCreateView(LoginRequiredMixin, CreateView):
         initial = super().get_initial()
         form_class = self.get_form_class()
         try:
-            valid_fields = set(form_class.base_fields.keys())  # type: ignore[attr-defined]
+            valid_fields = set(cast(Any, form_class).base_fields.keys())
         except AttributeError:
             valid_fields = set()
         for key, value in self.request.GET.items():
@@ -233,7 +260,7 @@ class EntityCreateView(LoginRequiredMixin, CreateView):
         ctx = super().get_context_data(**kwargs)
         ctx.update(
             {
-                "page_title": self.page_title or f"Add {self.model.__name__}",  # type: ignore[attr-defined]
+                "page_title": self.page_title or f"Add {self.model.__name__}",
                 "submit_label": "Save",
                 "cancel_url": reverse(self.list_url_name) if self.list_url_name else "",
                 "form_action": self.request.path,
@@ -247,10 +274,11 @@ class EntityCreateView(LoginRequiredMixin, CreateView):
         Returns:
             The URL of the created object's detail page.
         """
-        return reverse(self.success_url_name, kwargs={"pk": self.object.pk})  # type: ignore[attr-defined]
+        assert self.object is not None
+        return reverse(self.success_url_name, kwargs={"pk": self.object.pk})
 
 
-class EntityUpdateView(LoginRequiredMixin, AccessibleQuerySetMixin, UpdateView):
+class EntityUpdateView(LoginRequiredMixin, AccessibleQuerySetMixin, BaseUpdateView):
     """Base update view: renders _form.html and saves via form.save() (or service).
 
     Subclass must set: model, form_class, success_url_name.
@@ -259,7 +287,7 @@ class EntityUpdateView(LoginRequiredMixin, AccessibleQuerySetMixin, UpdateView):
     template_name = "_form.html"
     success_url_name: str = ""
 
-    def get_form(self, form_class: type[forms.BaseForm] | None = None) -> forms.BaseForm:
+    def get_form(self, form_class: type[BaseModelForm[Any]] | None = None) -> BaseModelForm[Any]:
         """Return the form with HTML5 ISO date pickers and an immutable primary key.
 
         Primary keys identify a row; editing them via a normal update flow would
@@ -268,8 +296,9 @@ class EntityUpdateView(LoginRequiredMixin, AccessibleQuerySetMixin, UpdateView):
         zero rows, so the ORM falls back to ``INSERT``). Disable the pk field on
         update so it renders read-only and any tampered POST value is ignored.
         """
-        form = _apply_iso_date_widgets(super().get_form(form_class))
-        pk_name = self.model._meta.pk.name  # type: ignore[attr-defined]
+        form = super().get_form(form_class)
+        _apply_iso_date_widgets(form)
+        pk_name = self.model._meta.pk.name
         if pk_name in form.fields:
             form.fields[pk_name].disabled = True
         return form
@@ -284,7 +313,7 @@ class EntityUpdateView(LoginRequiredMixin, AccessibleQuerySetMixin, UpdateView):
             Context dict for _form.html.
         """
         ctx = super().get_context_data(**kwargs)
-        item = self.object  # type: ignore[attr-defined]
+        item = self.object
         ctx.update(
             {
                 "page_title": f"Edit {type(item).__name__}: {item}",
@@ -301,10 +330,10 @@ class EntityUpdateView(LoginRequiredMixin, AccessibleQuerySetMixin, UpdateView):
         Returns:
             The URL of the updated object's detail page.
         """
-        return reverse(self.success_url_name, kwargs={"pk": self.object.pk})  # type: ignore[attr-defined]
+        return reverse(self.success_url_name, kwargs={"pk": self.object.pk})
 
 
-class EntityDeleteView(LoginRequiredMixin, AccessibleQuerySetMixin, DeleteView):
+class EntityDeleteView(LoginRequiredMixin, AccessibleQuerySetMixin, BaseDeleteView):
     """Base delete view: renders _confirm_delete.html, then redirects to list.
 
     Subclass must set: model, success_url_name.

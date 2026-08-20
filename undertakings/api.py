@@ -1,15 +1,14 @@
 """ViewSets for the undertakings app."""
 
-from typing import Any
-
 from rest_framework import viewsets
 
 from undertakings.filters import CostCenterFilterSet, UndertakingFilterSet
+from undertakings.managers import CostCenterQuerySet, UndertakingQuerySet
 from undertakings.models import CostCenter, Undertaking
 from undertakings.serializers import CostCenterSerializer, UndertakingSerializer
 
 
-class CostCenterViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class CostCenterViewSet(viewsets.ModelViewSet[CostCenter]):
     """CostCenter list/create/retrieve/update/destroy endpoints."""
 
     queryset = CostCenter.objects.all().order_by("id")
@@ -18,12 +17,13 @@ class CostCenterViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TOD
     search_fields = ["name"]
     ordering_fields = ["id", "name"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> CostCenterQuerySet:
         """Return cost centers accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return CostCenter.objects.accessible_to(self.request.user).order_by("id")
 
 
-class UndertakingViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class UndertakingViewSet(viewsets.ModelViewSet[Undertaking]):
     """Undertaking list/create/retrieve/update/destroy endpoints."""
 
     queryset = Undertaking.objects.all().order_by("id")
@@ -32,6 +32,7 @@ class UndertakingViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TO
     search_fields = ["name"]
     ordering_fields = ["id", "name"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> UndertakingQuerySet:
         """Return undertakings accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return Undertaking.objects.accessible_to(self.request.user).order_by("id")

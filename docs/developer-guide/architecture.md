@@ -75,6 +75,90 @@ Request
 
 ---
 
+## Request lifecycle
+
+Every request travels through the same layers regardless of surface. The diagram below
+is the end-to-end path for both `/companies/` (UI) and `/api/v1/companies/` (API):
+
+```mermaid
+flowchart LR
+    C[Client] --> M[Middleware: auth + logging]
+    M --> R{Router}
+    R -->|"/companies/"| UV[Django CBV]
+    R -->|"/api/v1/companies/"| VS[DRF ViewSet]
+    UV --> QS["Manager.accessible_to(user)"]
+    VS --> QS
+    UV -->|writes| SVC[services.py]
+    VS -->|writes| SVC
+    UV -->|reads| SEL[selectors.py]
+    VS -->|reads| SEL
+    SVC --> M2[Model.clean + save]
+    SEL --> ORM[(Django ORM)]
+    M2 --> ORM
+    ORM --> DB[(PostgreSQL / SQLite)]
+    UV --> TPL[base.html + _list/_detail/_form]
+    VS --> SER[serializers.py]
+    TPL --> C
+    SER --> C
+```
+
+Key properties enforced by this shape:
+
+- **Auth first, always.** `IsAuthenticated` and `HasLinkedPerson` (per FR‑21, FR‑22,
+  FR‑23) run before any view code — no path leaks unauthenticated bytes except
+  `/health/` (per NFR‑11, NFR‑39).
+- **`accessible_to(user)` is the choke point.** No view / viewset fetches a queryset
+  without funnelling it through the manager method (per FR‑27, FR‑28, NFR‑7).
+- **Services run inside `transaction.atomic()`.** Multi-step writes either commit fully
+  or roll back — the canonical case is `orders.services.create_new_order_version`
+  (per FR‑18, NFR‑1).
+
+---
+
+## Application dependency graph
+
+Which app imports which. The graph is intentionally sparse — service and selector
+boundaries keep it that way.
+
+```mermaid
+flowchart TD
+    vendor_manager[vendor_manager] --> api
+    vendor_manager --> companies
+    vendor_manager --> contracts
+    vendor_manager --> orders
+    vendor_manager --> undertakings
+    vendor_manager --> people
+    vendor_manager --> engagements
+    vendor_manager --> leaves
+    vendor_manager --> dashboards
+    api --> companies
+    api --> contracts
+    api --> orders
+    api --> undertakings
+    api --> people
+    api --> engagements
+    api --> leaves
+    api --> dashboards
+    contracts --> companies
+    orders --> contracts
+    orders --> companies
+    engagements --> people
+    engagements --> orders
+    engagements --> undertakings
+    undertakings --> people
+    leaves --> people
+    dashboards --> engagements
+    dashboards --> orders
+    dashboards --> leaves
+    dashboards --> undertakings
+```
+
+Rule of thumb: an arrow `A --> B` means `A` may import from `B`. The reverse MUST NOT
+hold. If you need `B` to react to a change in `A`, put the coordination in a service on
+the `A` side or in `dashboards`.
+
+---
+
 ## Services / selectors layer
 
 ```python

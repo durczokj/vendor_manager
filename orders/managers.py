@@ -2,21 +2,32 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from rolepermissions.checkers import has_role
 
+if TYPE_CHECKING:
+    from orders.models import Order, OrderVersion
 
-def _get_user_person_pk(user: User) -> object | None:
+    _OrderQuerySetBase = models.QuerySet[Order]
+    _OrderVersionQuerySetBase = models.QuerySet[OrderVersion]
+else:
+    _OrderQuerySetBase = models.QuerySet
+    _OrderVersionQuerySetBase = models.QuerySet
+
+
+def _get_user_person_pk(user: User) -> str | None:
     """Return the primary key of the person's profile linked to the user."""
     try:
-        return user.person.pk
+        return str(user.person.pk)
     except ObjectDoesNotExist:
         return None
 
 
-class OrderQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [Order] once strict scope widens
+class OrderQuerySet(_OrderQuerySetBase):
     """QuerySet for the Order model."""
 
     def accessible_to(self, user: User) -> OrderQuerySet:
@@ -50,7 +61,7 @@ class OrderQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add
 OrderManager = models.Manager.from_queryset(OrderQuerySet)
 
 
-class OrderVersionQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [OrderVersion] once strict scope widens
+class OrderVersionQuerySet(_OrderVersionQuerySetBase):
     """QuerySet for the OrderVersion model."""
 
     def accessible_to(self, user: User) -> OrderVersionQuerySet:

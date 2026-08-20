@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import NotAuthenticated, ValidationError
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import exception_handler
 
 
-def drf_exception_handler(exc: Exception, context: dict[str, object]):
+def drf_exception_handler(exc: Exception, context: dict[str, object]) -> Response | None:
     """Return DRF-standard error responses for framework and Django exceptions.
 
     Args:

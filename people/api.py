@@ -11,11 +11,12 @@ from rest_framework.response import Response
 from engagements.models import EngagementUndertakingAssignment
 from engagements.serializers import EngagementUndertakingAssignmentSerializer
 from people.filters import PersonFilterSet
+from people.managers import PersonQuerySet
 from people.models import Person
 from people.serializers import PersonSerializer
 
 
-class PersonViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class PersonViewSet(viewsets.ModelViewSet[Person]):
     """Person list/create/retrieve/update/destroy endpoints."""
 
     queryset = Person.objects.all().order_by("id")
@@ -24,9 +25,10 @@ class PersonViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8
     search_fields = ["first_name", "last_name", "location"]
     ordering_fields = ["id", "first_name", "last_name"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> PersonQuerySet:
         """Return people accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return Person.objects.accessible_to(self.request.user).order_by("id")
 
     @extend_schema(
         responses={200: EngagementUndertakingAssignmentSerializer(many=True)},
@@ -48,9 +50,10 @@ class PersonViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8
             200 with a list of EngagementUndertakingAssignment records.
 
         """
+        assert request.user.is_authenticated
         person: Person = self.get_object()
         qs = (
-            EngagementUndertakingAssignment.objects.accessible_to(request.user)  # type: ignore[arg-type]
+            EngagementUndertakingAssignment.objects.accessible_to(request.user)
             .filter(engagement__person=person)
             .order_by("id")
         )

@@ -1,5 +1,7 @@
 """Forms for managing leave requests."""
 
+from typing import Any
+
 from django import forms
 from rolepermissions.checkers import has_object_permission
 
@@ -18,12 +20,14 @@ class LeaveForm(forms.ModelForm):
         model = Leave
         fields = ["person", "start_date", "end_date", "percentage"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the form with a user to filter the person queryset."""
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if user:
-            self.fields["person"].queryset = Person.objects.filter(
+            person_field = self.fields["person"]
+            assert isinstance(person_field, forms.ModelChoiceField)
+            person_field.queryset = Person.objects.filter(
                 id__in=[
                     person.id for person in Person.objects.all() if has_object_permission("access_person", user, person)
                 ]

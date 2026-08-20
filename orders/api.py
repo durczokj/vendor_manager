@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from contracts.models import Contract
 from orders.filters import OrderFilterSet, OrderVersionFilterSet
+from orders.managers import OrderQuerySet, OrderVersionQuerySet
 from orders.models import Order, OrderVersion
 from orders.serializers import OrderSerializer, OrderVersionSerializer
 from orders.services import create_new_order_version
@@ -25,7 +26,7 @@ class CloneLatestVersionSerializer(drf_serializers.Serializer[Any]):
     copy_engagement_assignments = drf_serializers.BooleanField(default=True)
 
 
-class OrderViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class OrderViewSet(viewsets.ModelViewSet[Order]):
     """Order list/create/retrieve/update/destroy endpoints."""
 
     queryset = Order.objects.all().order_by("id")
@@ -34,9 +35,10 @@ class OrderViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8)
     search_fields = ["name"]
     ordering_fields = ["id", "name"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> OrderQuerySet:
         """Return orders accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return Order.objects.accessible_to(self.request.user).order_by("id")
 
     @extend_schema(
         request=CloneLatestVersionSerializer,
@@ -88,7 +90,7 @@ class OrderViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8)
         return Response(out.data, status=status.HTTP_201_CREATED)
 
 
-class OrderVersionViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # TODO(P8): add type param
+class OrderVersionViewSet(viewsets.ModelViewSet[OrderVersion]):
     """OrderVersion list/create/retrieve/update/destroy endpoints."""
 
     queryset = OrderVersion.objects.all().order_by("id")
@@ -97,6 +99,7 @@ class OrderVersionViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]  # T
     search_fields: list[str] = []
     ordering_fields = ["id", "version_number", "start_date", "end_date"]
 
-    def get_queryset(self) -> Any:
+    def get_queryset(self) -> OrderVersionQuerySet:
         """Return order versions accessible to the requesting user."""
-        return super().get_queryset().accessible_to(self.request.user)  # type: ignore[attr-defined]
+        assert self.request.user.is_authenticated
+        return OrderVersion.objects.accessible_to(self.request.user).order_by("id")

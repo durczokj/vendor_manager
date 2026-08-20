@@ -5,7 +5,7 @@ from django_filters import rest_framework as filters
 from people.models import Person
 
 
-class PersonFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class PersonFilterSet(filters.FilterSet):
     """FilterSet for the Person model."""
 
     class Meta:

@@ -2,21 +2,38 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from rolepermissions.checkers import has_role
 
+if TYPE_CHECKING:
+    from engagements.models import (
+        Engagement,
+        EngagementOrderVersionAssignment,
+        EngagementUndertakingAssignment,
+    )
 
-def _get_user_person_pk(user: User) -> object | None:
+    _EngagementQuerySetBase = models.QuerySet[Engagement]
+    _EngagementOrderVersionAssignmentQuerySetBase = models.QuerySet[EngagementOrderVersionAssignment]
+    _EngagementUndertakingAssignmentQuerySetBase = models.QuerySet[EngagementUndertakingAssignment]
+else:
+    _EngagementQuerySetBase = models.QuerySet
+    _EngagementOrderVersionAssignmentQuerySetBase = models.QuerySet
+    _EngagementUndertakingAssignmentQuerySetBase = models.QuerySet
+
+
+def _get_user_person_pk(user: User) -> str | None:
     """Return the primary key of the person's profile linked to the user."""
     try:
-        return user.person.pk
+        return str(user.person.pk)
     except ObjectDoesNotExist:
         return None
 
 
-class EngagementQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [Engagement] once strict scope widens
+class EngagementQuerySet(_EngagementQuerySetBase):
     """QuerySet for the Engagement model."""
 
     def accessible_to(self, user: User) -> EngagementQuerySet:
@@ -48,7 +65,7 @@ class EngagementQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8)
 EngagementManager = models.Manager.from_queryset(EngagementQuerySet)
 
 
-class EngagementOrderVersionAssignmentQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [EngagementOrderVersionAssignment]
+class EngagementOrderVersionAssignmentQuerySet(_EngagementOrderVersionAssignmentQuerySetBase):
     """QuerySet for the EngagementOrderVersionAssignment model."""
 
     def accessible_to(self, user: User) -> EngagementOrderVersionAssignmentQuerySet:
@@ -80,7 +97,7 @@ class EngagementOrderVersionAssignmentQuerySet(models.QuerySet):  # type: ignore
 EngagementOrderVersionAssignmentManager = models.Manager.from_queryset(EngagementOrderVersionAssignmentQuerySet)
 
 
-class EngagementUndertakingAssignmentQuerySet(models.QuerySet):  # type: ignore[type-arg]  # TODO(P8): add [EngagementUndertakingAssignment]
+class EngagementUndertakingAssignmentQuerySet(_EngagementUndertakingAssignmentQuerySetBase):
     """QuerySet for the EngagementUndertakingAssignment model."""
 
     def accessible_to(self, user: User) -> EngagementUndertakingAssignmentQuerySet:

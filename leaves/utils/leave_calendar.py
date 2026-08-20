@@ -2,32 +2,38 @@
 
 import calendar
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from leaves.models import Leave
 
 
 class LeaveCalendar(calendar.HTMLCalendar):
     """Custom HTML calendar for displaying leaves."""
 
-    def __init__(self, year, month, leaves):
+    def __init__(self, year: int, month: int, leaves: "Iterable[Leave]") -> None:
         """Initialize the calendar with the year, month, and leaves."""
         super().__init__()
         self.year = year
         self.month = month
-        self.leaves = leaves
+        self.leaves = list(leaves)
         self.colors = self.assign_colors()
 
     @staticmethod
-    def to_html(leave):
+    def to_html(leave: "Leave") -> str:
         """Convert a leave object to an HTML string."""
         person_html = str(leave.person).replace("\u2013", "&ndash;")
         percentage_html = f"({leave.percentage})"
         return f"<div>{person_html} {percentage_html}</div>"
 
-    def assign_colors(self):
+    def assign_colors(self) -> dict[str, str]:
         """Assign a unique color to each person."""
         unique_people = {leave.person.name for leave in self.leaves}
-        colors = {}
+        colors: dict[str, str] = {}
         color_palette = [
             "#D2691E",
             "#FFB6C1",
@@ -44,13 +50,13 @@ class LeaveCalendar(calendar.HTMLCalendar):
             colors[person] = color_palette[i % len(color_palette)]
         return colors
 
-    def formatday(self, day, weekday):
+    def formatday(self, day: int, weekday: int) -> str:
         """Format a day as a table cell."""
         if day == 0:
             return '<td class="noday" style="border: 1px solid black;">&nbsp;</td>'  # Empty cell
 
-        day = datetime(year=self.year, month=self.month, day=day).date()
-        leave_entries = [leave for leave in self.leaves if leave.start_date <= day <= leave.end_date]
+        day_date = datetime(year=self.year, month=self.month, day=day).date()
+        leave_entries = [leave for leave in self.leaves if leave.start_date <= day_date <= leave.end_date]
 
         leave_html = "".join(
             f'<div style="background-color: {self.colors[leave.person.name]}; padding: 2px; margin: 2px;">'
@@ -61,10 +67,10 @@ class LeaveCalendar(calendar.HTMLCalendar):
         return (
             f'<td class="{self.cssclasses[weekday]}" '
             'style="border: 1px solid black; vertical-align: top;">'
-            f"<b>{day}</b><br>{leave_html}</td>"
+            f"<b>{day_date}</b><br>{leave_html}</td>"
         )
 
-    def formatmonth(self, withyear=True):
+    def formatmonth(self, theyear: int = 0, themonth: int = 0, withyear: bool = True) -> SafeString:
         """Create HTML table for a month."""
         return mark_safe(
             f"""

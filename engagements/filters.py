@@ -5,7 +5,7 @@ from django_filters import rest_framework as filters
 from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
 
 
-class EngagementFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class EngagementFilterSet(filters.FilterSet):
     """FilterSet for the Engagement model."""
 
     class Meta:
@@ -15,7 +15,7 @@ class EngagementFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8):
         fields = ["person"]
 
 
-class EngagementOrderVersionAssignmentFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class EngagementOrderVersionAssignmentFilterSet(filters.FilterSet):
     """FilterSet for the EngagementOrderVersionAssignment model."""
 
     class Meta:
@@ -25,7 +25,7 @@ class EngagementOrderVersionAssignmentFilterSet(filters.FilterSet):  # type: ign
         fields = ["engagement", "order_version"]
 
 
-class EngagementUndertakingAssignmentFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class EngagementUndertakingAssignmentFilterSet(filters.FilterSet):
     """FilterSet for the EngagementUndertakingAssignment model."""
 
     class Meta:

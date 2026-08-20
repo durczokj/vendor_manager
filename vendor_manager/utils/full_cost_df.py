@@ -13,7 +13,7 @@ from people.models import Person
 from undertakings.models import Undertaking
 
 
-def get_full_cost_df():
+def get_full_cost_df() -> pd.DataFrame:
     """Returns a DataFrame with all costs and cost coverages for all engagements."""
     # === 1. Bulk fetch all raw data ===
 

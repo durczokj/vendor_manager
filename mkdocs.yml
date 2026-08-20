@@ -37,12 +37,28 @@ markdown_extensions:
 nav:
   - Home: index.md
   - User Guide:
+      - Overview: user-guide/index.md
       - Getting started: user-guide/getting-started.md
+      - Roles at a glance: user-guide/roles.md
+      - Companies & contracts: user-guide/companies-and-contracts.md
+      - Orders & versions: user-guide/orders.md
+      - Undertakings & cost centers: user-guide/undertakings.md
+      - People & engagements: user-guide/people-and-engagements.md
+      - Leaves: user-guide/leaves.md
+      - Dashboard: user-guide/dashboard.md
   - Developer Guide:
+      - Overview: developer-guide/index.md
       - Architecture: developer-guide/architecture.md
-      - Data model: ERD.md
+      - Data model: developer-guide/data-model.md
       - Roles & permissions: developer-guide/roles-and-permissions.md
+      - Coding conventions: developer-guide/coding-conventions.md
+      - Testing: developer-guide/testing.md
       - Local dev: developer-guide/local-dev.md
       - Deployment: developer-guide/deployment.md
       - Requirements: REQUIREMENTS.md
-  - API Reference: /docs/api/
+      - Implementation plan: IMPLEMENTATION_PLAN.md
+      - ERD: ERD.md
+  - API Reference:
+      - Overview: api-reference/index.md
+      - Using the API: api-reference/using-the-api.md
+      - Swagger UI: /docs/api/

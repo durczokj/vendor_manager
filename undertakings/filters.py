@@ -5,7 +5,7 @@ from django_filters import rest_framework as filters
 from undertakings.models import CostCenter, Undertaking
 
 
-class CostCenterFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class CostCenterFilterSet(filters.FilterSet):
     """FilterSet for the CostCenter model."""
 
     class Meta:
@@ -15,7 +15,7 @@ class CostCenterFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8):
         fields = ["name"]
 
 
-class UndertakingFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class UndertakingFilterSet(filters.FilterSet):
     """FilterSet for the Undertaking model."""
 
     class Meta:

@@ -19,12 +19,16 @@ import pytest
 from django.contrib.auth.models import User
 from rolepermissions.roles import assign_role
 
-from companies.models import Company
-from contracts.models import Contract
-from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
-from orders.models import Order, OrderVersion
-from people.models import Person
-from undertakings.models import CostCenter, Undertaking
+from companies.tests.factories import CompanyFactory
+from contracts.tests.factories import ContractFactory
+from engagements.tests.factories import (
+    EngagementFactory,
+    EngagementOrderVersionAssignmentFactory,
+    EngagementUndertakingAssignmentFactory,
+)
+from orders.tests.factories import OrderFactory, OrderVersionFactory
+from people.tests.factories import PersonFactory
+from undertakings.tests.factories import CostCenterFactory, UndertakingFactory
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -61,14 +65,14 @@ def api_data(db):
     assign_role(manager_user, "undertaking_manager")
     assign_role(person_user, "person")
 
-    manager_person = Person.objects.create(id="M00001", first_name="Manager", last_name="User", user=manager_user)
-    person_a = Person.objects.create(id="A00001", first_name="Alice", last_name="Alpha", user=person_user)
-    person_b = Person.objects.create(id="B00001", first_name="Bob", last_name="Beta")
+    manager_person = PersonFactory(id="M00001", first_name="Manager", last_name="User", user=manager_user)
+    person_a = PersonFactory(id="A00001", first_name="Alice", last_name="Alpha", user=person_user)
+    person_b = PersonFactory(id="B00001", first_name="Bob", last_name="Beta")
 
-    company = Company.objects.create(id=9001, name="Acme Corp", email="acme@example.com")
-    order = Order.objects.create(id=8001, name="Order 8001", company=company)
-    contract = Contract.objects.create(id=7001, name="Contract 7001", status="active", size=1)
-    order_version = OrderVersion.objects.create(
+    company = CompanyFactory(id=9001, name="Acme Corp", email="acme@example.com")
+    order = OrderFactory(id=8001, name="Order 8001", company=company)
+    contract = ContractFactory(id=7001, name="Contract 7001", status="active", size=1)
+    order_version = OrderVersionFactory(
         order=order,
         contract=contract,
         version_number=1,
@@ -76,42 +80,40 @@ def api_data(db):
         end_date=date(2024, 12, 31),
     )
 
-    cost_center = CostCenter.objects.create(id=6001, name="CC-6001")
-    undertaking = Undertaking.objects.create(
-        id=5001, name="Undertaking 5001", cost_center=cost_center, manager=manager_person
-    )
+    cost_center = CostCenterFactory(id=6001, name="CC-6001")
+    undertaking = UndertakingFactory(id=5001, name="Undertaking 5001", cost_center=cost_center, manager=manager_person)
 
-    eng_a = Engagement.objects.create(
+    eng_a = EngagementFactory(
         person=person_a,
         start_date=date(2024, 1, 1),
         end_date=date(2024, 1, 2),
         daily_rate=100,
         fte=1,
     )
-    EngagementOrderVersionAssignment(engagement=eng_a, order_version=order_version).save()
-    EngagementUndertakingAssignment(
+    EngagementOrderVersionAssignmentFactory(engagement=eng_a, order_version=order_version)
+    EngagementUndertakingAssignmentFactory(
         engagement=eng_a,
         undertaking=undertaking,
         start_date=date(2024, 1, 1),
         end_date=date(2024, 1, 2),
         percentage=1,
-    ).save()
+    )
 
-    eng_b = Engagement.objects.create(
+    eng_b = EngagementFactory(
         person=person_b,
         start_date=date(2024, 1, 1),
         end_date=date(2024, 1, 2),
         daily_rate=200,
         fte=1,
     )
-    EngagementOrderVersionAssignment(engagement=eng_b, order_version=order_version).save()
-    EngagementUndertakingAssignment(
+    EngagementOrderVersionAssignmentFactory(engagement=eng_b, order_version=order_version)
+    EngagementUndertakingAssignmentFactory(
         engagement=eng_b,
         undertaking=undertaking,
         start_date=date(2024, 1, 1),
         end_date=date(2024, 1, 2),
         percentage=1,
-    ).save()
+    )
 
     return {
         "admin_user": admin_user,

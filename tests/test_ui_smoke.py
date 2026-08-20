@@ -22,11 +22,12 @@ from django.urls import reverse
 from rolepermissions.roles import assign_role
 
 from companies.models import Company
-from contracts.models import Contract
-from engagements.models import Engagement
-from orders.models import Order, OrderVersion
-from people.models import Person
-from undertakings.models import CostCenter, Undertaking
+from companies.tests.factories import CompanyFactory
+from contracts.tests.factories import ContractFactory
+from engagements.tests.factories import EngagementFactory
+from orders.tests.factories import OrderFactory, OrderVersionFactory
+from people.tests.factories import PersonFactory
+from undertakings.tests.factories import CostCenterFactory, UndertakingFactory
 
 
 @pytest.fixture
@@ -42,21 +43,21 @@ def admin_client(db) -> Client:
 @pytest.fixture
 def seed_for_forms(db) -> dict:
     """Minimal object graph so create-form POSTs have valid FK targets."""
-    cc = CostCenter.objects.create(id=9001, name="UI CC")
-    manager = Person.objects.create(id="900001", first_name="UI", last_name="Manager")
-    undertaking = Undertaking.objects.create(id=9101, name="UI Undertaking", cost_center=cc, manager=manager)
-    company = Company.objects.create(id=9201, name="UI Company", email="ui@example.com")
-    contract = Contract.objects.create(id=9301, name="UI Contract", status="active", size=1)
-    order = Order.objects.create(id=9401, name="UI Order", company=company)
-    order_version = OrderVersion.objects.create(
+    cc = CostCenterFactory(id=9001, name="UI CC")
+    manager = PersonFactory(id="900001", first_name="UI", last_name="Manager")
+    undertaking = UndertakingFactory(id=9101, name="UI Undertaking", cost_center=cc, manager=manager)
+    company = CompanyFactory(id=9201, name="UI Company", email="ui@example.com")
+    contract = ContractFactory(id=9301, name="UI Contract", status="active", size=1)
+    order = OrderFactory(id=9401, name="UI Order", company=company)
+    order_version = OrderVersionFactory(
         order=order,
         contract=contract,
         version_number=1,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
     )
-    person = Person.objects.create(id="900002", first_name="UI", last_name="Person")
-    engagement = Engagement.objects.create(
+    person = PersonFactory(id="900002", first_name="UI", last_name="Person")
+    engagement = EngagementFactory(
         person=person,
         start_date=date(2025, 1, 1),
         end_date=date(2025, 12, 31),
@@ -145,9 +146,10 @@ def test_undertaking_assignment_create_persists(admin_client: Client, seed_for_f
             "percentage": "1.00",
         },
     )
-    assert response.status_code in (302, 303), (
-        f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
-    )
+    assert response.status_code in (
+        302,
+        303,
+    ), f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
     assert EngagementUndertakingAssignment.objects.count() == before + 1
 
 
@@ -163,9 +165,10 @@ def test_company_create_persists(admin_client: Client) -> None:
             "email": "smoke@example.com",
         },
     )
-    assert response.status_code in (302, 303), (
-        f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
-    )
+    assert response.status_code in (
+        302,
+        303,
+    ), f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
     assert Company.objects.count() == before + 1
 
 
@@ -184,9 +187,10 @@ def test_leave_create_persists(admin_client: Client, seed_for_forms: dict) -> No
             "percentage": Decimal("0.50"),
         },
     )
-    assert response.status_code in (302, 303), (
-        f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
-    )
+    assert response.status_code in (
+        302,
+        303,
+    ), f"expected redirect, got {response.status_code}: {response.content[:400]!r}"
     assert Leave.objects.count() == before + 1
 
 

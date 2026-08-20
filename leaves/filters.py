@@ -5,7 +5,7 @@ from django_filters import rest_framework as filters
 from leaves.models import Leave
 
 
-class LeaveFilterSet(filters.FilterSet):  # type: ignore[misc]  # TODO(P8): add django-filter stubs
+class LeaveFilterSet(filters.FilterSet):
     """FilterSet for the Leave model."""
 
     class Meta:
