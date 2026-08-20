@@ -20,8 +20,8 @@ python manage.py migrate && python manage.py runserver
 > one-liner ran `runserver` without them and it failed to start (or started with
 > `DEBUG=False`). `export` fixes that for the whole shell session.
 
-Open <http://localhost:8000>. Full local-dev guide (including the Compose+PostgreSQL
-mode) is at [docs/developer-guide/local-dev.md](docs/developer-guide/local-dev.md).
+Open <http://localhost:8000>. Full local-dev guide is at
+[docs/developer-guide/local-dev.md](docs/developer-guide/local-dev.md).
 
 ## License
 

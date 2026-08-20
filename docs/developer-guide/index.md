@@ -14,7 +14,7 @@ are looking for how to *use* the app, jump to the [User Guide](../user-guide/ind
   reviewable: services vs. selectors vs. managers, thin views, docstrings, migrations,
   URL naming.
 - [Testing](testing.md) — factories, permission-matrix tests, coverage gates.
-- [Local dev](local-dev.md) — the two dev modes, seed data, verify loop.
+- [Local dev](local-dev.md) — SQLite setup, seed data, verify loop.
 - [Deployment](deployment.md) — the k3s CD pipeline, image tagging, rollback.
 
 ## Where to find things

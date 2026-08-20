@@ -3,37 +3,11 @@
 ## Prerequisites
 
 - Python 3.13
-- Docker (optional — only needed for Mode A with a real PostgreSQL database)
 - `pip`
 
-## Dev mode A — Compose DB + host app (default)
+## Setup — Pure SQLite (no Docker)
 
-Start **only PostgreSQL** in Docker; the Django app runs on the host for fast reloads and
-easy debugging.
-
-```bash
-# 1. Start PostgreSQL
-docker compose up -d
-
-# 2. Install Python dependencies
-pip install -r requirements.txt -r requirements-dev.txt
-
-# 3. Apply migrations
-python manage.py migrate
-
-# 4. Create a superuser
-python manage.py createsuperuser
-
-# 5. Start the development server
-python manage.py runserver
-```
-
-Open <http://localhost:8000> in your browser.
-
-## Dev mode B — Pure SQLite (no Docker)
-
-Run everything on the host using an SQLite database file. No containers required. Useful
-for quick experiments and CI-like environments.
+Run everything on the host using an SQLite database file. No containers required.
 
 ```bash
 # 1. Install Python dependencies
@@ -50,6 +24,9 @@ DJANGO_DEBUG=true DJANGO_SECRET_KEY=dev DATABASE_ENGINE=sqlite python manage.py 
 ```
 
 Open <http://localhost:8000> in your browser.
+
+> A Compose-based Postgres dev mode existed previously and may return; production runs on
+> PostgreSQL under k3s (see [Deployment](deployment.md)).
 
 ## Populating sample data
 
