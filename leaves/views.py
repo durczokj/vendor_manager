@@ -23,7 +23,6 @@ from vendor_manager.cbv import EntityDeleteView
 from .forms import LeaveForm
 from .models import Leave
 from .tables import LeaveTable
-from .utils.leave_calendar import LeaveCalendar
 from .utils.leave_matrix import LeaveMatrix
 
 if TYPE_CHECKING:
@@ -32,9 +31,6 @@ if TYPE_CHECKING:
 else:
     _LeaveListBase = ListView
     _LeaveCreateBase = CreateView
-
-_VALID_VIEWS = {"calendar", "matrix"}
-_DEFAULT_VIEW = "matrix"
 
 
 @method_decorator([has_permission_decorator("view_leave")], name="dispatch")
@@ -53,11 +49,6 @@ class LeaveListView(LoginRequiredMixin, _LeaveListBase):
             return int(raw)
         except ValueError:
             return None
-
-    def _resolve_view(self) -> str:
-        """Parse ``?view=calendar|matrix``; default to ``matrix``."""
-        raw = self.request.GET.get("view", _DEFAULT_VIEW).strip().lower()
-        return raw if raw in _VALID_VIEWS else _DEFAULT_VIEW
 
     def _resolve_include_all_people(self) -> bool:
         """Parse ``?include_all_people=on`` (checkbox); default False."""
@@ -121,7 +112,6 @@ class LeaveListView(LoginRequiredMixin, _LeaveListBase):
             else datetime(year, month + 1, 1) - timedelta(days=1)
         )
         leaves = self.get_queryset()
-        view_mode = self._resolve_view()
         selected_undertaking_id = self._resolve_undertaking_id()
         include_all_people = self._resolve_include_all_people()
 
@@ -136,11 +126,9 @@ class LeaveListView(LoginRequiredMixin, _LeaveListBase):
                 "add_url": None,
                 "page_title": "Leaves",
                 "form": LeaveForm(user=self.request.user),
-                "calendar": LeaveCalendar(year=year, month=month, leaves=leaves).formatmonth(),
                 "matrix": LeaveMatrix(year=year, month=month, leaves=leaves, people=matrix_people).render(),
                 "month": month,
                 "year": year,
-                "view_mode": view_mode,
                 "undertakings": undertakings,
                 "selected_undertaking_id": selected_undertaking_id,
                 "include_all_people": include_all_people,

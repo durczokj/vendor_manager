@@ -15,6 +15,8 @@ import numpy as np
 import pandas as pd
 from django.contrib.auth.models import User
 
+from calendars.models import Calendar, CalendarAssignment
+from calendars.selectors import is_working
 from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
 from leaves.models import Leave
 
@@ -37,6 +39,48 @@ def _na_to_none(val: Any) -> Any:
     if isinstance(val, float) and math.isnan(val):
         return None
     return val
+
+
+def _compute_working_day_flags(
+    person_ids: pd.Series,
+    days: pd.Series,
+    accessible_person_ids: set[Any],
+) -> pd.Series:
+    """Return a boolean Series marking working days per (person, date).
+
+    A day is a working day iff the person's active :class:`CalendarAssignment`
+    on that date resolves to a calendar whose weekly pattern includes the
+    weekday and whose holiday calendar does not list the date. If no
+    assignment covers the day the fallback is ``True`` (treat as working)
+    so persons without a calendar assignment behave as they did before the
+    ``calendars`` feature was introduced.
+    """
+    assignments = list(
+        CalendarAssignment.objects.filter(person_id__in=accessible_person_ids)
+        .select_related("calendar__weekly_pattern", "calendar__holiday_calendar")
+        .order_by("person_id", "start_date")
+    )
+    if not assignments:
+        return pd.Series(True, index=person_ids.index)
+
+    by_person: dict[Any, list[tuple[date, date | None, Calendar]]] = {}
+    for a in assignments:
+        by_person.setdefault(a.person_id, []).append((a.start_date, a.end_date, a.calendar))
+
+    def _flag(person_id: Any, day_ts: Any) -> bool:
+        ranges = by_person.get(person_id)
+        if not ranges:
+            return True
+        day = day_ts.date() if hasattr(day_ts, "date") else day_ts
+        for start, end, cal in ranges:
+            if start <= day and (end is None or day <= end):
+                return is_working(cal, day)
+        return True
+
+    return pd.Series(
+        [_flag(p, d) for p, d in zip(person_ids, days, strict=True)],
+        index=person_ids.index,
+    )
 
 
 def get_accessible_cost_rows(
@@ -206,9 +250,14 @@ def get_accessible_cost_rows(
     else:
         calendar["availability"] = 1.0
 
+    # ── 5b. Calendar working days (weekly pattern + holidays) ────────────────
+    calendar["is_working_day"] = _compute_working_day_flags(
+        calendar["person_id"], calendar["date"], accessible_person_ids
+    )
+
     # ── 6. Daily cost ────────────────────────────────────────────────────────
     calendar["cost"] = np.where(
-        calendar["active"],
+        calendar["active"] & calendar["is_working_day"],
         calendar["daily_rate"] * calendar["fte"] * calendar["availability"],
         0.0,
     )

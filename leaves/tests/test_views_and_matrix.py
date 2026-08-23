@@ -111,8 +111,8 @@ def test_undertaking_filter_absent_shows_all(admin_client: Client, two_people_tw
 
 @pytest.mark.django_db
 def test_matrix_view_renders_table(admin_client: Client, two_people_two_undertakings: dict) -> None:
-    """?view=matrix must render the leave-matrix table."""
-    response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3, "view": "matrix"})
+    """The leaves page renders the leave-matrix table."""
+    response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3})
 
     assert response.status_code == 200
     body = response.content.decode("utf-8")
@@ -122,37 +122,6 @@ def test_matrix_view_renders_table(admin_client: Client, two_people_two_undertak
     assert "<th>31</th>" in body
     # Undertaking dropdown is present.
     assert 'name="undertaking"' in body
-    # View selector is present.
-    assert 'name="view"' in body
-
-
-@pytest.mark.django_db
-def test_matrix_is_default_view(admin_client: Client, two_people_two_undertakings: dict) -> None:
-    """No ?view param → matrix view."""
-    response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3})
-
-    assert response.status_code == 200
-    body = response.content.decode("utf-8")
-    assert 'class="leave-matrix"' in body
-
-
-@pytest.mark.django_db
-def test_calendar_view_is_reachable(admin_client: Client, two_people_two_undertakings: dict) -> None:
-    """?view=calendar still renders the calendar without the matrix."""
-    response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3, "view": "calendar"})
-
-    assert response.status_code == 200
-    body = response.content.decode("utf-8")
-    assert 'class="calendar"' in body
-    assert 'class="leave-matrix"' not in body
-
-
-@pytest.mark.django_db
-def test_invalid_view_falls_back_to_default(admin_client: Client) -> None:
-    """Unknown ?view= values fall back to the default (matrix)."""
-    response = admin_client.get(reverse("leave-list"), {"year": 2025, "month": 3, "view": "bogus"})
-    assert response.status_code == 200
-    assert 'class="leave-matrix"' in response.content.decode("utf-8")
 
 
 @pytest.mark.django_db
