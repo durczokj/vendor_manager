@@ -112,6 +112,34 @@ erDiagram
         int permission_id PK
     }
 
+    WEEKLY_PATTERN {
+        int id PK
+        string name
+        int working_days
+    }
+
+    HOLIDAY_CALENDAR {
+        int id PK
+        string name
+        string country_code
+        string subdivision
+    }
+
+    CALENDAR {
+        int id PK
+        string name
+        int weekly_pattern_id FK
+        int holiday_calendar_id FK
+    }
+
+    CALENDAR_ASSIGNMENT {
+        int id PK
+        string person_id FK
+        int calendar_id FK
+        date start_date
+        date end_date
+    }
+
 
     %% Define relationships
     COMPANY ||--o{ ORDER : "has"
@@ -139,6 +167,11 @@ erDiagram
 
     ENGAGEMENT ||--o{ ENGAGEMENT_UNDERTAKING_ASSIGNMENT : "has"
     UNDERTAKING ||--o{ ENGAGEMENT_UNDERTAKING_ASSIGNMENT : "has"
+
+    WEEKLY_PATTERN ||--o{ CALENDAR : "used by"
+    HOLIDAY_CALENDAR ||--o{ CALENDAR : "used by"
+    CALENDAR ||--o{ CALENDAR_ASSIGNMENT : "assigned via"
+    PERSON ||--o{ CALENDAR_ASSIGNMENT : "has"
 ```
 
 ## Notes on the diagram
@@ -150,3 +183,4 @@ erDiagram
 - **Django auth tables** (`USER`, `GROUP`, `USER_GROUP`, `PERMISSION`, `GROUP_PERMISSION`) are shown for completeness. Which of them is used to model the three roles (`Person`, `UndertakingManager`, `Admin`) is an implementation choice per `FR‑25`.
 - **`ENGAGEMENT.daily_rate`** and **`ENGAGEMENT.fte`** are `decimal`. `fte ∈ [0, 1]` per `FR‑12`.
 - **`LEAVE.percentage`** and **`ENGAGEMENT_UNDERTAKING_ASSIGNMENT.percentage`** are `decimal(3, 2)` in `[0, 1]` per `FR‑17` / `OQ‑1`.
+- **Calendars are additive to the ERD** (added post‑v1.2.1, out of the original refactor scope; see `FR‑55`–`FR‑60`). `WEEKLY_PATTERN.working_days` is a 7‑bit mask (bit 0 = Monday … bit 6 = Sunday). `HOLIDAY_CALENDAR` names an ISO‑3166 country (optional subdivision); the actual days are resolved dynamically via the `holidays` library — no per‑day rows are materialized. A `CALENDAR` bundles one `WEEKLY_PATTERN` with one `HOLIDAY_CALENDAR`. A `CALENDAR_ASSIGNMENT` is a time‑scoped, non‑overlapping link between a `PERSON` and a `CALENDAR` (nullable `end_date` means open‑ended). `weekly_pattern_id` and `holiday_calendar_id` FKs use `PROTECT` on delete; `calendar_id` on `CALENDAR_ASSIGNMENT` is also `PROTECT`; `person_id` on `CALENDAR_ASSIGNMENT` is `CASCADE` — deleting a person deletes their assignments.

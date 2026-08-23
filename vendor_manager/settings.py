@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     "engagements",
     "leaves",
     "contracts",
+    "calendars",
     "rolepermissions",
     "rest_framework",
     "django_filters",

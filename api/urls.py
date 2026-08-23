@@ -6,6 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested.routers import NestedDefaultRouter
 
+from calendars.api import (
+    CalendarAssignmentViewSet,
+    CalendarViewSet,
+    HolidayCalendarViewSet,
+    WeeklyPatternViewSet,
+)
 from companies.api import CompanyViewSet
 from contracts.api import ContractViewSet
 from dashboards.api import DashboardEntityOptionsView, DashboardSummaryView
@@ -39,6 +45,10 @@ router.register(
     basename="engagement-undertaking-assignments",
 )
 router.register("leaves", LeaveViewSet, basename="leaves")
+router.register("weekly-patterns", WeeklyPatternViewSet, basename="weekly-patterns")
+router.register("holiday-calendars", HolidayCalendarViewSet, basename="holiday-calendars")
+router.register("calendars", CalendarViewSet, basename="calendars")
+router.register("calendar-assignments", CalendarAssignmentViewSet, basename="calendar-assignments")
 
 # Nested router: /api/v1/engagements/<engagement_pk>/…
 engagements_router = NestedDefaultRouter(router, "engagements", lookup="engagement")

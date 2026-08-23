@@ -37,6 +37,7 @@
 | P7 | Test hardening | Factories, model/service/API/permission suites, diff-coverage gate live. | Runs alongside P1–P6; final push here. |
 | P8 | Strict-typing sweep | Everything that isn't already annotated gets annotated; `mypy --strict` passes on the whole project. | P1–P6 |
 | P9 | Acceptance & release | Every `FR‑*` / `NFR‑*` mapped to a passing test; `check --deploy` clean; MkDocs green; k3s deploy verified. | P0–P8 |
+| P10 | Calendars (per‑person working days) | Add `WeeklyPattern`, `HolidayCalendar`, `Calendar`, `CalendarAssignment`; integrate with cost calculations and the leave matrix. | P3, P5 |
 
 ---
 
@@ -132,6 +133,15 @@ Opportunistic P9 fixes already shipped (not part of P9.T1–T4):
 - [x] Run `sync_roles` as part of the `migrate` init container (`d2bb962`, `0.0.5`)
 - [x] Leaves calendar — undertaking filter and matrix view (`b7f82fd`, `0.0.6`)
 - [x] Leaves matrix polish — default view, gradient shading, layout (`a9df8cc`, `0.0.7`)
+
+### Phase 10 — Calendars (per‑person working days)
+- [x] P10.T1 `calendars` app scaffold (models, manager, admin, factories, initial migration)
+- [x] P10.T2 selectors (`is_working_for`, `calendar_on`) and dashboard integration
+- [x] P10.T3 DRF viewsets + `HasRolePermission` + `CanAccessAssignmentPerson`
+- [x] P10.T4 role permission matrix extended for the four new models
+- [x] P10.T5 UI CRUD for `CalendarAssignment` from the Person detail page
+- [x] P10.T6 free‑day rendering in the leaves absence matrix; remove standalone calendar view
+- [x] P10.T7 docs: ERD, requirements §3.11, user guide, developer‑guide entity index
 
 ---
 
@@ -1210,6 +1220,187 @@ Opportunistic P9 fixes already shipped (not part of P9.T1–T4):
 
 - Every acceptance criterion in §6 is verified.
 - The `docs/traceability.md` matrix has no gaps.
+
+---
+
+## Phase 10 — Calendars (per‑person working days)
+
+**Goal.** Model per‑person working / non‑working days as a first‑class concept so that
+cost calculations, the leave matrix, and the dashboard reflect real availability.
+Additive to the ERD (see [docs/ERD.md](ERD.md)) — no existing entity is changed.
+
+**Satisfies.** `FR‑55`, `FR‑56`, `FR‑57`, `FR‑58`, `FR‑59`, `FR‑60`, `FR‑61`.
+
+**Definition of done.**
+
+- `calendars` app is a full Django app under the project layout mandated by `NFR‑1`
+  (models, manager, admin, api, permissions, serializers, selectors, forms, tables,
+  views, urls, tests, migrations).
+- All four models are reachable via `/api/v1/` with the role and object‑level checks
+  from `FR‑58` / `FR‑59`.
+- `CalendarAssignment` CRUD is reachable from the Person detail page (Add / Edit /
+  Delete) per `FR‑60`.
+- `/leaves/` renders free days as red cells (leaves take precedence); the standalone
+  "calendar view" toggle is gone per `FR‑61`.
+- ERD, requirements (§3.11), user guide, and developer‑guide entity index reflect the
+  new surface area.
+
+### P10.T1 — `calendars` app scaffold [serial]
+
+**Satisfies.** `FR‑55`, `FR‑56`.
+
+**Do.**
+
+- Create the `calendars` Django app; add it to `INSTALLED_APPS` and `TEMPLATES.OPTIONS`
+  where relevant.
+- Add models `WeeklyPattern`, `HolidayCalendar`, `Calendar`, `CalendarAssignment` per
+  `FR‑55`. `CalendarAssignment.save()` calls `full_clean()`; `clean()` enforces
+  `FR‑56` (date order + non‑overlap per person, treating NULL `end_date` as `+∞`).
+- Add `CalendarAssignmentManager` with `accessible_to(user)` filtering through
+  `Person.objects.accessible_to(user)`.
+- Register the four models in the Django admin with `list_display`, `list_filter`,
+  `search_fields` per `FR‑48`.
+- Add `factory_boy` factories under `calendars/tests/factories.py`.
+- Add the initial migration (`0001_initial`).
+
+**Acceptance.**
+
+- Model unit tests cover the mask semantics (`is_working_weekday`), the overlap
+  detector, and the `NULL end_date == +∞` convention.
+- Admin pages render for all four models under a superuser.
+
+### P10.T2 — Selectors and dashboard integration [serial]
+
+**Satisfies.** `FR‑57`, `FR‑19`, `FR‑45`, `FR‑47`.
+
+**Do.**
+
+- Implement `calendars/selectors.py`:
+    - `calendar_on(person, day) -> Calendar | None` — the `Calendar` in effect for
+      `person` on `day` via the covering `CalendarAssignment` (if any).
+    - `is_working_for(person, day) -> bool | None` — per `FR‑57`; `None` when no
+      assignment covers `day`, else weekday‑mask AND not‑holiday.
+- Wire the dashboards cost pipeline (`dashboards/selectors.py`) so that per‑day cost
+  becomes zero when `is_working_for(person, day) is False`. `None` MUST fall back to
+  the pre‑P10 behavior (assume working).
+
+**Acceptance.**
+
+- Selector tests cover: no assignment → `None`; assignment with Mon‑Fri pattern →
+  `True` on Wednesday, `False` on Saturday; national holiday → `False` on that date;
+  boundary days at the `start_date` / `end_date` edges.
+- A regression test proves the case reported by the user (holiday assignment now
+  reduces the cost total on `/people/<code>/`).
+
+### P10.T3 — DRF viewsets and permissions [parallel-safe with P10.T2]
+
+**Satisfies.** `FR‑58`, `FR‑59`, `FR‑27`, `FR‑28`.
+
+**Do.**
+
+- Implement `calendars/api.py` with four `ModelViewSet`s and explicit serializers in
+  `calendars/serializers.py` (no `fields = "__all__"`).
+- Implement `calendars/permissions.py`:
+    - `HasRolePermission` — maps request method → codename
+      (`view_/add_/change_/delete_<model>`) and checks via
+      `rolepermissions.checkers.has_permission`.
+    - `CanAccessAssignmentPerson` — object‑level check delegating to the shared
+      `access_person` checker; SAFE_METHODS bypass.
+- The `CalendarAssignment` viewset MUST scope its queryset through
+  `Person.objects.accessible_to(user)` and MUST enforce `access_person` on the
+  incoming payload in `perform_create` / `perform_update`.
+
+**Acceptance.**
+
+- API tests for each of the three roles (Admin, UndertakingManager, Person) exercise
+  both the allow and the deny path on every endpoint.
+- Attempting to `POST` a `CalendarAssignment` for a person outside the caller's scope
+  returns HTTP 403.
+
+### P10.T4 — Role permission matrix [serial after P10.T1]
+
+**Satisfies.** `FR‑59`, `FR‑25`.
+
+**Do.**
+
+- Extend `vendor_manager/roles.py` with the 16 new codenames
+  (`{view,add,change,delete}_{weeklypattern,holidaycalendar,calendar,calendarassignment}`).
+- Admin: all True. UndertakingManager: read‑only on the first three; full CRUD on
+  `calendarassignment`. Person: all False.
+- Extend `vendor_manager/tests.py` (permission‑matrix test) with assertions covering
+  the new codenames for all three roles.
+
+**Acceptance.**
+
+- The permission‑matrix test passes with the extended matrix.
+
+### P10.T5 — UI CRUD from the Person detail page [serial after P10.T3]
+
+**Satisfies.** `FR‑60`, `FR‑37`, `FR‑40`.
+
+**Do.**
+
+- Add `calendars/forms.py` (`CalendarAssignmentForm`), `calendars/tables.py`
+  (`CalendarAssignmentTable`), `calendars/views.py` (list / detail / create / update /
+  delete CBVs using the shared `_form.html` / `_detail.html` / `_confirm_delete.html`
+  per `FR‑37` / `FR‑40`), and `calendars/urls.py` (kebab‑case, plural, trailing‑slash
+  per `FR‑49`).
+- Extend `people/views.PersonDetailView.related_table_specs` with a "Calendar
+  Assignments" block using `CalendarAssignmentTable`; the Add button MUST link to
+  `calendar-assignment-create?person=<pk>`.
+- Do NOT add a top‑level sidebar entry — management is done from the Person detail
+  page per user decision.
+
+**Acceptance.**
+
+- Admin and UndertakingManager can add / edit / delete a `CalendarAssignment` from
+  a Person detail page they can access.
+- UndertakingManager gets HTTP 403 when attempting the same for a person outside
+  their scope.
+- No new hard‑coded URL: every link goes through `{% url %}` / `reverse()`.
+
+### P10.T6 — Free‑day rendering in the leaves matrix [serial after P10.T2]
+
+**Satisfies.** `FR‑61`.
+
+**Do.**
+
+- Extend `leaves/utils/leave_matrix.py` to shade cells where
+  `is_working_for(person, day) is False` in red; leave cells MUST take precedence.
+- Delete `leaves/utils/leave_calendar.py` and remove the view‑selector dropdown from
+  `leaves/templates/leaves.html`; the absence matrix is the only view.
+- Remove `_VALID_VIEWS` / `_DEFAULT_VIEW` / `_resolve_view` from `leaves/views.py` and
+  drop the stale `view=` query param handling.
+- Update `leaves/tests/test_views_and_matrix.py` to drop the calendar‑view tests and
+  cover the red‑cell rendering.
+
+**Acceptance.**
+
+- `/leaves/` returns 200 without a `?view=` param and renders only the matrix.
+- A person with a Mon‑Fri calendar shows a red cell on Saturday and Sunday.
+- A day with both a leave and a free‑day flag renders as a leave cell.
+
+### P10.T7 — Documentation sweep [serial after P10.T5, P10.T6]
+
+**Satisfies.** `FR‑51`, `FR‑52`, `FR‑53`.
+
+**Do.**
+
+- Extend [docs/ERD.md](ERD.md) with the four new entities and their relationships.
+- Add §3.11 to [docs/REQUIREMENTS.md](REQUIREMENTS.md) covering `FR‑55`–`FR‑61` and a
+  change‑log entry.
+- Add a `docs/user-guide/calendars.md` page and cross‑link it from
+  `docs/user-guide/leaves.md` and `docs/user-guide/index.md`; add it to
+  `mkdocs.yml` navigation.
+- Update `docs/user-guide/leaves.md` to drop the "calendar / matrix view" language.
+- Extend `docs/developer-guide/data-model.md` entity index with the four new rows.
+- Extend `docs/user-guide/roles.md` matrix with the four new entities.
+
+**Acceptance.**
+
+- `mkdocs build --strict` passes.
+- The ERD diagram, requirements, and user guide are internally consistent with the
+  code that ships in P10.T1–T6.
 
 ---
 

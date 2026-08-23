@@ -91,6 +91,7 @@ convention = "google"
 [tool.ruff.lint.isort]
 known-first-party = [
     "vendor_manager",
+    "calendars",
     "companies",
     "contracts",
     "dashboards",
@@ -128,6 +129,7 @@ exclude = [
 # errors don't gate application code.
 files = [
     "api",
+    "calendars",
     "companies",
     "contracts",
     "dashboards",
@@ -186,6 +188,8 @@ module = [
     "django_filters",
     "django_filters.*",
     "rest_framework_nested.*",
+    "holidays",
+    "holidays.*",
     # pandas-stubs not installed; numpy ships its own stubs but mypy still
     # complains on some builds. Suppress until P8 strict-typing sweep.
     "pandas",
@@ -248,6 +252,7 @@ module = [
     "engagements.filters",
     "leaves.filters",
     "orders.filters",
+    "calendars.filters",
     "people.filters",
     "undertakings.filters",
 ]
@@ -280,7 +285,8 @@ filterwarnings = [
 # ---------------------------------------------------------------------------
 [tool.coverage.run]
 source = [
-    "vendor_manager",
+    "valendars",
+    "cendor_manager",
     "companies",
     "contracts",
     "dashboards",

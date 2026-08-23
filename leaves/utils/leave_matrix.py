@@ -10,6 +10,8 @@ from typing import Any, Protocol
 
 from django.utils.safestring import SafeString, mark_safe
 
+from calendars.selectors import is_working_for
+
 
 class _LeaveLike(Protocol):
     """Minimal duck-typed interface used by the matrix renderer."""
@@ -32,13 +34,28 @@ def _shade_for(percentage: float) -> str:
     return f"rgba(52, 152, 219, {alpha:.2f})"
 
 
+# Fill applied to days that the person's assigned Calendar marks as free
+# (weekend under the weekly pattern, or a public holiday).
+_FREE_DAY_FILL = "rgba(231, 76, 60, 0.35)"
+
+
+def _is_free_day(person: Any, day: date) -> bool:
+    """Return True iff ``day`` is a non-working day under the person's calendar."""
+    if not hasattr(person, "calendar_assignments"):
+        return False
+    return is_working_for(person, day) is False
+
+
 class LeaveMatrix:
     """Render an HTML table of leaves with people as rows and days as columns.
 
-    A cell is shaded if the person is on leave that day; the shade intensity is
-    proportional to the leave percentage. If ``people`` is provided, every one
-    of them gets a row (even with no leaves that month); otherwise only people
-    with at least one overlapping leave are shown.
+    A cell is shaded blue if the person is on leave that day; the shade
+    intensity is proportional to the leave percentage. A cell is shaded red
+    when the person's assigned :class:`~calendars.models.Calendar` marks the
+    day as free (weekly non-working day or public holiday). Leaves take
+    precedence over free-day shading. If ``people`` is provided, every one
+    of them gets a row (even with no leaves that month); otherwise only
+    people with at least one overlapping leave are shown.
     """
 
     def __init__(
@@ -55,20 +72,25 @@ class LeaveMatrix:
         self.people = list(people) if people is not None else None
         self.days_in_month = calendar.monthrange(year, month)[1]
 
-    def _rows(self) -> dict[str, list[_LeaveLike | None]]:
-        """Group leaves per person, one slot per day of month."""
-        rows: dict[str, list[_LeaveLike | None]] = {}
+    def _rows(self) -> dict[str, tuple[Any, list[_LeaveLike | None]]]:
+        """Group leaves per person, one slot per day of month.
+
+        The value is a ``(person, cells)`` tuple so the renderer can query
+        the person's calendar for free-day shading without another lookup.
+        """
+        rows: dict[str, tuple[Any, list[_LeaveLike | None]]] = {}
         if self.people is not None:
             for person in self.people:
-                rows[str(person)] = [None] * self.days_in_month
+                rows[str(person)] = (person, [None] * self.days_in_month)
         for leave in self.leaves:
             key = str(leave.person)
             if key not in rows:
-                rows[key] = [None] * self.days_in_month
+                rows[key] = (leave.person, [None] * self.days_in_month)
+            person_obj, day_cells = rows[key]
             for day_number in range(1, self.days_in_month + 1):
                 current = date(self.year, self.month, day_number)
                 if leave.start_date <= current <= leave.end_date:
-                    rows[key][day_number - 1] = leave
+                    day_cells[day_number - 1] = leave
         return dict(sorted(rows.items()))
 
     def render(self) -> SafeString:
@@ -81,16 +103,21 @@ class LeaveMatrix:
         header_cells = "".join(f"<th>{day}</th>" for day in range(1, self.days_in_month + 1))
 
         body_rows: list[str] = []
-        for person, day_cells in rows.items():
+        for person_label, (person_obj, day_cells) in rows.items():
             cell_html_parts: list[str] = []
-            for leave in day_cells:
-                if leave is None:
-                    cell_html_parts.append('<td class="leave-cell"></td>')
-                else:
+            for day_index, leave in enumerate(day_cells, start=1):
+                current = date(self.year, self.month, day_index)
+                if leave is not None:
                     pct = float(leave.percentage)
                     fill = _shade_for(pct)
                     cell_html_parts.append(f'<td class="leave-cell" style="background-color: {fill};">{pct:.2f}</td>')
-            person_escaped = html.escape(person, quote=True)
+                elif _is_free_day(person_obj, current):
+                    cell_html_parts.append(
+                        f'<td class="leave-cell free-day" style="background-color: {_FREE_DAY_FILL};"></td>'
+                    )
+                else:
+                    cell_html_parts.append('<td class="leave-cell"></td>')
+            person_escaped = html.escape(person_label, quote=True)
             body_rows.append(
                 f'<tr><th scope="row" title="{person_escaped}">{person_escaped}</th>{"".join(cell_html_parts)}</tr>'
             )

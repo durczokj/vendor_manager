@@ -48,6 +48,7 @@ urlpatterns = [
     path("undertakings/", include("undertakings.urls")),
     path("engagements/", include("engagements.urls")),
     path("leaves/", include("leaves.urls")),
+    path("calendar-assignments/", include("calendars.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
 ]

@@ -3,6 +3,7 @@
 from django.utils.decorators import method_decorator
 from rolepermissions.decorators import has_permission_decorator
 
+from calendars.tables import CalendarAssignmentTable
 from engagements.tables import EngagementTable, EngagementUndertakingAssignmentTable
 from vendor_manager.cbv import EntityCreateView, EntityDeleteView, EntityDetailView, EntityListView, EntityUpdateView
 
@@ -52,6 +53,14 @@ class PersonDetailView(EntityDetailView):
             EngagementUndertakingAssignmentTable,
             "engagement-undertaking-assignment-create",
             "add_engagement_undertaking_assignment",
+        ),
+        (
+            "Calendar Assignments",
+            lambda p: p.calendar_assignments.select_related("calendar").all(),
+            CalendarAssignmentTable,
+            "calendar-assignment-create",
+            "add_calendarassignment",
+            "person",
         ),
     ]
 

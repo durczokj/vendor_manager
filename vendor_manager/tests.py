@@ -92,6 +92,22 @@ def test_roles_have_expected_permission_sets() -> None:
         "add_contract",
         "change_contract",
         "delete_contract",
+        "view_weeklypattern",
+        "add_weeklypattern",
+        "change_weeklypattern",
+        "delete_weeklypattern",
+        "view_holidaycalendar",
+        "add_holidaycalendar",
+        "change_holidaycalendar",
+        "delete_holidaycalendar",
+        "view_calendar",
+        "add_calendar",
+        "change_calendar",
+        "delete_calendar",
+        "view_calendarassignment",
+        "add_calendarassignment",
+        "change_calendarassignment",
+        "delete_calendarassignment",
     }
 
     assert set(PersonRole.available_permissions) == expected_permissions
@@ -107,11 +123,16 @@ def test_roles_have_expected_permission_sets() -> None:
     assert UndertakingManager.available_permissions["change_undertaking"] is True
     assert UndertakingManager.available_permissions["delete_undertaking"] is True
     assert UndertakingManager.available_permissions["add_order"] is False
+    assert UndertakingManager.available_permissions["view_calendar"] is True
+    assert UndertakingManager.available_permissions["add_calendar"] is False
+    assert UndertakingManager.available_permissions["add_calendarassignment"] is True
 
     assert Admin.available_permissions["view_engagement_undertaking_assignment"] is True
     assert Admin.available_permissions["add_engagement_undertaking_assignment"] is True
     assert Admin.available_permissions["delete_engagement"] is True
     assert Admin.available_permissions["change_contract"] is True
+    assert Admin.available_permissions["add_calendar"] is True
+    assert Admin.available_permissions["delete_calendarassignment"] is True
 
 
 @pytest.mark.django_db
