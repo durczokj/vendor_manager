@@ -18,7 +18,7 @@ class CalendarAssignmentTable(BaseEntityTable):
     """Table for listing :class:`CalendarAssignment` records."""
 
     id = tables.Column(linkify=("calendar-assignment-detail", {"pk": tables.A("pk")}))
-    person = tables.Column(linkify=("person-detail", {"pk": tables.A("person.pk")}))
+    person = tables.Column(linkify=("person-detail", {"pk": tables.A("person__pk")}))
     calendar = tables.Column()
     start_date = tables.DateColumn(format="Y-m-d")
     end_date = tables.DateColumn(format="Y-m-d")
