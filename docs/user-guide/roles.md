@@ -53,6 +53,10 @@ The table below is a business-facing summary. The developer-facing detail lives 
 | EngagementUndertakingAssignment (FR‑10) | R/W | R/W (theirs) | R (own) |
 | EngagementOrderVersionAssignment (FR‑13) | R/W | R/W (theirs) | R (own) |
 | Leave (FR‑11) | R/W | R | R (own) |
+| WeeklyPattern (FR‑55) | R/W | R | — |
+| HolidayCalendar (FR‑55) | R/W | R | — |
+| Calendar (FR‑55) | R/W | R | — |
+| CalendarAssignment (FR‑55, FR‑58) | R/W | R/W (their people) | — |
 
 **R** = can read. **R/W** = can read and change. Blank cells mean no access; you will
 not see the sidebar entry either.

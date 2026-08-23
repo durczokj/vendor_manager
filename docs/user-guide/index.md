@@ -65,6 +65,8 @@ Each workflow page has the same shape so you always know where to find what you 
 - [People & engagements](people-and-engagements.md) — record who works with you and at
   what level of effort.
 - [Leaves](leaves.md) — record time away.
+- [Calendars](calendars.md) — assign a working‑day calendar to a person so cost and
+  the absence matrix reflect their real availability.
 - [Dashboard](dashboard.md) — read cost and coverage aggregates.
 
 !!! note "Screenshot pending"

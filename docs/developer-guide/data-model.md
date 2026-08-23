@@ -1,8 +1,10 @@
 # Data model
 
-Vendor Manager tracks eleven entities. Their relationships are frozen for the current
-refactor cycle — the ERD is the source of truth and MUST NOT be modified (per
-`REQUIREMENTS.md` §2.1).
+Vendor Manager tracks fifteen entities. The eleven core entities' relationships are
+frozen for the current refactor cycle — the ERD is the source of truth and MUST NOT be
+modified (per `REQUIREMENTS.md` §2.1). The four `calendars` entities were added
+additively post‑v1.2.1 (per `REQUIREMENTS.md` §3.11) and extend the ERD without
+touching any existing entity.
 
 ## Entity-relationship diagram
 
@@ -28,6 +30,10 @@ model definition.
 | EngagementUndertakingAssignment | FR‑10 | `engagements` | `engagements.models.EngagementUndertakingAssignment` |
 | EngagementOrderVersionAssignment | FR‑13 | `engagements` | `engagements.models.EngagementOrderVersionAssignment` |
 | Leave | FR‑11 | `leaves` | `leaves.models.Leave` |
+| WeeklyPattern | FR‑55 | `calendars` | `calendars.models.WeeklyPattern` |
+| HolidayCalendar | FR‑55 | `calendars` | `calendars.models.HolidayCalendar` |
+| Calendar | FR‑55 | `calendars` | `calendars.models.Calendar` |
+| CalendarAssignment | FR‑55, FR‑56 | `calendars` | `calendars.models.CalendarAssignment` |
 
 ## Invariants
 

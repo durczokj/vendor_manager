@@ -45,6 +45,7 @@ nav:
       - Undertakings & cost centers: user-guide/undertakings.md
       - People & engagements: user-guide/people-and-engagements.md
       - Leaves: user-guide/leaves.md
+      - Calendars: user-guide/calendars.md
       - Dashboard: user-guide/dashboard.md
   - Developer Guide:
       - Overview: developer-guide/index.md

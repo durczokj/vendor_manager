@@ -174,6 +174,73 @@ Entities in scope:
 - **FR‑53** The MkDocs site MUST be built as part of the CI pipeline (build‑only check on PRs; broken links and unresolved cross‑references MUST fail CI) and MUST be built into the production Docker image so it is served by the same process as the app. No separate docs host / no external docs URL.
 - **FR‑54** The MkDocs site MUST require authentication in production (same rule as FR‑35 / NFR‑11): reachable but not public. In local dev it MAY be served unauthenticated.
 
+### 3.11 Calendars (per‑person working‑day model)
+
+**Status:** additive to the original refactor scope; introduced in v1.3 (see §8). These
+requirements govern the `calendars` app and its integration with cost calculations and
+the leave matrix.
+
+- **FR‑55** The system MUST model per‑person working / non‑working days through four
+  entities:
+    - `WeeklyPattern` — a recurring weekly pattern of working weekdays, stored as a
+      7‑bit mask (bit 0 = Monday … bit 6 = Sunday).
+    - `HolidayCalendar` — a public‑holiday source identified by an ISO‑3166 country
+      code and optional subdivision; the actual holidays MUST be resolved dynamically
+      (currently via the `holidays` library) and MUST NOT be materialized as
+      per‑day rows.
+    - `Calendar` — a bundle of exactly one `WeeklyPattern` and exactly one
+      `HolidayCalendar`; the assignable unit.
+    - `CalendarAssignment` — a time‑scoped link between a `Person` and a `Calendar`,
+      with `start_date` and nullable `end_date` (open‑ended when NULL).
+
+- **FR‑56** `CalendarAssignment` MUST enforce these invariants at model level (via
+  `full_clean()` on save):
+    - `end_date` is either NULL or `>= start_date`.
+    - For a given `Person`, no two assignments MUST have overlapping date ranges
+      (NULL `end_date` is treated as `+∞`).
+
+  Invalid values MUST be rejected at both API and UI boundaries with a readable error.
+
+- **FR‑57** The system MUST expose a selector `is_working_for(person, day) -> bool | None`
+  that returns:
+    - `True` if the person has a `CalendarAssignment` covering `day` and the resolved
+      calendar reports `day` as a working day (weekday in the pattern's mask AND not a
+      holiday);
+    - `False` if a covering assignment exists but `day` is non‑working;
+    - `None` if no assignment covers `day`.
+
+  Cost calculations (per FR‑19) and dashboard aggregates (per FR‑45, FR‑47) MUST treat
+  a person's cost as zero on days where `is_working_for(...)` is `False`. `None` MUST
+  be treated as the legacy "assume working" fallback for people without a calendar
+  assignment on `day`.
+
+- **FR‑58** All four entities MUST be exposed as DRF `ModelViewSet`s under `/api/v1/`
+  with explicit serializers (per FR‑30). List endpoints for `CalendarAssignment` MUST
+  be scoped to assignments whose `person` the caller can access (per FR‑27, FR‑28) —
+  i.e. filtered through `Person.objects.accessible_to(user)`. Create / update
+  operations on `CalendarAssignment` MUST additionally enforce the `access_person`
+  object check on the target person.
+
+- **FR‑59** The role permission matrix MUST include, in addition to §3.4:
+    - **Admin**: full CRUD (view/add/change/delete) on `WeeklyPattern`,
+      `HolidayCalendar`, `Calendar`, and `CalendarAssignment`.
+    - **UndertakingManager**: read‑only (view) on `WeeklyPattern`, `HolidayCalendar`,
+      `Calendar`; full CRUD on `CalendarAssignment`, further scoped by `access_person`
+      per FR‑58.
+    - **Person**: no access to any of the four entities.
+
+- **FR‑60** The UI MUST expose `CalendarAssignment` CRUD from the **Person detail
+  page**: a "Calendar Assignments" related‑records block MUST list the person's
+  assignments with Add / Edit / Delete controls. `WeeklyPattern`, `HolidayCalendar`,
+  and `Calendar` MUST be maintained through the Django admin site — no server‑rendered
+  UI is required for those three.
+
+- **FR‑61** The `/leaves/` page MUST render free days (days where
+  `is_working_for(person, day) is False`) as red cells in the absence matrix. Leave
+  cells MUST take precedence over free‑day cells on the same day. The standalone
+  "calendar view" toggle previously present on `/leaves/` MUST be removed; the absence
+  matrix is the only view.
+
 ---
 
 ## 4. Non‑Functional Requirements
@@ -344,3 +411,4 @@ The following questions were raised during requirements review and have been res
   - `NFR‑24` rewritten to describe the actual local dev flow: `compose.yml` runs PostgreSQL only; the Django app runs on the host. Pure‑SQLite dev remains a supported second mode. The now‑unused `docker-compose.prod.yml` MUST be deleted.
   - Health‑check endpoint standardized on **`/health/`** (already in the k8s manifest and consistent with Django/DRF trailing‑slash conventions), not `/healthz`. `NFR‑11`, `NFR‑39`, and acceptance criterion 12 updated.
   - Acceptance criterion 12 rewritten to describe k3s rollout instead of docker‑compose deploy.
+- **v1.3** — added a **Calendars** section (§3.11) covering per‑person working‑day modelling. New requirements FR‑55 through FR‑61 introduce `WeeklyPattern`, `HolidayCalendar`, `Calendar`, and `CalendarAssignment`, the `is_working_for(person, day)` selector, the API surface, the extended permission matrix, and the free‑day rendering in the absence matrix (with removal of the standalone leaves calendar view). The ERD in [docs/ERD.md](ERD.md) is extended additively — no existing entity is modified. Implementation‑plan coverage is added as Phase P10.

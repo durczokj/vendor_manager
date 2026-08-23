@@ -16,12 +16,13 @@ under their undertakings. Person can read their own leaves.
 
 ## Screens
 
-- **Leaves list.** `/leaves/` — includes the calendar / matrix view for planning.
+- **Leaves list & absence matrix.** `/leaves/` — the leaves list, followed by the
+  absence matrix for planning (see below).
 - **Create leave.** `/leaves/create/`
 - **Delete leave.** `/leaves/<id>/delete/` (intermediate confirmation, per FR‑40)
 
 !!! note "Screenshot pending"
-    A screenshot of the leaves list with the calendar / matrix view will be added here.
+    A screenshot of the leaves list and the absence matrix will be added here.
     Tracked as a P6.T5 follow-up.
 
 ## Happy path — record a leave
@@ -33,18 +34,27 @@ under their undertakings. Person can read their own leaves.
 4. Set the **percentage** — a decimal between `0` and `1` (per FR‑17). Use `1.0` for a
    full day off, `0.5` for a half day, and so on.
 5. Optional: add a reason / note field if your deployment shows one.
-6. Save. The leave is added to the calendar and immediately subtracted from the
-   person's daily availability in dashboard calculations.
+6. Save. The leave is recorded and immediately subtracted from the person's daily
+   availability in dashboard calculations.
 
-## Reading the leave matrix
+## Reading the absence matrix
 
-The `/leaves/` page includes a matrix / calendar view for planning. Filter by
-undertaking to see, day by day, how much of your team is out. Cells are shaded by
-cumulative leave percentage so you can spot conflicts at a glance.
+The `/leaves/` page includes an **absence matrix** for planning (per FR‑61). Filter by
+undertaking to see, day by day, how much of your team is out.
+
+- **Blue‑ish shaded cells** encode cumulative leave percentage — the darker the cell,
+  the more of the day is unavailable.
+- **Red cells** mark **free days** for that person — weekends and public holidays as
+  defined by their assigned calendar (per FR‑57). A leave on a free day still renders
+  as a leave cell (leaves take precedence).
+
+Free days come from each person's [Calendar assignment](calendars.md). If a person has
+no calendar assigned, no red cells will appear for them; the matrix falls back to
+assuming every day is a working day.
 
 ## Happy path — delete a leave
 
-1. Open `/leaves/` and find the leave in the list or calendar.
+1. Open `/leaves/` and find the leave in the list or absence matrix.
 2. Click **Delete** on the row.
 3. Confirm on the intermediate page (per FR‑40).
 
@@ -62,5 +72,7 @@ Leaves have no dependents, so deletion always succeeds once you confirm.
 
 - Before: [People & engagements](people-and-engagements.md) — the person and their
   engagement must exist for the leave to have an effect on cost.
+- Alongside: [Calendars](calendars.md) — free days on the absence matrix come from
+  the person's calendar assignment.
 - Downstream: [Dashboard](dashboard.md) — leaves lower daily availability, which lowers
   the person's daily cost on the leave days (per FR‑19).
