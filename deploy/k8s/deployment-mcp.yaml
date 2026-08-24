@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vendor-manager-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vendor-manager-mcp
+  template:
+    metadata:
+      labels:
+        app: vendor-manager-mcp
+    spec:
+      containers:
+        - name: vendor-manager-mcp
+          image: durczokj/vendor-manager-mcp:__IMAGE_TAG__
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef: { name: vendor-manager-mcp-config }
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
