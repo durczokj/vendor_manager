@@ -23,6 +23,23 @@ python manage.py migrate && python manage.py runserver
 Open <http://localhost:8000>. Full local-dev guide is at
 [docs/developer-guide/local-dev.md](docs/developer-guide/local-dev.md).
 
+## Run the MCP server locally
+
+The MCP server (`vendor_manager/mcp/`) is a separate process that proxies an
+LLM client (e.g. Claude Desktop) into the vendor_manager REST API. It has its
+own runtime deps and its own image (`Dockerfile.mcp`); Django doesn't import
+it and it doesn't import Django.
+
+```bash
+pip install -r requirements-mcp.txt
+VM_API_BASE_URL=http://localhost:8000/api/v1 \
+MCP_PORT=8100 \
+python -m vendor_manager.mcp.server
+```
+
+`curl http://localhost:8100/healthz` should return `200`. See
+[docs/user-guide/mcp.md](docs/user-guide/mcp.md) for the Claude Desktop config.
+
 ## License
 
 MIT

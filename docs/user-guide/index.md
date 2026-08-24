@@ -68,6 +68,8 @@ Each workflow page has the same shape so you always know where to find what you 
 - [Calendars](calendars.md) — assign a working‑day calendar to a person so cost and
   the absence matrix reflect their real availability.
 - [Dashboard](dashboard.md) — read cost and coverage aggregates.
+- [MCP for LLM clients](mcp.md) — plug Claude Desktop into vendor_manager and
+  reconcile invoices in plain English.
 
 !!! note "Screenshot pending"
     An overview screenshot of the sidebar + landing dashboard will be added here.

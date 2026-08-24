@@ -28,6 +28,7 @@ Docker image build (see [Deployment](developer-guide/deployment.md)).
 Use the navigation on the left to explore:
 
 - **[Getting started](user-guide/getting-started.md)** — run the app locally in under five minutes.
+- **[MCP for LLM clients](user-guide/mcp.md)** — reconcile invoices from Claude Desktop, using your own login.
 - **[Architecture](developer-guide/architecture.md)** — how the codebase is structured, the UI/API split,
   and the services/selectors pattern.
 - **[Data model](ERD.md)** — entity-relationship diagram for all tracked entities.
