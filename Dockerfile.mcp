@@ -1,0 +1,54 @@
+# Dockerfile.mcp — vendor_manager MCP server image (P11.T2, satisfies FR-63).
+#
+# The MCP server is a thin FastMCP wrapper around the vendor_manager REST API.
+# It does not import Django, so this image only carries the MCP runtime deps
+# from requirements-mcp.txt plus the `vendor_manager/mcp/` package.
+#
+# Build:
+#   docker build -f Dockerfile.mcp -t vendor-manager-mcp:dev .
+# Run:
+#   docker run --rm -p 8000:8000 \
+#     -e VM_API_BASE_URL=http://host.docker.internal:8080/api/v1 \
+#     vendor-manager-mcp:dev
+
+FROM python:3.13-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+RUN pip install --upgrade pip
+
+COPY requirements-mcp.txt /app/
+RUN pip install --no-cache-dir -r requirements-mcp.txt
+
+
+FROM python:3.13-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    LOG_LEVEL=INFO
+
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+RUN groupadd --system --gid 1001 mcp \
+    && useradd --system --uid 1001 --gid mcp --home /home/mcp --create-home mcp
+
+WORKDIR /app
+
+# Only ship the mcp package; nothing else in this repo is needed at runtime.
+COPY --chown=mcp:mcp vendor_manager/__init__.py /app/vendor_manager/__init__.py
+COPY --chown=mcp:mcp vendor_manager/mcp /app/vendor_manager/mcp
+
+USER mcp
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request,sys; \
+sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status == 200 else 1)"
+
+CMD ["python", "-m", "vendor_manager.mcp.server"]
