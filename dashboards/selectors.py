@@ -336,7 +336,19 @@ def get_accessible_cost_rows(
         coverage["percentage"] = 1.0
 
     # ── 8. Merge costs × coverage ────────────────────────────────────────────
-    costs_df = calendar[["engagement_id", "date", "cost", "person_id", "order_id", "company_id"]]
+    costs_df = calendar[
+        [
+            "engagement_id",
+            "date",
+            "cost",
+            "person_id",
+            "order_id",
+            "company_id",
+            "daily_rate",
+            "fte",
+            "is_working_day",
+        ]
+    ]
     full_df = costs_df.merge(coverage, on=["engagement_id", "date"], how="left")
     full_df["cost"] = (full_df["cost"] * full_df["percentage"]).fillna(0.0)
     full_df["date"] = full_df["date"].dt.date
@@ -366,6 +378,9 @@ def get_accessible_cost_rows(
             "company_id",
             "undertaking_id",
             "percentage",
+            "daily_rate",
+            "fte",
+            "is_working_day",
         ]
     ].to_dict(orient="records")
 
