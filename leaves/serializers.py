@@ -17,6 +17,7 @@ class LeaveSerializer(serializers.ModelSerializer[Leave]):
         decimal_places=2,
         min_value=Decimal("0"),
         max_value=Decimal("1"),
+        help_text="Share of the working day the person is on leave, in [0, 1]; 1.00 = full day off.",
     )
 
     class Meta:

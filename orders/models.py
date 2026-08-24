@@ -16,9 +16,20 @@ class Order(models.Model):
 
     objects = OrderManager()
 
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=255)
-    company = models.ForeignKey(Company, related_name="orders", on_delete=models.CASCADE)
+    id = models.IntegerField(
+        primary_key=True,
+        help_text="Business-supplied order identifier (integer, immutable).",
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text="Display name of the order.",
+    )
+    company = models.ForeignKey(
+        Company,
+        related_name="orders",
+        on_delete=models.CASCADE,
+        help_text="The billing Company that owns this order.",
+    )
 
     def __str__(self) -> str:
         """Return the name of the order."""
@@ -51,11 +62,27 @@ class OrderVersion(models.Model):
 
     objects = OrderVersionManager()
 
-    order = models.ForeignKey(Order, related_name="versions", on_delete=models.CASCADE)
-    contract = models.OneToOneField(Contract, related_name="order_version", on_delete=models.CASCADE)
-    version_number = models.IntegerField()
-    start_date = models.DateField()
-    end_date = models.DateField()
+    order = models.ForeignKey(
+        Order,
+        related_name="versions",
+        on_delete=models.CASCADE,
+        help_text="Order this version belongs to.",
+    )
+    contract = models.OneToOneField(
+        Contract,
+        related_name="order_version",
+        on_delete=models.CASCADE,
+        help_text="Contract underpinning this specific order version (1:1).",
+    )
+    version_number = models.IntegerField(
+        help_text="Monotonically increasing version index within the order (1, 2, 3…).",
+    )
+    start_date = models.DateField(
+        help_text="Inclusive first day this version is in effect.",
+    )
+    end_date = models.DateField(
+        help_text="Inclusive last day this version is in effect.",
+    )
 
     class Meta:
         """Define meta options for OrderVersion."""

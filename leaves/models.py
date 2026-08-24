@@ -15,11 +15,23 @@ class Leave(models.Model):
 
     objects = LeaveManager()
 
-    person = models.ForeignKey(Person, related_name="leaves", on_delete=models.CASCADE)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    person = models.ForeignKey(
+        Person,
+        related_name="leaves",
+        on_delete=models.CASCADE,
+        help_text="Person taking the leave.",
+    )
+    start_date = models.DateField(
+        help_text="Inclusive first day of the leave.",
+    )
+    end_date = models.DateField(
+        help_text="Inclusive last day of the leave.",
+    )
     percentage = models.DecimalField(
-        max_digits=3, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(1)]
+        max_digits=3,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(1)],
+        help_text="Share of the working day the person is on leave, in [0, 1]; 1.00 = full day off.",
     )
 
     def clean(self) -> None:

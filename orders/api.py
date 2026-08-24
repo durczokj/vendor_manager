@@ -20,10 +20,19 @@ from orders.services import create_new_order_version
 class CloneLatestVersionSerializer(drf_serializers.Serializer[Any]):
     """Request body for the clone-latest action."""
 
-    contract_id = drf_serializers.IntegerField()
-    start_date = drf_serializers.DateField()
-    end_date = drf_serializers.DateField()
-    copy_engagement_assignments = drf_serializers.BooleanField(default=True)
+    contract_id = drf_serializers.IntegerField(
+        help_text="Primary key of the Contract to attach to the new OrderVersion.",
+    )
+    start_date = drf_serializers.DateField(
+        help_text="Inclusive first day of the new OrderVersion; must equal the previous version's end_date + 1.",
+    )
+    end_date = drf_serializers.DateField(
+        help_text="Inclusive last day of the new OrderVersion; must be on or after start_date.",
+    )
+    copy_engagement_assignments = drf_serializers.BooleanField(
+        default=True,
+        help_text="If true, copy the previous version's EngagementOrderVersionAssignments to the new version.",
+    )
 
 
 class OrderViewSet(viewsets.ModelViewSet[Order]):
