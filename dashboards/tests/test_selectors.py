@@ -111,6 +111,11 @@ def test_leave_reduces_availability(admin_user):
     assert by_date[date(2024, 1, 1)] == pytest.approx(100.0)
     assert by_date[date(2024, 1, 2)] == pytest.approx(50.0)
     assert by_date[date(2024, 1, 3)] == pytest.approx(100.0)
+    # P11.T1: every row must carry the cost components used by /cost-lines/.
+    for row in rows:
+        assert "daily_rate" in row
+        assert "fte" in row
+        assert "is_working_day" in row
 
 
 @pytest.mark.django_db

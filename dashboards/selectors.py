@@ -17,8 +17,12 @@ from django.contrib.auth.models import User
 
 from calendars.models import Calendar, CalendarAssignment
 from calendars.selectors import is_working
+from companies.models import Company
 from engagements.models import Engagement, EngagementOrderVersionAssignment, EngagementUndertakingAssignment
 from leaves.models import Leave
+from orders.models import Order
+from people.models import Person
+from undertakings.models import Undertaking
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +34,37 @@ CLASS_TO_ID_COL: dict[str, str] = {
     "Company": "company_id",
     "Undertaking": "undertaking_id",
 }
+
+
+def get_entity_name_map(
+    user: User,
+    class_: str,
+    entity_ids: set[Any],
+) -> dict[Any, str]:
+    """Return a mapping of entity PKs to display strings for *user*'s scope.
+
+    Args:
+        user: The authenticated Django user.
+        class_: One of the five entity class names in :data:`CLASS_TO_ID_COL`.
+        entity_ids: The set of primary keys whose names are needed.
+
+    Returns:
+        A dict mapping each PK to a human-readable display string. Entities
+        the user cannot access are omitted.
+    """
+    if not entity_ids:
+        return {}
+    if class_ == "Person":
+        return {p.pk: str(p) for p in Person.objects.accessible_to(user).filter(pk__in=entity_ids)}
+    if class_ == "Order":
+        return {o.pk: o.name for o in Order.objects.accessible_to(user).filter(pk__in=entity_ids)}
+    if class_ == "Company":
+        return {c.pk: str(c) for c in Company.objects.accessible_to(user).filter(pk__in=entity_ids)}
+    if class_ == "Undertaking":
+        return {u.pk: str(u) for u in Undertaking.objects.accessible_to(user).filter(pk__in=entity_ids)}
+    if class_ == "Engagement":
+        return {e.pk: f"Engagement {e.pk}" for e in Engagement.objects.accessible_to(user).filter(pk__in=entity_ids)}
+    return {}
 
 
 def _na_to_none(val: Any) -> Any:
