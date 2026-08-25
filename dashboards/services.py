@@ -1,27 +1,28 @@
 """Service layer for the dashboards app.
 
-The public entry point is :func:`build_summary`.  It orchestrates selectors
-from :mod:`dashboards.selectors` and returns a serialisable
-:data:`SummaryPayload` dict.
+The public entry points are :func:`build_summary` (pre-aggregated cost series
+for the dashboard) and :func:`build_cost_lines` (unaggregated day-level cost
+rows for LLM / MCP / export clients). Both start from
+:func:`dashboards.selectors.get_accessible_cost_rows` and share the same
+role-scoping guarantees.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, TypedDict
 
+from django.conf import settings
 from django.contrib.auth.models import User
 
-from companies.models import Company
-from dashboards.selectors import CLASS_TO_ID_COL, get_accessible_cost_rows
-from engagements.models import Engagement
-from orders.models import Order
-from people.models import Person
-from undertakings.models import Undertaking
+from dashboards.selectors import CLASS_TO_ID_COL, get_accessible_cost_rows, get_entity_name_map
 
 VALID_CLASSES: frozenset[str] = frozenset(CLASS_TO_ID_COL.keys())
 VALID_GRANULARITIES: frozenset[str] = frozenset(["Monthly", "Daily", "Total"])
+
+# Entity classes whose display names are denormalized onto each cost line.
+_NAME_CLASSES: tuple[str, ...] = ("Person", "Order", "Company", "Undertaking")
 
 
 class SummaryRow(TypedDict):
@@ -42,35 +43,56 @@ class SummaryPayload(TypedDict):
     rows: list[SummaryRow]
 
 
-def _get_entity_name_map(
-    user: User,
-    class_: str,
-    entity_ids: set[Any],
-) -> dict[Any, str]:
-    """Return a mapping of entity PKs to display strings for *user*'s scope.
+class CostLinesPayload(TypedDict):
+    """The payload returned by :func:`build_cost_lines`."""
+
+    date_from: str
+    date_to: str
+    count: int
+    rows: list[dict[str, Any]]
+
+
+class CostLinesSpanTooLargeError(ValueError):
+    """Raised when the requested ``(date_from, date_to)`` span exceeds the cap.
+
+    The API layer maps this to HTTP 400.
+    """
+
+
+def attach_display_names(user: User, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Denormalize per-entity display names onto each cost-line row in place.
+
+    For each of ``person``, ``order``, ``company``, ``undertaking`` the row is
+    given a ``<entity>_name`` key resolved via
+    :func:`dashboards.selectors.get_entity_name_map`. Entities the user cannot
+    access via ``accessible_to(user)`` resolve to ``None``.
 
     Args:
-        user: The authenticated Django user.
-        class_: One of the five entity class names.
-        entity_ids: The set of primary keys whose names are needed.
+        user: The authenticated Django user; used only to scope the name
+            lookups. Row-level accessibility is already enforced by
+            :func:`get_accessible_cost_rows`.
+        rows: The list of row dicts produced by
+            :func:`get_accessible_cost_rows`.
 
     Returns:
-        A dict mapping each PK to a human-readable display string.
+        The same list, with the four ``*_name`` keys populated on every row.
     """
-    if not entity_ids:
-        return {}
+    ids_by_class: dict[str, set[Any]] = {}
+    for class_ in _NAME_CLASSES:
+        id_col = CLASS_TO_ID_COL[class_]
+        ids_by_class[class_] = {r[id_col] for r in rows if r.get(id_col) is not None}
 
-    if class_ == "Person":
-        return {p.pk: str(p) for p in Person.objects.accessible_to(user).filter(pk__in=entity_ids)}
-    if class_ == "Order":
-        return {o.pk: o.name for o in Order.objects.accessible_to(user).filter(pk__in=entity_ids)}
-    if class_ == "Company":
-        return {c.pk: str(c) for c in Company.objects.accessible_to(user).filter(pk__in=entity_ids)}
-    if class_ == "Undertaking":
-        return {u.pk: str(u) for u in Undertaking.objects.accessible_to(user).filter(pk__in=entity_ids)}
-    if class_ == "Engagement":
-        return {e.pk: f"Engagement {e.pk}" for e in Engagement.objects.accessible_to(user).filter(pk__in=entity_ids)}
-    return {}
+    name_maps: dict[str, dict[Any, str]] = {
+        class_: get_entity_name_map(user, class_, ids) for class_, ids in ids_by_class.items()
+    }
+
+    for row in rows:
+        for class_ in _NAME_CLASSES:
+            id_col = CLASS_TO_ID_COL[class_]
+            name_col = f"{class_.lower()}_name"
+            entity_id = row.get(id_col)
+            row[name_col] = name_maps[class_].get(entity_id) if entity_id is not None else None
+    return rows
 
 
 def build_summary(
@@ -136,7 +158,7 @@ def build_summary(
 
     # Resolve display names (accessible to the user only).
     non_none_ids: set[Any] = {k[0] for k in aggregated if k[0] is not None}
-    entity_name_map = _get_entity_name_map(user, class_, non_none_ids)
+    entity_name_map = get_entity_name_map(user, class_, non_none_ids)
 
     output_rows: list[SummaryRow] = []
     for key, total_cost in aggregated.items():
@@ -162,4 +184,64 @@ def build_summary(
         "class_": class_,
         "granularity": granularity,
         "rows": output_rows,
+    }
+
+
+def build_cost_lines(
+    user: User,
+    date_range: tuple[date, date],
+    entity_selection: dict[str, list[Any]],
+) -> CostLinesPayload:
+    """Return day-level cost rows with denormalized display names.
+
+    The rows are the same intermediate values that :func:`build_summary`
+    aggregates away — one row per ``(engagement, day)`` — with every dimension
+    (person, order, company, undertaking) present on every row and the
+    corresponding display names resolved through
+    :func:`dashboards.selectors.get_entity_name_map`. This is the API surface
+    intended for LLM / MCP / CSV export clients that need to do their own math.
+
+    Args:
+        user: The authenticated Django user. Rows are scoped to
+            engagements returned by ``Engagement.objects.accessible_to(user)``.
+        date_range: ``(date_from, date_to)`` — both inclusive and both
+            required. The span in days must not exceed
+            ``settings.DASHBOARDS_COST_LINES_MAX_DAYS``.
+        entity_selection: Mapping of entity class names to lists of primary
+            keys to further narrow the result. An empty list means "no
+            restriction" for that class. Accessibility is already enforced by
+            the initial engagement query.
+
+    Returns:
+        A :data:`CostLinesPayload` dict ready for JSON serialisation.
+
+    Raises:
+        CostLinesSpanTooLargeError: If the ``date_to - date_from`` span exceeds
+            ``settings.DASHBOARDS_COST_LINES_MAX_DAYS``.
+        ValueError: If ``date_from > date_to``.
+    """
+    date_from, date_to = date_range
+    if date_from > date_to:
+        raise ValueError(f"date_from ({date_from}) must not be after date_to ({date_to}).")
+
+    max_days: int = int(getattr(settings, "DASHBOARDS_COST_LINES_MAX_DAYS", 400))
+    span = (date_to - date_from) + timedelta(days=1)
+    if span.days > max_days:
+        raise CostLinesSpanTooLargeError(
+            f"Requested span of {span.days} days exceeds the {max_days}-day cap; narrow date_from/date_to."
+        )
+
+    rows = get_accessible_cost_rows(
+        user,
+        min_date=date_from,
+        max_date=date_to,
+        entity_filters=entity_selection,
+    )
+    rows = attach_display_names(user, rows)
+
+    return {
+        "date_from": date_from.isoformat(),
+        "date_to": date_to.isoformat(),
+        "count": len(rows),
+        "rows": rows,
     }

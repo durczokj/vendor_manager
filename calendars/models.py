@@ -33,7 +33,11 @@ class WeeklyPattern(models.Model):
     Sunday=6).
     """
 
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Unique display name of the weekly pattern (e.g. 'Mon-Fri').",
+    )
     working_days = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(ALL_WEEK_MASK)],
         help_text="7-bit mask; bit 0=Mon … bit 6=Sun. E.g. Mon-Fri = 31.",
@@ -63,9 +67,21 @@ class HolidayCalendar(models.Model):
     ``"TX"``); leave empty for country-wide holidays.
     """
 
-    name = models.CharField(max_length=100, unique=True)
-    country_code = models.CharField(max_length=2)
-    subdivision = models.CharField(max_length=10, blank=True, default="")
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Unique display name of the holiday calendar (e.g. 'Poland PL').",
+    )
+    country_code = models.CharField(
+        max_length=2,
+        help_text="ISO-3166 alpha-2 country code supported by python-holidays (e.g. 'PL', 'US').",
+    )
+    subdivision = models.CharField(
+        max_length=10,
+        blank=True,
+        default="",
+        help_text="Optional subdivision code (e.g. US state 'TX'); empty for country-wide holidays.",
+    )
 
     class Meta:
         """Model metadata."""
@@ -86,9 +102,23 @@ class Calendar(models.Model):
     two components — no per-day rows are materialized.
     """
 
-    name = models.CharField(max_length=100, unique=True)
-    weekly_pattern = models.ForeignKey(WeeklyPattern, on_delete=models.PROTECT, related_name="calendars")
-    holiday_calendar = models.ForeignKey(HolidayCalendar, on_delete=models.PROTECT, related_name="calendars")
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Unique display name of the calendar (e.g. 'Poland Mon-Fri').",
+    )
+    weekly_pattern = models.ForeignKey(
+        WeeklyPattern,
+        on_delete=models.PROTECT,
+        related_name="calendars",
+        help_text="Recurring weekly working-day pattern used by this calendar.",
+    )
+    holiday_calendar = models.ForeignKey(
+        HolidayCalendar,
+        on_delete=models.PROTECT,
+        related_name="calendars",
+        help_text="Public-holiday source overlaid on top of the weekly pattern.",
+    )
 
     class Meta:
         """Model metadata."""
@@ -113,14 +143,22 @@ class CalendarAssignment(models.Model):
         "people.Person",
         on_delete=models.CASCADE,
         related_name="calendar_assignments",
+        help_text="Person the calendar is assigned to.",
     )
     calendar = models.ForeignKey(
         Calendar,
         on_delete=models.PROTECT,
         related_name="person_assignments",
+        help_text="Working calendar in effect during this window.",
     )
-    start_date = models.DateField()
-    end_date = models.DateField(blank=True, null=True)
+    start_date = models.DateField(
+        help_text="Inclusive first day of the assignment.",
+    )
+    end_date = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Inclusive last day of the assignment; NULL means the assignment is open-ended.",
+    )
 
     objects = CalendarAssignmentManager()
 

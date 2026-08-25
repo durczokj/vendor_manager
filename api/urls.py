@@ -14,7 +14,7 @@ from calendars.api import (
 )
 from companies.api import CompanyViewSet
 from contracts.api import ContractViewSet
-from dashboards.api import DashboardEntityOptionsView, DashboardSummaryView
+from dashboards.api import DashboardCostLinesView, DashboardEntityOptionsView, DashboardSummaryView
 from engagements.api import (
     EngagementOrderVersionAssignmentViewSet,
     EngagementUndertakingAssignmentViewSet,
@@ -67,6 +67,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("", include(engagements_router.urls)),
     path("dashboards/summary/", DashboardSummaryView.as_view(), name="dashboards-summary"),
+    path("dashboards/cost-lines/", DashboardCostLinesView.as_view(), name="dashboards-cost-lines"),
     path("dashboards/entity-options/", DashboardEntityOptionsView.as_view(), name="dashboards-entity-options"),
     path(
         "schema/",

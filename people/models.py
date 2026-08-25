@@ -16,12 +16,39 @@ class Person(models.Model):
 
     objects = PersonManager()
 
-    id = models.CharField(primary_key=True, max_length=6)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=False, default="")
-    location = models.CharField(max_length=255, blank=True, null=False, default="")
-    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
+    id = models.CharField(
+        primary_key=True,
+        max_length=6,
+        help_text="Six-character HR person identifier (e.g. 'P00042'). Immutable.",
+    )
+    first_name = models.CharField(
+        max_length=255,
+        help_text="Given name.",
+    )
+    last_name = models.CharField(
+        max_length=255,
+        help_text="Family name.",
+    )
+    description = models.TextField(
+        blank=True,
+        null=False,
+        default="",
+        help_text="Free-form note about the person (skills, role, etc.).",
+    )
+    location = models.CharField(
+        max_length=255,
+        blank=True,
+        null=False,
+        default="",
+        help_text="Primary work location (city or country).",
+    )
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        help_text="Linked Django auth user; NULL for people who cannot log in.",
+    )
 
     @property
     def name(self) -> str:

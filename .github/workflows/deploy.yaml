@@ -66,12 +66,33 @@ jobs:
           tags: |
             durczokj/vendor-manager:${{ steps.vars.outputs.tag }}
 
+      - name: Build and push MCP image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.mcp
+          push: true
+          tags: |
+            durczokj/vendor-manager-mcp:${{ steps.vars.outputs.tag }}
+
       - name: Deploy to k3s
         uses: durczokj/vm/.github/actions/deploy-to-k3s@main
         with:
           app_name: vendor-manager
           deployment_name: vendor-manager
           namespace:      ${{ steps.vars.outputs.namespace }}
+          image_tag:      ${{ steps.vars.outputs.tag }}
+          server_host:    ${{ secrets.SERVER_HOST }}
+          server_user:    ${{ secrets.SERVER_USER }}
+          server_ssh_key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Deploy MCP to k3s
+        uses: durczokj/vm/.github/actions/deploy-to-k3s@main
+        with:
+          app_name: vendor-manager-mcp
+          deployment_name: vendor-manager-mcp
+          namespace:      ${{ steps.vars.outputs.namespace }}
+          manifest_path:  deploy/k8s/deployment-mcp.yaml
           image_tag:      ${{ steps.vars.outputs.tag }}
           server_host:    ${{ secrets.SERVER_HOST }}
           server_user:    ${{ secrets.SERVER_USER }}

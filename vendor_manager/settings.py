@@ -378,3 +378,10 @@ LOGGING = {
         },
     },
 }
+
+
+# ── Dashboards ─────────────────────────────────────────────────────────────
+# Maximum (date_to - date_from) span accepted by
+# /api/v1/dashboards/cost-lines/. Requests wider than this cap return HTTP
+# 400 to protect the pandas pipeline from unbounded input sizes (P11.T1).
+DASHBOARDS_COST_LINES_MAX_DAYS: int = int(os.environ.get("DASHBOARDS_COST_LINES_MAX_DAYS", "400"))

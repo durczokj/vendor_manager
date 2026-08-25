@@ -38,6 +38,7 @@
 | P8 | Strict-typing sweep | Everything that isn't already annotated gets annotated; `mypy --strict` passes on the whole project. | P1–P6 |
 | P9 | Acceptance & release | Every `FR‑*` / `NFR‑*` mapped to a passing test; `check --deploy` clean; MkDocs green; k3s deploy verified. | P0–P8 |
 | P10 | Calendars (per‑person working days) | Add `WeeklyPattern`, `HolidayCalendar`, `Calendar`, `CalendarAssignment`; integrate with cost calculations and the leave matrix. | P3, P5 |
+| P11 | MCP surface for external LLM clients | Expose day‑level cost rows via `/api/v1/dashboards/cost-lines/`; ship a remote MCP server on the VM at `https://vendor-manager-mcp.durczok.ovh/` that forwards Basic auth to the Django API. | P3, P5, P10 |
 
 ---
 
@@ -142,6 +143,13 @@ Opportunistic P9 fixes already shipped (not part of P9.T1–T4):
 - [x] P10.T5 UI CRUD for `CalendarAssignment` from the Person detail page
 - [x] P10.T6 free‑day rendering in the leaves absence matrix; remove standalone calendar view
 - [x] P10.T7 docs: ERD, requirements §3.11, user guide, developer‑guide entity index
+
+### Phase 11 — MCP surface for external LLM clients
+- [ ] P11.T1 `cost-lines` refactor + endpoint (`get_entity_name_map` promoted, `_CostFilterSerializer` extracted, `DashboardCostLinesView`)
+- [ ] P11.T2 `vendor_manager/mcp/` package + `Dockerfile.mcp`
+- [ ] P11.T3 `deploy/k8s/deployment-mcp.yaml` + CI builds both images on one tag
+- [ ] P11.T4 `vm` repo: `apps/vendor-manager-mcp/base/` (Service, Ingress, ConfigMap, Middleware) wired into both overlays
+- [ ] P11.T5 docs: `docs/user-guide/mcp.md` + RUNBOOK MCP section
 
 ---
 
@@ -1401,6 +1409,206 @@ Additive to the ERD (see [docs/ERD.md](ERD.md)) — no existing entity is change
 - `mkdocs build --strict` passes.
 - The ERD diagram, requirements, and user guide are internally consistent with the
   code that ships in P10.T1–T6.
+
+---
+
+## Phase 11 — MCP surface for external LLM clients
+
+**Goal.** Ship a role-scoped read surface (`/api/v1/dashboards/cost-lines/`) and a
+remote MCP server at `https://vendor-manager-mcp.durczok.ovh/` so business users can
+hand invoices to Claude Desktop (or any MCP client) and reconcile them against the
+actual data in vendor_manager without opening the dashboard.
+
+**Satisfies.** New `FR‑62` (cost-lines endpoint) and `FR‑63` (MCP server surface).
+Both are additive; no existing FR/NFR is weakened.
+
+**Auth model.** HTTP Basic (per `FR‑22`), unchanged. The MCP server forwards the
+caller's `Authorization: Basic …` header verbatim to the in-cluster Django API. The
+MCP process holds no credentials of its own. RBAC stays where it already is
+(`accessible_to(user)` querysets).
+
+**Definition of done.**
+
+- `/api/v1/dashboards/cost-lines/` documented in the OpenAPI schema, role-scoped, and
+  covered by allow/deny tests.
+- MCP server image built and deployed alongside the main app image on every release.
+- MCP server reachable at `https://vendor-manager-mcp.durczok.ovh/` with a valid
+  Let's Encrypt cert and a Traefik rate-limit + max-body middleware in front.
+- An analyst can follow `docs/user-guide/mcp.md` end-to-end and reconcile a real
+  invoice against dev data without paging the admin.
+
+### P11.T1 — `cost-lines` refactor and endpoint [serial]
+
+**Satisfies.** `FR‑62`, `FR‑45`, `FR‑47`, `NFR‑1`, `NFR‑10`.
+
+**Do.**
+
+Refactor commit (no behavior change):
+
+- Promote `_get_entity_name_map` → `dashboards/selectors.py::get_entity_name_map`
+  (public); update the caller in `dashboards/services.py`.
+- Extract `_CostFilterSerializer` in `dashboards/api.py` holding `date_from`,
+  `date_to`, `person_ids`, `order_ids`, `company_ids`, `undertaking_ids`,
+  `engagement_ids`. Make `_SummaryRequestSerializer` inherit from it.
+- Extend `get_accessible_cost_rows` output rows with `daily_rate`, `fte`,
+  `is_working_day` (additive; existing consumers ignore them).
+- Update `dashboards/tests/test_selectors.py` to assert the new keys.
+
+Feature commit:
+
+- Add `attach_display_names(user, rows)` in `dashboards/services.py`; uses
+  `get_entity_name_map` once per class.
+- Add `build_cost_lines(user, date_range, entity_selection) -> CostLinesPayload` in
+  `dashboards/services.py`.
+- Add `_CostLinesRequestSerializer(_CostFilterSerializer)` with `date_from` and
+  `date_to` **required**.
+- Add `DashboardCostLinesView(APIView)` — GET + POST, delegating to
+  `build_cost_lines`; `permission_classes = DashboardSummaryView.permission_classes`.
+- Wire
+  `path("dashboards/cost-lines/", DashboardCostLinesView.as_view(), name="dashboards-cost-lines")`
+  in `api/urls.py`.
+- Add setting `DASHBOARDS_COST_LINES_MAX_DAYS = 400` in `vendor_manager/settings.py`;
+  span-cap raises HTTP 400.
+- drf-spectacular `extend_schema` with an example request/response.
+
+**Acceptance.**
+
+- `/summary/` behavior byte-identical — existing tests unchanged.
+- New endpoint appears in `/api/v1/schema/` with denormalized name columns
+  documented.
+- Tests cover: admin allow, person-role scoping (only own rows), span-cap 400,
+  missing `date_from`/`date_to` 400, denormalized `person_name`, `order_name`,
+  `company_name`, `undertaking_name` present, filter by `company_ids` narrows
+  correctly.
+- `ruff check .`, `ruff format --check .`, and `mypy` clean for `dashboards/*`.
+- Diff-coverage on the touched files ≥ 80 %.
+
+### P11.T2 — MCP server package `vendor_manager/mcp/` [serial]
+
+**Satisfies.** `FR‑63`, `NFR‑1`, `NFR‑10`.
+
+**Do.**
+
+- New package `vendor_manager/mcp/` — pure Python, **does not import Django**:
+    - `client.py` — `httpx.AsyncClient` wrapper. Reads `VM_API_BASE_URL` from env.
+      Extracts `Authorization` from the incoming MCP request context and forwards
+      it verbatim on outbound calls. Maps 401 / 403 / 400 to MCP tool errors with
+      clear messages.
+    - `server.py` — `fastmcp.FastMCP` app. Streamable HTTP transport on
+      `MCP_HOST:MCP_PORT` (default `0.0.0.0:8000`). `/healthz` endpoint.
+      `python-json-logger` structured logs. Two tools registered — the
+      surface below — with no feature flags.
+    - `tools/describe_api.py` — `describe_api()` → GET `/schema/`; returns
+      the full OpenAPI schema so the LLM can discover every endpoint.
+    - `tools/api_request.py` — `vm_api_request(method, path, params?, body?)`;
+      generic passthrough that lets the LLM call any endpoint discovered via
+      `describe_api`. RBAC is enforced Django-side per request.
+- Add `requirements-mcp.txt` listing `fastmcp`, `httpx`, `pydantic>=2`,
+  `python-json-logger`.
+- Add `Dockerfile.mcp` — Python 3.13 slim, installs `-r requirements-mcp.txt`, `CMD ["python", "-m",
+  "vendor_manager.mcp.server"]`, `EXPOSE 8000`.
+- Add tests under `vendor_manager/mcp/tests/` using `respx` (recorded httpx). Cover:
+    - `Authorization` header pass-through.
+    - Tool JSON schemas match declared inputs.
+    - 401 from Django → MCP tool error ("check your Basic credentials").
+    - 403 → clear error ("insufficient role").
+    - Span-cap 400 from Django surfaces as MCP tool error.
+    - `describe_api` returns the OpenAPI schema unmodified.
+    - `vm_api_request` normalizes the HTTP method and forwards to the right path.
+
+**Acceptance.**
+
+- `docker build -f Dockerfile.mcp -t vendor-manager-mcp:test .` succeeds.
+- `docker run --rm -e VM_API_BASE_URL=http://mock -p 8000:8000 vendor-manager-mcp:test`
+  starts, `/healthz` returns 200.
+- `ruff`, `mypy --strict` clean for `vendor_manager/mcp/*`.
+
+### P11.T3 — Release manifest for MCP [serial after P11.T2]
+
+**Satisfies.** `FR‑63`, `NFR‑15`.
+
+**Do.**
+
+- Add `deploy/k8s/deployment-mcp.yaml`:
+    - `Deployment/vendor-manager-mcp`, 1 replica.
+    - `readinessProbe` + `livenessProbe` on `/healthz`.
+    - Resources: requests `100m` / `128Mi`; limits `500m` / `512Mi`.
+    - `envFrom.configMapRef: vendor-manager-mcp-config` (owned by the vm repo).
+    - Image `durczokj/vendor-manager-mcp:__IMAGE_TAG__`, rendered by CI.
+- Update `.github/workflows/deploy.yaml`:
+    - Build **both** images (`vendor-manager` and `vendor-manager-mcp`) on the same
+      tag from a single release.
+    - `scp` **both** rendered manifests to the VM.
+    - `kubectl apply` + `rollout status` for both deployments.
+
+**Acceptance.**
+
+- `gh workflow run "Build and Deploy" -f tag=v0.x.y -f namespace=dev` deploys both
+  images.
+- `kubectl -n dev rollout status deploy/vendor-manager-mcp --timeout=180s` succeeds.
+- `kubectl -n dev logs deploy/vendor-manager-mcp --tail=50` shows a clean fastmcp
+  startup line, no crash loop for 5 min.
+
+### P11.T4 — Platform manifests in the `vm` repo [serial after P11.T3]
+
+**Satisfies.** `FR‑63`.
+
+**Do.** In `/Users/jakubdurczok/Documents/GitHub/vm`:
+
+- New directory `apps/vendor-manager-mcp/base/`:
+    - `service.yaml` — `Service/vendor-manager-mcp`, port 80 → targetPort 8000.
+    - `ingress.yaml` — host `vendor-manager-mcp.durczok.ovh`,
+      `cert-manager.io/cluster-issuer: letsencrypt-prod`, TLS secret
+      `vendor-manager-mcp-tls`; wired to the Traefik guardrails middleware.
+    - `configmap.yaml` — `vendor-manager-mcp-config` with `VM_API_BASE_URL` and
+      `LOG_LEVEL=info`.
+    - `middleware.yaml` — Traefik `Middleware/vendor-manager-mcp-guardrails` with a
+      60 req/min rate limit and a 1 MB request-body cap.
+    - `kustomization.yaml` including the four above.
+- Wire into overlays:
+    - `overlays/prod/kustomization.yaml` → append
+      `../../apps/vendor-manager-mcp/base`.
+    - `overlays/dev/kustomization.yaml` → append same, with a per-overlay patch to
+      change the host to `mcp-dev.durczok.ovh` and point `VM_API_BASE_URL` at the
+      dev vendor-manager Service.
+- Add DNS `A` records `vendor-manager-mcp.durczok.ovh` and `mcp-dev.durczok.ovh` →
+  `51.83.199.73` (manual, recorded in `RUNBOOK.md`).
+
+**Acceptance.**
+
+- `kubectl diff -k overlays/dev` shows exactly the new objects (Service, Ingress,
+  ConfigMap, Middleware); no drift on existing objects.
+- After apply, `curl -sS -o /dev/null -w '%{http_code}\n' https://mcp-dev.durczok.ovh/healthz`
+  returns `200`.
+- `kubectl -n dev get certificate vendor-manager-mcp-tls` reports `READY=True`.
+- 61st request within a minute returns 429 (rate limit verified).
+
+### P11.T5 — Docs and analyst onboarding [serial after P11.T4]
+
+**Satisfies.** `FR‑51`, `FR‑52`.
+
+**Do.**
+
+- In the `vendor_manager` repo, add `docs/user-guide/mcp.md`:
+    - "What this is" — one paragraph, non-technical.
+    - Claude Desktop config snippet with Basic auth pointed at
+      `https://vendor-manager-mcp.durczok.ovh/mcp/`.
+    - The two tools (`describe_api`, `vm_api_request`) with a worked example
+      of a billing-reconciliation conversation.
+    - Data scope + privacy note.
+    - Troubleshooting: 401 → wrong credentials, 403 → role scope, span-cap 400 →
+      narrow the date range.
+- Link from `docs/index.md` under a new "Integrations" section; add to `mkdocs.yml`.
+- In the `vm` repo, append a "MCP server" section to `RUNBOOK.md` with the DNS
+  records, health-check URL, log-tail command, and how to disable temporarily
+  (`kubectl -n prod scale deploy/vendor-manager-mcp --replicas=0`).
+
+**Acceptance.**
+
+- A colleague who has never touched MCP follows `docs/user-guide/mcp.md` on their
+  own laptop against the dev slot and reconciles one real invoice line end-to-end.
+  Transcript attached to the PR description as evidence.
+- `mkdocs build --strict` clean.
 
 ---
 

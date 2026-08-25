@@ -47,6 +47,7 @@ nav:
       - Leaves: user-guide/leaves.md
       - Calendars: user-guide/calendars.md
       - Dashboard: user-guide/dashboard.md
+      - MCP for LLM clients: user-guide/mcp.md
   - Developer Guide:
       - Overview: developer-guide/index.md
       - Architecture: developer-guide/architecture.md

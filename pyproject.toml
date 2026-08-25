@@ -7,6 +7,7 @@ readme = "README.md"
 
 # Runtime deps are declared in requirements.txt (pinned) for the Docker build.
 # Dev deps are declared in requirements-dev.txt.
+# MCP server deps are declared in requirements-mcp.txt.
 # This section exists so the project is a valid PEP 621 package for tooling.
 dependencies = []
 
@@ -267,6 +268,7 @@ django_settings_module = "vendor_manager.settings"
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "vendor_manager.settings"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
+asyncio_mode = "auto"
 addopts = [
     "-ra",
     "--strict-markers",
@@ -287,6 +289,7 @@ filterwarnings = [
 source = [
     "valendars",
     "cendor_manager",
+    "vendor_manager",
     "companies",
     "contracts",
     "dashboards",

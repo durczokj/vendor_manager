@@ -22,11 +22,28 @@ class Engagement(models.Model):
     objects = EngagementManager()
 
     id = models.AutoField(primary_key=True)
-    person = models.ForeignKey(Person, related_name="engagements", on_delete=models.CASCADE)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    daily_rate = models.DecimalField(max_digits=10, decimal_places=2)
-    fte = models.DecimalField(max_digits=3, decimal_places=2)
+    person = models.ForeignKey(
+        Person,
+        related_name="engagements",
+        on_delete=models.CASCADE,
+        help_text="Person engaged (contractor or employee).",
+    )
+    start_date = models.DateField(
+        help_text="Inclusive first day of the engagement.",
+    )
+    end_date = models.DateField(
+        help_text="Inclusive last day of the engagement.",
+    )
+    daily_rate = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Cost per full working day in the engagement currency (before FTE weighting).",
+    )
+    fte = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        help_text="Full-time-equivalent factor in [0, 1]; 1.00 = full-time, 0.50 = half-time.",
+    )
 
     def active(self, date: date = date.today()) -> bool:  # noqa: B008
         """Check if the engagement is active."""
@@ -81,8 +98,18 @@ class EngagementOrderVersionAssignment(models.Model):
 
     objects = EngagementOrderVersionAssignmentManager()
 
-    engagement = models.ForeignKey(Engagement, related_name="order_version_assignments", on_delete=models.CASCADE)
-    order_version = models.ForeignKey(OrderVersion, related_name="engagement_assignments", on_delete=models.CASCADE)
+    engagement = models.ForeignKey(
+        Engagement,
+        related_name="order_version_assignments",
+        on_delete=models.CASCADE,
+        help_text="Engagement being billed against the order version.",
+    )
+    order_version = models.ForeignKey(
+        OrderVersion,
+        related_name="engagement_assignments",
+        on_delete=models.CASCADE,
+        help_text="Order version funding the engagement (all versions must share one Order).",
+    )
 
     class Meta:
         """Meta class for the model."""
@@ -110,11 +137,29 @@ class EngagementUndertakingAssignment(models.Model):
 
     objects = EngagementUndertakingAssignmentManager()
 
-    engagement = models.ForeignKey(Engagement, related_name="undertaking_assignments", on_delete=models.CASCADE)
-    undertaking = models.ForeignKey(Undertaking, related_name="engagement_assignments", on_delete=models.CASCADE)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    percentage = models.DecimalField(max_digits=3, decimal_places=2)
+    engagement = models.ForeignKey(
+        Engagement,
+        related_name="undertaking_assignments",
+        on_delete=models.CASCADE,
+        help_text="Engagement whose time is being allocated.",
+    )
+    undertaking = models.ForeignKey(
+        Undertaking,
+        related_name="engagement_assignments",
+        on_delete=models.CASCADE,
+        help_text="Undertaking receiving the allocation.",
+    )
+    start_date = models.DateField(
+        help_text="Inclusive first day of the allocation (must fall within the engagement).",
+    )
+    end_date = models.DateField(
+        help_text="Inclusive last day of the allocation (must fall within the engagement).",
+    )
+    percentage = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        help_text="Share of the engagement's FTE spent on this undertaking, in [0, 1].",
+    )
 
     class Meta:
         """Meta class for the model."""

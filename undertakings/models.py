@@ -10,8 +10,14 @@ class CostCenter(models.Model):
 
     objects = CostCenterManager()
 
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=255)
+    id = models.IntegerField(
+        primary_key=True,
+        help_text="Business-supplied cost-center identifier (integer, immutable).",
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text="Display name of the cost center.",
+    )
 
     def __str__(self) -> str:
         """Return the name of the cost center."""
@@ -23,10 +29,26 @@ class Undertaking(models.Model):
 
     objects = UndertakingManager()
 
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=255)
-    cost_center = models.ForeignKey(CostCenter, related_name="undertakings", on_delete=models.CASCADE)
-    manager = models.ForeignKey("people.Person", related_name="managed_undertakings", on_delete=models.CASCADE)
+    id = models.IntegerField(
+        primary_key=True,
+        help_text="Business-supplied undertaking identifier (integer, immutable).",
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text="Display name of the undertaking (project / workstream).",
+    )
+    cost_center = models.ForeignKey(
+        CostCenter,
+        related_name="undertakings",
+        on_delete=models.CASCADE,
+        help_text="Cost center this undertaking rolls up to.",
+    )
+    manager = models.ForeignKey(
+        "people.Person",
+        related_name="managed_undertakings",
+        on_delete=models.CASCADE,
+        help_text="Person accountable for this undertaking (the Undertaking Manager).",
+    )
 
     def __str__(self) -> str:
         """Return the name of the undertaking."""

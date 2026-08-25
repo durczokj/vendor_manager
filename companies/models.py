@@ -10,9 +10,18 @@ class Company(models.Model):
 
     objects = CompanyManager()
 
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=255)
-    email = models.EmailField(max_length=255)
+    id = models.IntegerField(
+        primary_key=True,
+        help_text="Business-supplied company identifier (integer, immutable).",
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text="Display name of the company (e.g. 'Acme Corp').",
+    )
+    email = models.EmailField(
+        max_length=255,
+        help_text="Primary billing / contact email for the company.",
+    )
 
     def __str__(self) -> str:
         """Return the name of the company."""
