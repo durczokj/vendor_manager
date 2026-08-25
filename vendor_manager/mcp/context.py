@@ -33,7 +33,8 @@ def get_authorization_header() -> str:
     """
     from fastmcp.server.dependencies import get_http_headers
 
-    headers: dict[str, Any] = get_http_headers() or {}
+    # fastmcp strips `authorization` from get_http_headers() by default; opt in.
+    headers: dict[str, Any] = get_http_headers(include={"authorization"}) or {}
     logger.debug("mcp incoming header names: %s", sorted(headers.keys()))
     # Header names come through lowercase from Starlette.
     auth = headers.get("authorization") or headers.get("Authorization")
