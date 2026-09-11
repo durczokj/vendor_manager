@@ -1,4 +1,4 @@
-"""Serializers used by the API surface.
+"""Serializers used by the API.
 
 All serializer implementations live in ``<app>/serializers.py``.  This module
 re-exports ``CompanySerializer`` for backward compatibility.
